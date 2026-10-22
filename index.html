@@ -96,6 +96,10 @@ nav.esconde{transform:translateY(-130%)}
 /* menu em cápsula com destaque que segue o mouse */
 .menu{position:relative;display:flex;gap:2px;list-style:none;padding:5px;border-radius:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px)}
 .menu li{position:relative;z-index:1}
+.nav-centro{display:flex;align-items:center;gap:10px}
+.comece{display:block;padding:14px 18px;border-radius:16px;font-size:12px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;white-space:nowrap;color:#fff;
+  background:rgba(255,255,255,.04);border:1px solid var(--laranja);box-shadow:0 0 18px rgba(255,109,41,.22),inset 0 0 12px rgba(255,109,41,.08);backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);transition:box-shadow .3s,text-shadow .3s,background .3s}
+.comece:hover{background:rgba(255,109,41,.12);box-shadow:0 0 30px rgba(255,109,41,.45);text-shadow:0 0 12px rgba(255,154,92,.6)}
 .menu a{display:block;padding:9px 16px;border-radius:12px;font-size:12px;font-weight:500;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.7);transition:color .3s,text-shadow .3s}
 .menu a:hover,.menu a.ativo{color:#fff;text-shadow:0 0 12px rgba(255,154,92,.6)}
 .menu .ind{position:absolute;z-index:0;top:5px;left:5px;width:0;height:calc(100% - 10px);border-radius:12px;background:linear-gradient(135deg,rgba(255,109,41,.38),rgba(69,48,39,.55));border:1px solid rgba(255,109,41,.6);box-shadow:0 0 26px rgba(255,109,41,.35),inset 0 0 14px rgba(255,154,92,.22);opacity:0;transition:left .45s cubic-bezier(.2,.7,.2,1),width .45s cubic-bezier(.2,.7,.2,1),opacity .3s;pointer-events:none}
@@ -300,6 +304,8 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;gap:2
   .pilar{grid-template-columns:auto 1fr}
   .pilar .num{display:none}
   .menu{display:none}
+  .comece{padding:11px 14px;font-size:11px;letter-spacing:.1em}
+  nav .btn .tx{display:none}
   /* mãos com o celular: sempre visíveis; só o pé das mãos se dissolve na cor da próxima seção, como no desktop */
   .maos{width:min(112vw,440px)}
   .palco{height:calc(min(112vw,440px) * 1.12)}
@@ -325,6 +331,7 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;gap:2
 <nav id="nav">
   <div class="wrap">
     <a href="#topo" class="marca"><span class="simb"><span class="orbe" id="orbe"></span><img src="assets/vox-simbolo.svg" alt="" /></span><div><b>Vox</b><span>DIGITAL</span></div></a>
+    <div class="nav-centro">
     <ul class="menu" id="menu">
       <span class="ind" id="ind"></span>
       <li><a href="#metodo">Método VOX</a></li>
@@ -332,6 +339,8 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;gap:2
       <li><a href="#trabalhos">Trabalhos</a></li>
       <li><a href="#faq">FAQ</a></li>
     </ul>
+    <a href="serie/" class="comece">Comece aqui</a>
+    </div>
     <a href="#aplicar" class="btn prim"><span class="ic"><svg><use href="#seta"/></svg></span><span class="tx">Aplicar</span></a>
   </div>
 </nav>
