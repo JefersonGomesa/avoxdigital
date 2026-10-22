@@ -31,10 +31,11 @@ img{display:block;max-width:100%}
 
 /* fundo: ilustração da pessoa digitando no celular (à direita) + janela do agente de IA espelhando o celular (à esquerda) */
 .fundo{position:absolute;inset:0;z-index:-2;overflow:hidden;background:radial-gradient(ellipse 55% 60% at 74% 45%,#3a2418 0%,#1b1416 55%,var(--noite) 100%)}
-.fundo .arte{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:right center;animation:respira 14s ease-in-out infinite alternate;transform-origin:72% 50%}
+.fundo .arte{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:60% center;animation:respira 14s ease-in-out infinite alternate;transform-origin:72% 50%}
 .fundo video.arte{animation:none}
+@media (min-width:1200px){.fundo .arte{object-position:32% center}}
 @keyframes respira{from{transform:scale(1)}to{transform:scale(1.06) translateX(-1%)}}
-.fundo .brilho{position:absolute;left:var(--cel-x,70%);top:var(--cel-y,52%);width:34%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;
+.fundo .brilho{position:absolute;left:var(--cel-x,70%);top:var(--cel-y,52%);width:22%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;
   background:radial-gradient(circle,rgba(255,154,92,.38),rgba(255,109,41,.12) 40%,transparent 70%);mix-blend-mode:screen;animation:tela 3.2s ease-in-out infinite}
 @keyframes tela{0%,100%{opacity:.75}45%{opacity:1}55%{opacity:.6}}
 .fundo::after{content:"";position:absolute;inset:0;background:
@@ -179,7 +180,7 @@ h1 .g{background:linear-gradient(100deg,#fff 0%,#fff 30%,var(--brasa) 62%,var(--
 @media (max-width:980px){
   .casca{grid-template-columns:1fr}
   .destaque{min-height:auto;border-radius:0}
-  .fundo .arte{object-position:70% top}
+  .fundo .arte{object-position:56% top}
   .silhueta{right:-4%;width:62%;bottom:auto;top:70px}
   .agente{top:74px;width:62%;transform:none;font-size:12px}
   .agente::after{display:none}
@@ -312,6 +313,7 @@ const CONFIG = {
   destravaEm: 0.8,                         // fração assistida que libera o próximo episódio
   fundoVideo: "assets/fundo-pessoa.mp4",   // loop da pessoa digitando (opcional, tem prioridade)
   fundoArte: "assets/fundo-pessoa.webp",   // ilustração da pessoa digitando no celular
+  celular: { x: 0.37, y: 0.64 },            // onde está o celular na arte (fração da imagem), para o brilho pulsar em cima
   episodios: [
     { titulo: "O restaurante vazio", dur: "", src: "", thumb: "", horizontal: true,
       sinopse: "O salão está vazio e o dono contrata três garçons para chamar gente na calçada. Absurdo? É o que quase todo dono de produto bom faz quando a venda trava." },
@@ -471,13 +473,22 @@ function evento(nome, extra) { try { window.fbq && fbq("trackCustom", nome, extr
   const box = document.getElementById("fundo");
   // tenta o loop em vídeo; se não houver, a ilustração; se não houver nenhum, fica a silhueta provisória
   const vid = Object.assign(document.createElement("video"), { muted: true, loop: true, playsInline: true, autoplay: true, className: "arte" });
-  vid.addEventListener("loadeddata", () => { box.prepend(vid); box.classList.add("tem-arte"); });
+  vid.addEventListener("loadeddata", () => { box.prepend(vid); box.classList.add("tem-arte"); mira(vid); });
   vid.addEventListener("error", () => {
     const img = Object.assign(new Image(), { className: "arte", alt: "" });
-    img.onload = () => { box.prepend(img); box.classList.add("tem-arte"); };
+    img.onload = () => { box.prepend(img); box.classList.add("tem-arte"); mira(img); addEventListener("resize", () => mira(img)); };
     img.src = CONFIG.fundoArte;
   });
   vid.src = CONFIG.fundoVideo;
+  // object-fit: cover alinhado à direita → acha onde o celular caiu na tela
+  function mira(m) {
+    const W = box.clientWidth, H = box.clientHeight, iw = m.naturalWidth || m.videoWidth, ih = m.naturalHeight || m.videoHeight;
+    if (!iw) return;
+    const s = Math.max(W / iw, H / ih), fx = getComputedStyle(m).objectPosition.split(" ")[0];
+    const sobra = W - iw * s, ox = fx.endsWith("%") ? sobra * parseFloat(fx) / 100 : sobra;
+    box.style.setProperty("--cel-x", ox + CONFIG.celular.x * iw * s + "px");
+    box.style.setProperty("--cel-y", (H - ih * s) / 2 + CONFIG.celular.y * ih * s + "px");
+  }
 
   const rascunhos = [
     ["Escreve a headline do meu produto.", "Seu produto não precisa de mais vendedor. Precisa ser desejado."],
