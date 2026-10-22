@@ -304,6 +304,10 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;gap:2
   .palco{height:calc(min(112vw,440px) * 1.18)}
   .palco::after{height:42%}
   .maos{will-change:opacity,filter}
+  /* nome gigante: bem mais largo, dissolvendo nas cores do fundo */
+  .nome-gigante{width:165vw;top:1%;opacity:.9;mix-blend-mode:screen;
+    -webkit-mask-image:linear-gradient(180deg,#000 10%,rgba(0,0,0,.7) 45%,transparent 92%),linear-gradient(90deg,transparent 0%,#000 9%,#000 91%,transparent 100%);
+    -webkit-mask-composite:source-in;mask-image:linear-gradient(180deg,#000 10%,rgba(0,0,0,.7) 45%,transparent 92%),linear-gradient(90deg,transparent 0%,#000 9%,#000 91%,transparent 100%);mask-composite:intersect}
 }
 @media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}.rev{opacity:1;filter:none;transform:none}}
 </style>
