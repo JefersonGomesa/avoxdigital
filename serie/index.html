@@ -35,9 +35,26 @@ img{display:block;max-width:100%}
 .fundo video.arte{animation:none}
 @media (min-width:1200px){.fundo .arte{object-position:32% center}}
 @keyframes respira{from{transform:scale(1)}to{transform:scale(1.06) translateX(-1%)}}
+.fundo{--luz:.7}
+/* luz do celular: acompanha o agente (forte digitando, máxima lendo, fraca apagando) */
 .fundo .brilho{position:absolute;left:var(--cel-x,70%);top:var(--cel-y,52%);width:22%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;
-  background:radial-gradient(circle,rgba(255,154,92,.38),rgba(255,109,41,.12) 40%,transparent 70%);mix-blend-mode:screen;animation:tela 3.2s ease-in-out infinite}
-@keyframes tela{0%,100%{opacity:.75}45%{opacity:1}55%{opacity:.6}}
+  background:radial-gradient(circle,rgba(255,170,110,.55),rgba(255,109,41,.16) 40%,transparent 70%);mix-blend-mode:screen;opacity:var(--luz);transition:opacity .14s}
+.fundo .rosto{position:absolute;left:calc(var(--cel-x,70%) + 9%);top:calc(var(--cel-y,52%) - 22%);width:34%;aspect-ratio:1;transform:translate(-50%,-50%);border-radius:50%;
+  background:radial-gradient(circle,rgba(255,150,90,.32),rgba(255,109,41,.08) 45%,transparent 70%);mix-blend-mode:soft-light;opacity:var(--luz);transition:opacity .2s}
+/* helicóptero passando lá fora: feixe frio atravessando uma persiana e lavando o quarto */
+.heli{position:absolute;inset:0;overflow:hidden;mix-blend-mode:screen;pointer-events:none;z-index:1}
+.heli .feixe{position:absolute;top:-25%;left:0;width:34%;height:150%;transform:translateX(-120%) rotate(-14deg);opacity:0;
+  background:repeating-linear-gradient(0deg,rgba(185,210,255,.2) 0 22px,transparent 22px 40px);
+  -webkit-mask:radial-gradient(ellipse 50% 50% at 50% 50%,#000 30%,transparent 72%);mask:radial-gradient(ellipse 50% 50% at 50% 50%,#000 30%,transparent 72%);
+  filter:blur(2px);animation:passa 13s cubic-bezier(.45,.05,.55,.95) infinite}
+.heli .feixe.b{animation-delay:-.35s;width:24%;opacity:0;filter:blur(6px)}
+@keyframes passa{0%,52%{transform:translateX(-120%) rotate(-14deg);opacity:0}56%{opacity:.9}78%{opacity:.75}86%,100%{transform:translateX(310%) rotate(-8deg);opacity:0}}
+.heli .clarao{position:absolute;inset:0;background:radial-gradient(ellipse 70% 60% at 60% 40%,rgba(170,200,255,.16),transparent 70%);opacity:0;animation:clarao 13s ease-in-out infinite}
+@keyframes clarao{0%,58%{opacity:0}68%{opacity:1}72%{opacity:.6}76%{opacity:.9}86%,100%{opacity:0}}
+/* poeira flutuando na luz */
+.poeira{position:absolute;inset:0;z-index:1}.poeira i{position:absolute;width:3px;height:3px;border-radius:50%;background:#ffd2b5;opacity:0;box-shadow:0 0 6px #ff9a5c;animation:poeira 9s linear infinite}
+@keyframes poeira{0%{transform:translate(0,0);opacity:0}15%{opacity:.7}85%{opacity:.5}100%{transform:translate(30px,-140px);opacity:0}}
+@media (prefers-reduced-motion:reduce){.fundo .arte,.heli .feixe,.heli .clarao,.poeira i{animation:none}}
 .fundo::after{content:"";position:absolute;inset:0;background:
   linear-gradient(90deg,rgba(15,12,14,.94) 0%,rgba(15,12,14,.78) 34%,rgba(15,12,14,.25) 62%,rgba(15,12,14,.1) 100%),
   linear-gradient(0deg,rgba(15,12,14,.95) 0%,rgba(15,12,14,0) 42%)}
@@ -216,7 +233,9 @@ h1 .g{background:linear-gradient(100deg,#fff 0%,#fff 30%,var(--brasa) 62%,var(--
         <g transform="rotate(-18 110 250)"><rect x="86" y="208" width="52" height="92" rx="8" fill="#161316" stroke="#FF9A5C" stroke-width="2"/><rect x="91" y="216" width="42" height="74" rx="4" fill="#FF6D29" opacity=".85"/></g>
         <path d="M70 300c20-30 40-46 62-50M180 300c-14-26-30-40-50-46" stroke="#3a2c2f" stroke-width="22" stroke-linecap="round" fill="none"/>
       </svg>
-      <div class="brilho"></div>
+      <div class="brilho"></div><div class="rosto"></div>
+      <div class="heli"><div class="clarao"></div><div class="feixe"></div><div class="feixe b"></div></div>
+      <div class="poeira"><i style="left:58%;top:62%;animation-delay:-0s;animation-duration:9s"></i><i style="left:64%;top:70%;animation-delay:-2.1s;animation-duration:11s"></i><i style="left:70%;top:55%;animation-delay:-4.3s;animation-duration:8s"></i><i style="left:52%;top:75%;animation-delay:-6.2s;animation-duration:12s"></i><i style="left:76%;top:66%;animation-delay:-1.4s;animation-duration:10s"></i><i style="left:61%;top:48%;animation-delay:-3.7s;animation-duration:9.5s"></i><i style="left:68%;top:80%;animation-delay:-5.5s;animation-duration:13s"></i><i style="left:55%;top:58%;animation-delay:-7.8s;animation-duration:10.5s"></i></div>
     </div>
     <div class="agente" id="agente" aria-hidden="true">
       <div class="barra"><i></i><i></i><i></i><b>Agente de copy</b><span class="ao">escrevendo</span></div>
@@ -497,12 +516,13 @@ function evento(nome, extra) { try { window.fbq && fbq("trackCustom", nome, extr
   ];
   const pedido = document.getElementById("pedido"), alvo = document.getElementById("digitando");
   let r = 0, n = 0, fase = "digita";
+  const luz = v => box.style.setProperty("--luz", v);
   const pinta = s => alvo.innerHTML = s.replace(/&/g, "&amp;").replace(/</g, "&lt;") + '<span class="cursor"></span>';
   (function passo() {
     const texto = rascunhos[r][1]; let espera = 34;
-    if (fase === "digita") { n++; pinta(texto.slice(0, n)); espera = texto[n - 1] === " " ? 70 : 30 + (n % 7 === 0 ? 60 : 0); if (n >= texto.length) { fase = "le"; espera = 2400; } }
+    if (fase === "digita") { n++; pinta(texto.slice(0, n)); luz(n % 4 ? .82 : .95); espera = texto[n - 1] === " " ? 70 : 30 + (n % 7 === 0 ? 60 : 0); if (n >= texto.length) { fase = "le"; espera = 2400; luz(1); } }
     else if (fase === "le") { fase = "apaga"; espera = 20; }
-    else { n = Math.max(0, n - 2); pinta(texto.slice(0, n)); espera = 16; if (!n) { r = (r + 1) % rascunhos.length; pedido.textContent = rascunhos[r][0]; fase = "digita"; espera = 700; } }
+    else { n = Math.max(0, n - 2); pinta(texto.slice(0, n)); espera = 16; luz(.55); if (!n) { r = (r + 1) % rascunhos.length; pedido.textContent = rascunhos[r][0]; fase = "digita"; espera = 700; luz(.4); } }
     setTimeout(passo, espera);
   })();
 })();
