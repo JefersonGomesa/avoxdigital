@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-12 -10 264 212" width="1056" height="848">
+  <!-- Vox Digital — símbolo v4 (paleta laranja/escura, 21/10/2026) — base v3: fita dobrada em V, base escura, cor fluida (manchas desfocadas) e dobras com sombra curva -->
+  <defs>
+    <!-- formas de cada faixa (cantos arredondados via stroke) -->
+    <polygon id="f-topo" points="85,57 115,3 200,3 165,57" />
+    <polygon id="f-esq" points="0,52 32,3 154,188 85,188" />
+    <polygon id="f-dir" points="84,188 152,188 237,58 200,3" />
+
+    <mask id="c-topo" maskUnits="userSpaceOnUse" x="-20" y="-20" width="280" height="240"><use href="#f-topo" fill="#fff" stroke="#fff" stroke-width="10" stroke-linejoin="round" /></mask>
+    <mask id="c-esq" maskUnits="userSpaceOnUse" x="-20" y="-20" width="280" height="240"><use href="#f-esq" fill="#fff" stroke="#fff" stroke-width="10" stroke-linejoin="round" /></mask>
+    <mask id="c-dir" maskUnits="userSpaceOnUse" x="-20" y="-20" width="280" height="240"><use href="#f-dir" fill="#fff" stroke="#fff" stroke-width="10" stroke-linejoin="round" /></mask>
+
+    <filter id="fluido" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="18" />
+    </filter>
+    <filter id="macio" x="-50%" y="-50%" width="200%" height="200%">
+      <feGaussianBlur stdDeviation="7" />
+    </filter>
+    <filter id="sombra-externa" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="6" stdDeviation="8" flood-color="#000000" flood-opacity="0.6" />
+    </filter>
+
+    <!-- dobra inferior: sombra que o braço direito projeta sobre o esquerdo (perpendicular à borda) -->
+    <linearGradient id="g-dobra-baixo" gradientUnits="userSpaceOnUse" x1="101" y1="160" x2="60" y2="135">
+      <stop offset="0" stop-color="#0a0605" stop-opacity="0.95" />
+      <stop offset="0.45" stop-color="#0a0605" stop-opacity="0.35" />
+      <stop offset="1" stop-color="#0a0605" stop-opacity="0" />
+    </linearGradient>
+    <!-- dobra superior: sombra sobre a barra do topo junto à borda do braço direito -->
+    <linearGradient id="g-dobra-topo" gradientUnits="userSpaceOnUse" x1="183" y1="30" x2="140" y2="20">
+      <stop offset="0" stop-color="#0a0605" stop-opacity="0.85" />
+      <stop offset="0.35" stop-color="#0a0605" stop-opacity="0.15" />
+      <stop offset="1" stop-color="#0a0605" stop-opacity="0" />
+    </linearGradient>
+    <!-- curvatura do braço direito: claro no meio, escurece nas bordas (fita curvada) -->
+    <linearGradient id="g-curva-dir" gradientUnits="userSpaceOnUse" x1="92" y1="160" x2="190" y2="200">
+      <stop offset="0" stop-color="#ffffff" stop-opacity="0.08" />
+      <stop offset="0.35" stop-color="#ffffff" stop-opacity="0" />
+      <stop offset="1" stop-color="#000000" stop-opacity="0.35" />
+    </linearGradient>
+    <linearGradient id="g-curva-esq" gradientUnits="userSpaceOnUse" x1="0" y1="52" x2="45" y2="20">
+      <stop offset="0" stop-color="#000000" stop-opacity="0.3" />
+      <stop offset="0.6" stop-color="#ffffff" stop-opacity="0.06" />
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0.16" />
+    </linearGradient>
+    <radialGradient id="g-reflexo" cx="0.5" cy="0" r="0.8">
+      <stop offset="0" stop-color="#ffd2b0" stop-opacity="0.14" />
+      <stop offset="1" stop-color="#ffffff" stop-opacity="0" />
+    </radialGradient>
+  </defs>
+
+  <g filter="url(#sombra-externa)">
+    <!-- BARRA DO TOPO -->
+    <g mask="url(#c-topo)">
+      <rect x="70" y="-10" width="150" height="80" fill="#2a1712" />
+      <g filter="url(#fluido)">
+        <ellipse cx="100" cy="35" rx="45" ry="30" fill="#ff6d29" />
+        <ellipse cx="150" cy="15" rx="40" ry="25" fill="#c2410c" />
+        <ellipse cx="195" cy="40" rx="35" ry="30" fill="#453027" />
+      </g>
+      <polygon points="85,57 115,3 200,3 165,57" fill="url(#g-dobra-topo)" />
+    </g>
+
+    <!-- BRAÇO ESQUERDO -->
+    <g mask="url(#c-esq)">
+      <rect x="-10" y="-10" width="175" height="210" fill="#24130e" />
+      <g filter="url(#fluido)">
+        <ellipse cx="22" cy="30" rx="34" ry="40" fill="#ff9a5c" />
+        <ellipse cx="60" cy="95" rx="40" ry="45" fill="#ff6d29" />
+        <ellipse cx="105" cy="160" rx="45" ry="40" fill="#7a2e12" />
+      </g>
+      <polygon points="0,52 32,3 154,188 85,188" fill="url(#g-curva-esq)" />
+      <polygon points="0,52 32,3 154,188 85,188" fill="url(#g-dobra-baixo)" />
+    </g>
+
+    <!-- BRAÇO DIREITO (por cima) -->
+    <g mask="url(#c-dir)">
+      <rect x="75" y="-10" width="175" height="210" fill="#161316" />
+      <g filter="url(#fluido)">
+        <ellipse cx="110" cy="175" rx="45" ry="35" fill="#2a1712" />
+        <ellipse cx="165" cy="105" rx="45" ry="45" fill="#ff6d29" />
+        <ellipse cx="215" cy="40" rx="35" ry="40" fill="#ffa066" />
+      </g>
+      <polygon points="84,188 152,188 237,58 200,3" fill="url(#g-curva-dir)" />
+      <!-- fio de luz na borda da dobra (aresta da fita por cima) -->
+      <line x1="86" y1="185" x2="199" y2="6" stroke="#ffc39a" stroke-opacity="0.45" stroke-width="2.5" filter="url(#macio)" />
+      <rect x="75" y="-10" width="175" height="210" fill="url(#g-reflexo)" />
+    </g>
+  </g>
+</svg>

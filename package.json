@@ -1,0 +1,13 @@
+{
+  "name": "avoxdigital",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Site da Vox Digital (avoxdigital.com.br): página principal e LP da série.",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

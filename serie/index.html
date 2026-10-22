@@ -1,0 +1,466 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Produto Invisível · uma série da Vox Digital</title>
+<meta name="description" content="Minissérie gratuita em 3 episódios para quem tem produto bom e vende menos do que ele vale." />
+<meta property="og:title" content="Produto Invisível · minissérie em 3 episódios" />
+<meta property="og:description" content="Por que produto bom vende pouco, e o que o seu cliente não está enxergando." />
+<meta property="og:url" content="https://avoxdigital.com.br/serie" />
+<link rel="icon" href="../assets/vox-simbolo.svg" />
+<link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600&display=swap" rel="stylesheet" />
+<style>
+/* ===== LP "série" (SHO do funil) · modelo desmontado de uma página de minissérie, no layout e nas cores da Vox ===== */
+:root{
+  --laranja:#FF6D29; --brasa:#FF9A5C; --cafe:#453027; --grafite:#161316; --grafite-2:#1d1816; --noite:#0f0c0e;
+  --cinza:#BABABA; --branco:#fff;
+  --vidro:rgba(255,255,255,.05); --vidro-borda:rgba(255,255,255,.1);
+  --fonte:"Neue Montreal","General Sans",system-ui,sans-serif;
+  --lateral:380px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--noite);color:var(--branco);font-family:var(--fonte);-webkit-font-smoothing:antialiased}
+button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+a{color:inherit;text-decoration:none}
+img{display:block;max-width:100%}
+
+/* ---------- casca: destaque à esquerda + episódios à direita ---------- */
+.casca{display:grid;grid-template-columns:1fr var(--lateral);min-height:100dvh}
+.destaque{position:relative;overflow:hidden;border-radius:0 0 28px 0;min-height:100dvh;display:flex;flex-direction:column;isolation:isolate}
+
+/* fundo: vídeo (quando existir) ou a cena animada do agente de IA escrevendo */
+.fundo{position:absolute;inset:0;z-index:-2}
+.fundo video{width:100%;height:100%;object-fit:cover}
+.fundo::after{content:"";position:absolute;inset:0;background:
+  linear-gradient(90deg,rgba(15,12,14,.96) 0%,rgba(15,12,14,.82) 38%,rgba(15,12,14,.35) 72%,rgba(15,12,14,.55) 100%),
+  linear-gradient(0deg,rgba(15,12,14,.95) 0%,rgba(15,12,14,0) 45%),
+  radial-gradient(ellipse 60% 55% at 78% 40%,rgba(255,109,41,.22),transparent 70%)}
+.agente{position:absolute;right:-4%;top:9%;width:62%;max-width:860px;aspect-ratio:16/10.5;border-radius:18px;
+  background:linear-gradient(180deg,#1f1a1c,#141113);border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 60px 120px rgba(0,0,0,.6),0 0 140px rgba(255,109,41,.28);
+  transform:perspective(1400px) rotateY(-16deg) rotateX(4deg);filter:blur(.6px) saturate(1.1);overflow:hidden}
+.agente .barra{display:flex;align-items:center;gap:8px;padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.08);font-size:12px;color:#8d8689}
+.agente .barra i{width:10px;height:10px;border-radius:50%;background:#3a3236}.agente .barra i:first-child{background:var(--laranja)}
+.agente .barra b{margin-left:10px;font-weight:500;color:#cfc8cb}
+.agente .chat{padding:22px 26px;display:flex;flex-direction:column;gap:14px;font-size:15px;line-height:1.55}
+.agente .eu{align-self:flex-end;max-width:70%;padding:10px 14px;border-radius:14px 14px 4px 14px;background:rgba(255,255,255,.08);color:#ddd}
+.agente .ia{display:flex;gap:12px;color:#eee}
+.agente .ia .av{flex:none;width:28px;height:28px;border-radius:8px;background:linear-gradient(145deg,#ffb27a,var(--laranja) 55%,#9a3412)}
+.agente .ia p{white-space:pre-wrap}
+.agente .cursor{display:inline-block;width:8px;height:1.1em;vertical-align:-3px;background:var(--laranja);animation:pisca 1s steps(1) infinite}
+@keyframes pisca{50%{opacity:0}}
+.maos{position:absolute;right:6%;bottom:-6%;width:56%;max-width:760px;height:26%;border-radius:50% 50% 0 0/100% 100% 0 0;
+  background:radial-gradient(ellipse at 50% 0%,rgba(255,154,92,.18),transparent 60%);filter:blur(10px)}
+
+/* topo */
+.topo{display:flex;align-items:center;justify-content:space-between;padding:26px clamp(20px,4vw,48px)}
+.marca{display:flex;align-items:center;gap:10px;font-weight:600;letter-spacing:.02em}
+.marca img{width:30px}
+.marca span{font-size:15px}.marca em{font-style:normal;color:var(--cinza);font-weight:400;letter-spacing:.3em;font-size:11px;margin-left:2px}
+.menu{display:flex;gap:22px;font-size:14px;color:var(--cinza)}.menu a.on{color:#fff}
+
+/* bloco de texto */
+.info{margin-top:auto;padding:0 clamp(20px,4vw,48px) 30px;max-width:640px}
+.selo{display:flex;align-items:center;gap:10px;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--laranja);font-weight:600}
+.selo::before{content:"";width:3px;height:14px;background:var(--laranja);border-radius:2px}
+.frase{margin-top:14px;font-style:italic;color:#e9e3e5;font-size:clamp(15px,1.4vw,18px)}
+h1{margin-top:10px;font-size:clamp(44px,6.4vw,92px);line-height:.95;letter-spacing:-.045em;font-weight:600;text-transform:uppercase}
+h1 .g{background:linear-gradient(100deg,#fff 0%,#fff 30%,var(--brasa) 62%,var(--laranja) 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
+.meta{display:flex;flex-wrap:wrap;align-items:center;gap:12px;margin-top:18px;font-size:14px;color:#ddd}
+.meta .chip{padding:3px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.25);font-size:12px}
+.meta .ponto{width:4px;height:4px;border-radius:50%;background:#777}
+.sinopse{margin-top:18px;color:#d6d0d2;font-size:clamp(15px,1.25vw,17px);line-height:1.6}
+.cta{margin-top:26px;display:inline-flex;align-items:center;gap:14px;padding:18px 34px 18px 26px;border-radius:16px;
+  background:var(--laranja);color:#160c06;font-weight:600;font-size:17px;letter-spacing:.04em;text-transform:uppercase;
+  box-shadow:0 18px 50px rgba(255,109,41,.45),inset 0 1px 0 rgba(255,255,255,.35);transition:transform .2s,box-shadow .2s}
+.cta:hover{transform:translateY(-2px);box-shadow:0 24px 60px rgba(255,109,41,.6)}
+.cta svg{width:16px;height:16px}
+.micro{margin-top:12px;font-size:13px;color:#9b9497}
+.acoes{display:flex;gap:28px;margin-top:22px;padding-top:18px;border-top:1px solid rgba(255,255,255,.1)}
+.acoes button{display:flex;flex-direction:column;align-items:center;gap:6px;font-size:12px;color:#cfc9cb}
+.acoes svg{width:22px;height:22px}
+.acoes button.on{color:var(--laranja)}
+
+/* abas (aparecem no celular; no desktop a lateral já mostra os episódios) */
+.abas{display:none}
+.painel{display:none}
+
+/* ---------- lateral de episódios ---------- */
+.lateral{padding:26px 22px 40px;background:var(--noite)}
+.lateral h2{font-size:20px;font-weight:600;margin-bottom:18px}
+.ep{display:grid;grid-template-columns:22px 128px 1fr;gap:14px;align-items:start;width:100%;text-align:left;padding:14px 8px;border-radius:14px;transition:background .2s}
+.ep:hover{background:rgba(255,255,255,.04)}
+.ep .n{font-size:18px;color:#6f686b;padding-top:24px}
+.ep.atual .n{color:var(--laranja)}
+.ep .thumb{position:relative;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:linear-gradient(145deg,#2a2124,#151113);border:1px solid rgba(255,255,255,.08)}
+.ep .thumb img{width:100%;height:100%;object-fit:cover}
+.ep .thumb .num{position:absolute;inset:0;display:grid;place-items:center;font-size:38px;font-weight:600;letter-spacing:-.05em;color:rgba(255,109,41,.35)}
+.ep .thumb .barra{position:absolute;left:0;bottom:0;height:3px;background:var(--laranja);width:0}
+.ep .thumb .cad{position:absolute;right:6px;bottom:6px;width:24px;height:24px;border-radius:50%;display:none;place-items:center;background:rgba(0,0,0,.65)}
+.ep .thumb .cad svg{width:12px;height:12px}
+.ep.travado .thumb{filter:grayscale(1) brightness(.6)}.ep.travado .thumb .cad{display:grid}
+.ep h3{font-size:15px;font-weight:600;line-height:1.3}
+.ep p{margin-top:6px;font-size:13px;line-height:1.5;color:#a59ea1}
+.ep .dur{display:block;margin-top:6px;font-size:12px;color:#7d7679}
+.ep.travado h3,.ep.travado p{color:#6f686b}
+.proximo{margin-top:20px;padding:18px;border-radius:16px;border:1px solid rgba(255,109,41,.35);background:linear-gradient(145deg,rgba(255,109,41,.1),rgba(69,48,39,.25))}
+.proximo .r{font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--brasa)}
+.proximo h3{margin-top:8px;font-size:17px;font-weight:600}
+.proximo p{margin-top:6px;font-size:13px;color:#c9c2c4;line-height:1.5}
+.proximo a{display:inline-flex;margin-top:12px;padding:10px 16px;border-radius:12px;background:var(--laranja);color:#160c06;font-weight:600;font-size:14px}
+.proximo.travado{opacity:.45;filter:grayscale(.6)}.proximo.travado a{pointer-events:none;background:#555;color:#ccc}
+
+/* ---------- player em tela cheia ---------- */
+.player{position:fixed;inset:0;z-index:50;background:#000;display:none}
+.player.aberto{display:block}
+.tela{position:absolute;inset:0;display:grid;place-items:center}
+.tela video{width:100%;height:100%;object-fit:contain;background:#000}
+.tela .vazio{display:none;text-align:center;padding:24px;color:#ccc;max-width:420px}
+.tela .vazio b{display:block;font-size:22px;color:#fff;margin-bottom:8px}
+.player.sem-video .tela video{display:none}.player.sem-video .tela .vazio{display:block}
+.toque{position:absolute;inset:0;z-index:1}
+.ctrl{position:absolute;inset:0;z-index:2;pointer-events:none;transition:opacity .3s}
+.player.ocioso .ctrl{opacity:0}
+.ctrl > *{pointer-events:auto}
+.voltar{position:absolute;left:18px;top:16px;display:flex;align-items:center;gap:8px;font-size:14px;padding:8px 12px;border-radius:10px;background:rgba(0,0,0,.45)}
+.rotulo-ep{position:absolute;left:50%;top:20px;transform:translateX(-50%);font-size:13px;color:#ddd;white-space:nowrap}
+.rotulo-ep b{color:var(--laranja);font-weight:600}
+.centro{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:84px;height:84px;border-radius:50%;display:grid;place-items:center;background:var(--laranja);box-shadow:0 0 50px rgba(255,109,41,.6)}
+.centro svg{width:30px;height:30px;color:#160c06}
+.pausado{position:absolute;left:50%;top:calc(50% + 70px);transform:translateX(-50%);font-size:14px;color:#ddd;display:none}
+.player.pausa .pausado{display:block}
+.barra-ctrl{position:absolute;left:0;right:0;bottom:0;padding:18px 20px calc(16px + env(safe-area-inset-bottom));background:linear-gradient(0deg,rgba(0,0,0,.8),transparent);display:grid;grid-template-columns:auto 1fr auto auto auto;gap:14px;align-items:center;font-size:13px}
+.barra-ctrl button{display:grid;place-items:center;width:34px;height:34px}
+.barra-ctrl svg{width:20px;height:20px}
+.progresso{height:5px;border-radius:5px;background:rgba(255,255,255,.2);position:relative;cursor:pointer}
+.progresso i{position:absolute;left:0;top:0;bottom:0;border-radius:5px;background:var(--laranja);width:0}
+.vel{display:flex;gap:6px}
+.vel button{width:auto;padding:4px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.3);font-size:12px}
+.vel button.on{background:#fff;color:#000;border-color:#fff}
+.mini{position:absolute;left:0;right:0;bottom:0;height:3px;background:rgba(255,255,255,.12);z-index:3;display:none}
+.mini i{display:block;height:100%;background:var(--laranja);width:0}
+.player.ocioso .mini{display:block}
+
+/* fim do episódio */
+.fim{position:absolute;inset:0;z-index:4;display:none;place-items:center;background:rgba(15,12,14,.86);backdrop-filter:blur(8px);padding:24px}
+.player.acabou .fim{display:grid}
+.fim .caixa{max-width:460px;text-align:center}
+.fim .r{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--brasa)}
+.fim h3{margin-top:10px;font-size:28px;font-weight:600;letter-spacing:-.03em;line-height:1.15}
+.fim p{margin-top:10px;color:#cfc8cb;line-height:1.55}
+.fim .bt{display:inline-flex;margin-top:20px;padding:15px 26px;border-radius:14px;background:var(--laranja);color:#160c06;font-weight:600}
+.fim .sec{display:block;margin:14px auto 0;font-size:14px;color:#aaa;text-decoration:underline}
+
+/* cadastro antes do episódio 2 */
+.modal{position:fixed;inset:0;z-index:60;display:none;place-items:center;background:rgba(10,8,9,.8);backdrop-filter:blur(10px);padding:20px}
+.modal.aberto{display:grid}
+.modal form{width:min(440px,100%);padding:30px;border-radius:22px;background:linear-gradient(160deg,#211b1d,#151113);border:1px solid rgba(255,109,41,.3);box-shadow:0 40px 100px rgba(0,0,0,.6)}
+.modal .r{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--brasa)}
+.modal h3{margin-top:10px;font-size:24px;font-weight:600;letter-spacing:-.03em;line-height:1.2}
+.modal p{margin-top:8px;color:#bdb6b9;font-size:14px;line-height:1.5}
+.modal label{display:block;margin-top:14px;font-size:13px;color:#cfc8cb}
+.modal input{width:100%;margin-top:6px;padding:13px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);color:#fff;font:inherit}
+.modal input:focus{outline:none;border-color:var(--laranja)}
+.modal button[type=submit]{width:100%;margin-top:20px;padding:15px;border-radius:14px;background:var(--laranja);color:#160c06;font-weight:600;font-size:16px}
+.modal .fechar{display:block;margin:12px auto 0;font-size:13px;color:#999}
+.modal small{display:block;margin-top:12px;font-size:12px;color:#857e81;text-align:center}
+
+/* ---------- celular ---------- */
+@media (max-width:980px){
+  .casca{grid-template-columns:1fr}
+  .destaque{min-height:auto;border-radius:0}
+  .agente{right:-30%;top:7%;width:115%;opacity:.55}
+  .fundo::after{background:linear-gradient(0deg,rgba(15,12,14,1) 0%,rgba(15,12,14,.85) 45%,rgba(15,12,14,.45) 100%),radial-gradient(ellipse 80% 40% at 70% 20%,rgba(255,109,41,.25),transparent 70%)}
+  .info{padding-top:120px}
+  .menu{display:none}
+  .lateral{display:none}
+  .abas{display:flex;gap:26px;padding:0 20px;border-bottom:1px solid rgba(255,255,255,.1)}
+  .abas button{padding:14px 0;font-size:15px;color:#9b9497;border-bottom:2px solid transparent}
+  .abas button.on{color:#fff;border-color:var(--laranja)}
+  .painel.on{display:block;padding:10px 12px 40px}
+  .painel .ep{grid-template-columns:20px 120px 1fr}
+  .det{padding:10px 8px;display:grid;gap:14px;font-size:14px;color:#cfc8cb}
+  .det b{display:block;font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:#7d7679;font-weight:500;margin-bottom:4px}
+  /* vídeo horizontal em celular na vertical: gira o player, como no modelo */
+  .player.horizontal.retrato .tela,.player.horizontal.retrato .ctrl,.player.horizontal.retrato .fim,.player.horizontal.retrato .mini-wrap{position:absolute;left:50%;top:50%;width:100dvh;height:100vw;transform:translate(-50%,-50%) rotate(90deg)}
+}
+</style>
+</head>
+<body>
+
+<div class="casca">
+  <!-- ===== destaque (KI → SHO: abre a história) ===== -->
+  <section class="destaque">
+    <div class="fundo" aria-hidden="true">
+      <!-- Quando existir o vídeo de fundo (pessoa usando um agente de IA para escrever), basta colocar em assets/fundo-agente.mp4 -->
+      <video id="fundoVideo" muted loop playsinline autoplay preload="metadata" poster=""></video>
+      <div class="agente" id="agente">
+        <div class="barra"><i></i><i></i><i></i><b>Agente de copy · rascunho</b></div>
+        <div class="chat">
+          <div class="eu">Meu produto é bom, quem compra elogia. Por que vende tão pouco?</div>
+          <div class="ia"><span class="av"></span><p id="digitando"></p></div>
+        </div>
+      </div>
+      <div class="maos"></div>
+    </div>
+
+    <header class="topo">
+      <a class="marca" href="../"><img src="../assets/vox-simbolo.svg" alt="" /><span>VOX</span><em>DIGITAL</em></a>
+      <nav class="menu"><a class="on" href="#">Série</a><a href="#" data-ir="detalhes">Detalhes</a><a href="../">Vox Digital</a></nav>
+    </header>
+
+    <div class="info">
+      <div class="selo">Minissérie · 3 episódios · Original Vox</div>
+      <p class="frase">“Para quem tem produto bom e vende menos do que ele vale.”</p>
+      <h1>Produto<br /><span class="g">Invisível</span></h1>
+      <div class="meta"><span>2026</span><span class="ponto"></span><span class="chip">Negócios</span><span class="ponto"></span><span id="duracaoTotal">3 episódios</span></div>
+      <p class="sinopse">Um restaurante vazio. Um dono que contrata três garçons para chamar gente na calçada. E um prato que ninguém enxerga. Três episódios mostram por que o seu cliente não vê o que você entrega. No terceiro, a história para de ser sobre o restaurante e passa a ser sobre o seu produto.</p>
+      <button class="cta" id="ctaPlay"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg><span id="ctaTexto">Assistir episódio 1</span></button>
+      <p class="micro" id="ctaMicro">Gratuito · Episódio 1 sem cadastro · Acesso imediato</p>
+      <div class="acoes">
+        <button id="btCurtir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>Curtir</button>
+        <button id="btCompartilhar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><circle cx="18" cy="5" r="2.5"/><circle cx="6" cy="12" r="2.5"/><circle cx="18" cy="19" r="2.5"/><path d="m8.2 10.8 7.6-4.4M8.2 13.2l7.6 4.4"/></svg>Compartilhar</button>
+        <button id="btSalvar"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 3h12v18l-6-4-6 4z"/></svg>Salvar</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- abas (celular) -->
+  <nav class="abas" id="abas"><button class="on" data-aba="episodios">Episódios</button><button data-aba="detalhes">Detalhes</button><button data-aba="passo">Próximo passo</button></nav>
+  <div class="painel on" id="p-episodios"><div class="lista-eps"></div></div>
+  <div class="painel" id="p-detalhes"><div class="det">
+    <div><b>Ano</b>2026</div><div><b>Categoria</b>Negócios · Marketing</div><div><b>Episódios</b>3</div>
+    <div><b>Sinopse</b>Por que produto bom vende pouco: a Muleta Comercial, o que o seu cliente enxerga antes de comprar e o ponto cego do valor.</div>
+    <div><b>Produção</b>Vox Digital · avoxdigital.com.br</div></div></div>
+  <div class="painel" id="p-passo"><div class="slot-proximo"></div></div>
+
+  <!-- ===== lateral (desktop) ===== -->
+  <aside class="lateral">
+    <h2>Episódios</h2>
+    <div class="lista-eps"></div>
+    <div class="slot-proximo"></div>
+  </aside>
+</div>
+
+<!-- ===== player ===== -->
+<div class="player" id="player" aria-hidden="true">
+  <div class="tela"><video id="video" playsinline preload="metadata"></video><div class="vazio"><b>Episódio em produção</b>Este episódio ainda não foi publicado. Volte em breve.</div></div>
+  <button class="toque" id="toque" aria-label="Mostrar ou esconder controles"></button>
+  <div class="ctrl">
+    <button class="voltar" id="voltar"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>Voltar</button>
+    <div class="rotulo-ep" id="rotuloEp"></div>
+    <button class="centro" id="centro" aria-label="Tocar ou pausar"><svg id="icCentro" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg></button>
+    <div class="pausado">Pausado · toque para continuar</div>
+    <div class="barra-ctrl">
+      <button id="btPlay" aria-label="Tocar ou pausar"><svg id="icPlay" viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg></button>
+      <div class="progresso" id="progresso"><i id="fill"></i></div>
+      <span id="tempo">0:00 / 0:00</span>
+      <div class="vel"><button class="on" data-v="1">1×</button><button data-v="1.5">1,5×</button></div>
+      <button id="btMudo" aria-label="Ligar ou desligar o som"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 9h4l5-4v14l-5-4H4z"/><path id="ondaSom" d="M16 9a4 4 0 0 1 0 6M18.5 6.5a7.5 7.5 0 0 1 0 11"/></svg></button>
+    </div>
+  </div>
+  <div class="mini"><i id="miniFill"></i></div>
+  <div class="fim" id="fim"><div class="caixa">
+    <div class="r" id="fimRotulo"></div><h3 id="fimTitulo"></h3><p id="fimTexto"></p>
+    <a class="bt" id="fimBotao" href="#"></a><a class="sec" href="#" id="fimFechar">Voltar para a série</a>
+  </div></div>
+</div>
+
+<!-- ===== cadastro (libera o episódio 2 em diante) ===== -->
+<div class="modal" id="modal">
+  <form id="cadastro">
+    <div class="r">Episódio 2 liberado</div>
+    <h3>Para onde a gente manda os próximos episódios?</h3>
+    <p>Você assiste agora mesmo. A gente só avisa quando sair conteúdo novo da série.</p>
+    <label>Nome<input name="nome" required autocomplete="given-name" /></label>
+    <label>WhatsApp<input name="whatsapp" required inputmode="tel" autocomplete="tel" placeholder="(00) 00000-0000" /></label>
+    <label>E-mail<input name="email" type="email" required autocomplete="email" /></label>
+    <button type="submit">Liberar e assistir</button>
+    <button type="button" class="fechar" id="fecharModal">Agora não</button>
+    <small>Sem spam. Você sai quando quiser.</small>
+  </form>
+</div>
+
+<script>
+/* ================= CONFIGURAÇÃO (o que muda de uma série para outra) ================= */
+const CONFIG = {
+  serieId: "produto-invisivel-v1",
+  proximoPasso: "../?origem=serie",       // página TEN (Site/index.html)
+  cadastroAPartirDoEp: 2,                  // 0 = sem cadastro
+  webhook: "",                             // [GHL] URL do webhook de entrada (vazio = guarda só no navegador)
+  destravaEm: 0.8,                         // fração assistida que libera o próximo episódio
+  fundoVideo: "assets/fundo-agente.mp4",   // vídeo de fundo do destaque (opcional)
+  episodios: [
+    { titulo: "O restaurante vazio", dur: "", src: "", thumb: "", horizontal: true,
+      sinopse: "O salão está vazio e o dono contrata três garçons para chamar gente na calçada. Absurdo? É o que quase todo dono de produto bom faz quando a venda trava." },
+    { titulo: "O que o seu cliente enxerga", dur: "", src: "", thumb: "", horizontal: true,
+      sinopse: "Seu cliente abre a sua página ao lado de outras cinco e decide em segundos. O que ele vê ali é o motivo de o seu produto ser comparado pelo preço." },
+    { titulo: "O ponto cego", dur: "", src: "", thumb: "", horizontal: true,
+      sinopse: "Três perguntas sobre o seu produto. Se a resposta for sim nas três, o problema nunca foi o produto. E a história deixa de ser sobre o restaurante." }
+  ]
+};
+// ?demo=1 usa a VSL do site em todos os episódios, só para testar o fluxo
+if (new URLSearchParams(location.search).has("demo")) CONFIG.episodios.forEach(e => { if (!e.src) { e.src = "../assets/vsl/vox-vsl-hero.mp4"; e.horizontal = false; } });
+
+/* ================= estado (salvo no navegador) ================= */
+const CHAVE = "vox_serie_" + CONFIG.serieId;
+const ler = (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } };
+const gravar = (k, v) => { try { localStorage.setItem(k, JSON.stringify(v)); } catch {} };
+const estado = Object.assign({ visto: [], tempo: {}, atual: 0, curtiu: false, salvou: false }, ler(CHAVE, {}));
+const salvar = () => gravar(CHAVE, estado);
+const temLead = () => !!ler("vox_lead", null);
+const liberado = i => i === 0 || estado.visto.includes(i - 1);
+const fmt = s => { s = Math.max(0, Math.floor(s || 0)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); };
+
+/* ================= lista de episódios ================= */
+const cadeado = '<svg viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
+function desenhar() {
+  document.querySelectorAll(".lista-eps").forEach(lista => {
+    lista.innerHTML = CONFIG.episodios.map((e, i) => {
+      const trav = !liberado(i), pct = Math.min(100, (estado.tempo[i]?.pct || 0) * 100);
+      return `<button class="ep ${i === estado.atual ? "atual" : ""} ${trav ? "travado" : ""}" data-ep="${i}"
+        aria-label="Episódio ${i + 1}${trav ? ", bloqueado: assista o anterior para liberar" : ""}">
+        <span class="n">${i + 1}</span>
+        <span class="thumb">${e.thumb ? `<img src="${e.thumb}" alt="" />` : `<span class="num">${String(i + 1).padStart(2, "0")}</span>`}<span class="barra" style="width:${estado.visto.includes(i) ? 100 : pct}%"></span><span class="cad">${cadeado}</span></span>
+        <span><h3>Episódio ${i + 1} · ${e.titulo}</h3><p>${e.sinopse}</p>${e.dur ? `<span class="dur">${e.dur}</span>` : ""}</span>
+      </button>`;
+    }).join("");
+  });
+  const fim = estado.visto.includes(CONFIG.episodios.length - 1);
+  document.querySelectorAll(".slot-proximo").forEach(s => s.innerHTML = `
+    <div class="proximo ${fim ? "" : "travado"}"><div class="r">Passo 3 de 3</div>
+    <h3>${fim ? "Você chegou ao fim da série." : "Libera depois do episódio 3"}</h3>
+    <p>Na próxima página a gente mostra o Método VOX: a ordem que muda como o cliente enxerga o seu produto, sem mudar o produto.</p>
+    <a href="${CONFIG.proximoPasso}">Ver o próximo passo →</a></div>`);
+  const prox = CONFIG.episodios.findIndex((_, i) => !estado.visto.includes(i));
+  const alvo = prox === -1 ? 0 : prox;
+  document.getElementById("ctaTexto").textContent = prox === -1 ? "Rever a série" : (estado.tempo[alvo]?.t > 5 ? "Continuar episódio " : "Assistir episódio ") + (alvo + 1);
+  document.getElementById("ctaPlay").dataset.ep = alvo;
+  document.getElementById("ctaMicro").textContent = prox === -1 ? "Série completa · o próximo passo está liberado"
+    : estado.visto.length ? "Gratuito · " + estado.visto.length + " de " + CONFIG.episodios.length + " episódios assistidos"
+    : "Gratuito · Episódio 1 sem cadastro · Acesso imediato";
+  document.getElementById("btCurtir").classList.toggle("on", estado.curtiu);
+  document.getElementById("btSalvar").classList.toggle("on", estado.salvou);
+}
+document.addEventListener("click", ev => {
+  const b = ev.target.closest("[data-ep]"); if (!b || b.id === "ctaPlay") return;
+  const i = +b.dataset.ep; if (liberado(i)) abrir(i); else balancar(b);
+});
+function balancar(el) { el.animate([{ transform: "translateX(0)" }, { transform: "translateX(-6px)" }, { transform: "translateX(6px)" }, { transform: "translateX(0)" }], { duration: 260 }); }
+
+/* ================= player ================= */
+const P = document.getElementById("player"), V = document.getElementById("video");
+let ociosoT;
+function abrir(i) {
+  if (CONFIG.cadastroAPartirDoEp && i >= CONFIG.cadastroAPartirDoEp - 1 && !temLead()) { pedirCadastro(i); return; }
+  const e = CONFIG.episodios[i];
+  estado.atual = i; salvar(); desenhar();
+  P.classList.remove("acabou", "pausa");
+  P.classList.toggle("sem-video", !e.src);
+  P.classList.toggle("horizontal", !!e.horizontal);
+  document.getElementById("rotuloEp").innerHTML = `<b>EP ${i + 1}/${CONFIG.episodios.length}</b> · ${e.titulo}`;
+  P.classList.add("aberto"); P.setAttribute("aria-hidden", "false"); document.body.style.overflow = "hidden";
+  orientacao();
+  if (e.src) {
+    if (V.getAttribute("src") !== e.src) V.src = e.src;
+    V.onloadedmetadata = () => { const t = estado.tempo[i]?.t || 0; if (t > 3 && t < V.duration - 3) V.currentTime = t; };
+    V.play().catch(() => P.classList.add("pausa"));
+  }
+  acordar();
+}
+function fechar() { V.pause(); P.classList.remove("aberto"); P.setAttribute("aria-hidden", "true"); document.body.style.overflow = ""; desenhar(); }
+function alternar() { if (P.classList.contains("sem-video")) return; V.paused ? V.play() : V.pause(); }
+function acordar() { P.classList.remove("ocioso"); clearTimeout(ociosoT); ociosoT = setTimeout(() => { if (!V.paused) P.classList.add("ocioso"); }, 2600); }
+function orientacao() { P.classList.toggle("retrato", innerHeight > innerWidth); }
+addEventListener("resize", orientacao);
+
+const icPlay = '<path d="M7 4.5v15l13-7.5z"/>', icPausa = '<path d="M7 4h4v16H7zM13 4h4v16h-4z"/>';
+V.addEventListener("play", () => { P.classList.remove("pausa"); document.getElementById("icPlay").innerHTML = icPausa; document.getElementById("icCentro").innerHTML = icPausa; acordar(); });
+V.addEventListener("pause", () => { P.classList.add("pausa"); P.classList.remove("ocioso"); document.getElementById("icPlay").innerHTML = icPlay; document.getElementById("icCentro").innerHTML = icPlay; });
+V.addEventListener("timeupdate", () => {
+  const i = estado.atual, pct = V.duration ? V.currentTime / V.duration : 0;
+  document.getElementById("fill").style.width = document.getElementById("miniFill").style.width = pct * 100 + "%";
+  document.getElementById("tempo").textContent = fmt(V.currentTime) + " / " + fmt(V.duration);
+  estado.tempo[i] = { t: V.currentTime, pct: Math.max(pct, estado.tempo[i]?.pct || 0) };
+  if (pct >= CONFIG.destravaEm && !estado.visto.includes(i)) { estado.visto.push(i); evento("episodio_assistido", { ep: i + 1 }); }
+  salvar();
+});
+V.addEventListener("ended", () => {
+  const i = estado.atual, ultimo = i === CONFIG.episodios.length - 1;
+  if (!estado.visto.includes(i)) estado.visto.push(i);
+  salvar();
+  document.getElementById("fimRotulo").textContent = ultimo ? "Fim da série" : "Fim do episódio " + (i + 1);
+  document.getElementById("fimTitulo").textContent = ultimo ? "Agora vem a parte que ninguém te mostrou." : "Episódio " + (i + 2) + " · " + CONFIG.episodios[i + 1].titulo;
+  document.getElementById("fimTexto").textContent = ultimo ? "Você viu o problema e o ponto cego. Na próxima página, o método para tirar o seu produto dele." : CONFIG.episodios[i + 1].sinopse;
+  const bt = document.getElementById("fimBotao");
+  bt.textContent = ultimo ? "Ver o próximo passo →" : "Assistir episódio " + (i + 2) + " →";
+  bt.href = ultimo ? CONFIG.proximoPasso : "#";
+  bt.onclick = ultimo ? null : ev => { ev.preventDefault(); abrir(i + 1); };
+  P.classList.add("acabou");
+});
+document.getElementById("fimFechar").onclick = ev => { ev.preventDefault(); fechar(); };
+document.getElementById("toque").onclick = () => { P.classList.contains("ocioso") ? acordar() : alternar(); };
+document.getElementById("centro").onclick = alternar;
+document.getElementById("btPlay").onclick = alternar;
+document.getElementById("voltar").onclick = fechar;
+document.getElementById("btMudo").onclick = () => { V.muted = !V.muted; document.getElementById("ondaSom").style.display = V.muted ? "none" : ""; };
+document.querySelectorAll(".vel button").forEach(b => b.onclick = () => { V.playbackRate = +b.dataset.v; document.querySelectorAll(".vel button").forEach(x => x.classList.toggle("on", x === b)); });
+document.getElementById("progresso").onclick = ev => {
+  const r = ev.currentTarget.getBoundingClientRect(), girado = P.classList.contains("horizontal") && P.classList.contains("retrato") && innerWidth <= 980;
+  const f = girado ? (ev.clientY - r.top) / r.height : (ev.clientX - r.left) / r.width;
+  if (V.duration) V.currentTime = Math.max(0, Math.min(1, f)) * V.duration;
+};
+P.addEventListener("pointermove", acordar);
+document.addEventListener("keydown", ev => { if (!P.classList.contains("aberto")) return; if (ev.key === " ") { ev.preventDefault(); alternar(); } if (ev.key === "Escape") fechar(); });
+document.getElementById("ctaPlay").onclick = () => abrir(+document.getElementById("ctaPlay").dataset.ep || 0);
+
+/* ================= cadastro → GHL ================= */
+let depoisDoCadastro = null;
+function pedirCadastro(i) { depoisDoCadastro = i; document.getElementById("modal").classList.add("aberto"); }
+document.getElementById("fecharModal").onclick = () => document.getElementById("modal").classList.remove("aberto");
+document.getElementById("cadastro").onsubmit = async ev => {
+  ev.preventDefault();
+  const dados = Object.fromEntries(new FormData(ev.target));
+  const utm = Object.fromEntries([...new URLSearchParams(location.search)].filter(([k]) => k.startsWith("utm_")));
+  const lead = { ...dados, ...utm, serie: CONFIG.serieId, origem: "serie", em: new Date().toISOString() };
+  if (CONFIG.webhook) { try { await fetch(CONFIG.webhook, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(lead) }); } catch {} }
+  gravar("vox_lead", { nome: dados.nome });
+  evento("cadastro_serie", {});
+  document.getElementById("modal").classList.remove("aberto");
+  if (depoisDoCadastro != null) abrir(depoisDoCadastro);
+};
+
+/* ================= ações e abas ================= */
+document.getElementById("btCurtir").onclick = () => { estado.curtiu = !estado.curtiu; salvar(); desenhar(); };
+document.getElementById("btSalvar").onclick = () => { estado.salvou = !estado.salvou; salvar(); desenhar(); };
+document.getElementById("btCompartilhar").onclick = async () => {
+  const dados = { title: "Produto Invisível", text: "Minissérie em 3 episódios sobre por que produto bom vende pouco.", url: location.origin + location.pathname };
+  if (navigator.share) { try { await navigator.share(dados); } catch {} } else { try { await navigator.clipboard.writeText(dados.url); alert("Link copiado."); } catch {} }
+};
+function aba(nome) { document.querySelectorAll("#abas button").forEach(b => b.classList.toggle("on", b.dataset.aba === nome)); document.querySelectorAll(".painel").forEach(p => p.classList.toggle("on", p.id === "p-" + nome)); }
+document.querySelectorAll("#abas button").forEach(b => b.onclick = () => aba(b.dataset.aba));
+document.querySelectorAll("[data-ir]").forEach(a => a.onclick = ev => { ev.preventDefault(); aba(a.dataset.ir); document.getElementById("abas").scrollIntoView({ behavior: "smooth" }); });
+
+/* ================= eventos (pixel / GHL) ================= */
+function evento(nome, extra) { try { window.fbq && fbq("trackCustom", nome, extra); } catch {} try { window.dataLayer && dataLayer.push({ event: nome, ...extra }); } catch {} }
+
+/* ================= fundo: vídeo se existir; senão o agente de IA escrevendo ================= */
+(function fundo() {
+  const fv = document.getElementById("fundoVideo");
+  fv.addEventListener("loadeddata", () => document.getElementById("agente").style.display = "none");
+  fv.addEventListener("error", () => fv.remove());
+  fv.src = CONFIG.fundoVideo;
+  const texto = "Porque o seu cliente não está enxergando o que você entrega.\n\nO problema não é quem vende. É como o produto é apresentado antes da venda: a promessa, o ângulo, as palavras.\n\nRascunho de headline:\n“Seu produto não precisa de mais vendedor. Precisa ser desejado.”";
+  const alvo = document.getElementById("digitando"); let n = 0;
+  (function passo() {
+    alvo.innerHTML = texto.slice(0, n).replace(/&/g, "&amp;").replace(/</g, "&lt;") + '<span class="cursor"></span>';
+    n = n >= texto.length + 60 ? 0 : n + 1;
+    setTimeout(passo, n > texto.length ? 60 : 28 + (texto[n] === " " ? 30 : 0));
+  })();
+})();
+
+desenhar();
+</script>
+</body>
+</html>
