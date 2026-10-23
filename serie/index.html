@@ -14,8 +14,8 @@
 <meta property="og:url" content="https://avoxdigital.com.br/serie/" />
 <meta property="og:title" content="Caixa Cinza · minissérie gratuita em 3 episódios" />
 <meta property="og:description" content="O mais barato sempre ganha. Só uma loja vende pelo triplo, e tem fila. O terceiro episódio abre a sua caixa." />
-<meta property="og:image" content="https://avoxdigital.com.br/serie/assets/og-serie.jpg" />
-<meta property="og:image:secure_url" content="https://avoxdigital.com.br/serie/assets/og-serie.jpg" />
+<meta property="og:image" content="https://avoxdigital.com.br/serie/assets/og-serie.jpg?v=3" />
+<meta property="og:image:secure_url" content="https://avoxdigital.com.br/serie/assets/og-serie.jpg?v=3" />
 <meta property="og:image:type" content="image/jpeg" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
@@ -23,7 +23,7 @@
 <meta name="twitter:card" content="summary_large_image" />
 <meta name="twitter:title" content="Caixa Cinza · minissérie gratuita em 3 episódios" />
 <meta name="twitter:description" content="O mais barato sempre ganha. Só uma loja vende pelo triplo, e tem fila. O terceiro episódio abre a sua caixa." />
-<meta name="twitter:image" content="https://avoxdigital.com.br/serie/assets/og-serie.jpg" />
+<meta name="twitter:image" content="https://avoxdigital.com.br/serie/assets/og-serie.jpg?v=3" />
 <link rel="icon" href="/favicon.ico" sizes="any" />
 <link rel="icon" href="../assets/vox-simbolo.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="../assets/apple-touch-icon.png" />
@@ -92,7 +92,7 @@ img{display:block;max-width:100%}
 /* poeira flutuando na luz */
 .poeira{position:absolute;inset:0;z-index:1}.poeira i{position:absolute;width:3px;height:3px;border-radius:50%;background:#ffd2b5;opacity:0;box-shadow:0 0 6px #ff9a5c;animation:poeira 9s linear infinite}
 @keyframes poeira{0%{transform:translate(0,0);opacity:0}15%{opacity:.7}85%{opacity:.5}100%{transform:translate(30px,-140px);opacity:0}}
-@media (prefers-reduced-motion:reduce){.fundo .arte,.heli .feixe,.heli .clarao,.poeira i,.fundo .cena,.fundo .corpo,.fio path{animation:none}}
+@media (prefers-reduced-motion:reduce){.ep .thumb img,.ep .thumb::before,.ep .thumb::after,.fundo .arte,.heli .feixe,.heli .clarao,.poeira i,.fundo .cena,.fundo .corpo,.fio path{animation:none}}
 .fundo::after{content:"";position:absolute;inset:0;background:
   linear-gradient(90deg,rgba(15,12,14,.94) 0%,rgba(15,12,14,.78) 34%,rgba(15,12,14,.25) 62%,rgba(15,12,14,.1) 100%),
   linear-gradient(0deg,rgba(15,12,14,.95) 0%,rgba(15,12,14,0) 42%)}
@@ -163,10 +163,20 @@ h1 .g{background:linear-gradient(100deg,#fff 0%,#fff 30%,var(--brasa) 62%,var(--
 .ep .n{font-size:18px;color:#6f686b;padding-top:24px}
 .ep.atual .n{color:var(--laranja)}
 .ep .thumb{position:relative;aspect-ratio:16/9;border-radius:10px;overflow:hidden;background:linear-gradient(145deg,#2a2124,#151113);border:1px solid rgba(255,255,255,.08)}
-.ep .thumb img{width:100%;height:100%;object-fit:cover}
+.ep .thumb img{width:100%;height:100%;object-fit:cover;transform-origin:0% 100%;animation:camera 16s ease-in-out infinite alternate}
+/* capas vivas: câmera lenta (zoom e deslize) + luz entrando na cena (feixe que passa e foco que pulsa) */
+.ep .thumb::before,.ep .thumb::after{content:"";position:absolute;pointer-events:none;mix-blend-mode:screen;z-index:1}
+.ep .thumb::before{inset:-40%;background:linear-gradient(var(--fa,112deg),transparent 42%,rgba(var(--lc,255,170,110),.32) 49%,rgba(var(--lc,255,170,110),.12) 53%,transparent 60%);animation:feixe 9s ease-in-out infinite;animation-delay:var(--fd,0s)}
+.ep .thumb::after{inset:0;background:radial-gradient(circle at var(--lx,50%) var(--ly,50%),rgba(var(--lc,255,140,60),.55),transparent 38%);animation:foco 3.6s ease-in-out infinite}
+.lista-eps .ep:nth-child(1) .thumb{--fx:45%;--fy:55%;--lx:30%;--ly:45%;--lc:255,140,60;--fd:0s}
+.lista-eps .ep:nth-child(2) .thumb{--fx:70%;--fy:40%;--lx:31%;--ly:28%;--lc:150,190,255;--fa:125deg;--fd:-3s}
+.lista-eps .ep:nth-child(3) .thumb{--fx:58%;--fy:62%;--lx:54%;--ly:68%;--lc:255,150,70;--fa:95deg;--fd:-6s}
+@keyframes camera{from{transform:scale(1)}to{transform:scale(1.1)}}
+@keyframes feixe{0%,100%{transform:translateX(-18%);opacity:.35}50%{transform:translateX(18%);opacity:1}}
+@keyframes foco{0%,100%{opacity:.45}45%{opacity:1}60%{opacity:.7}70%{opacity:.95}}
 .ep .thumb .num{position:absolute;inset:0;display:grid;place-items:center;font-size:38px;font-weight:600;letter-spacing:-.05em;color:rgba(255,109,41,.35)}
-.ep .thumb .barra{position:absolute;left:0;bottom:0;height:3px;background:var(--laranja);width:0}
-.ep .thumb .cad{position:absolute;right:6px;bottom:6px;width:24px;height:24px;border-radius:50%;display:none;place-items:center;background:rgba(0,0,0,.65)}
+.ep .thumb .barra{position:absolute;z-index:2;left:0;bottom:0;height:3px;background:var(--laranja);width:0}
+.ep .thumb .cad{position:absolute;z-index:2;right:6px;bottom:6px;width:24px;height:24px;border-radius:50%;display:none;place-items:center;background:rgba(0,0,0,.65)}
 .ep .thumb .cad svg{width:12px;height:12px}
 .ep.travado .thumb{filter:grayscale(1) brightness(.6)}.ep.travado .thumb .cad{display:grid}
 .ep h3{font-size:15px;font-weight:600;line-height:1.3}
@@ -377,11 +387,11 @@ const CONFIG = {
     corpo: { x: 0.6, y: 0.5, rx: 0.24, ry: 0.5 }, quadril: { x: 0.66, y: 0.95 }
   },
   episodios: [
-    { titulo: "A Lei da Caixa", dur: "", src: "", thumb: "assets/ep1.webp?v=2", horizontal: true,
+    { titulo: "A Lei da Caixa", dur: "", src: "", thumb: "assets/ep1.webp?v=4", horizontal: true,
       sinopse: "Na cidade das caixas cinzas, o melhor produto fecha as portas e o mais barato tem fila. Os donos contratam mais gente para gritar na porta. Só uma loja não grita. E vende pelo triplo." },
-    { titulo: "O Experimento", dur: "", src: "", thumb: "assets/ep2.webp?v=2", horizontal: true,
+    { titulo: "O Experimento", dur: "", src: "", thumb: "assets/ep2.webp?v=4", horizontal: true,
       sinopse: "Em 2009, dois escritores compraram cem tralhas de brechó e revenderam no eBay por quase vinte e oito vezes mais. Não mudaram nada nos objetos. A resposta explica por que você paga anúncio atrás de anúncio e o cliente continua pedindo desconto." },
-    { titulo: "A Virada", dur: "", src: "", thumb: "assets/ep3.webp?v=2", horizontal: true,
+    { titulo: "A Virada", dur: "", src: "", thumb: "assets/ep3.webp?v=4", horizontal: true,
       sinopse: "Essa série começou numa cidade que não existe. O último episódio mostra que o seu produto mora nela. E faz com você o que a loja da fila faz com quem passa." }
   ]
 };

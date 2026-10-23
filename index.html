@@ -121,7 +121,9 @@ nav .btn .ic{width:42px;border-radius:12px}
 .maos::before{content:"";position:absolute;left:20%;right:20%;top:2%;height:58%;border-radius:50%;background:radial-gradient(ellipse,rgba(255,109,41,.45),transparent 70%);filter:blur(40px);z-index:0}
 .maos>img{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;-webkit-mask-image:linear-gradient(180deg,#000 52%,rgba(0,0,0,.55) 66%,transparent 84%);mask-image:linear-gradient(180deg,#000 52%,rgba(0,0,0,.55) 66%,transparent 84%)}
 .tela{position:absolute;left:37.4%;top:10%;width:26.8%;height:41.6%;border-radius:11% / 5.2%;overflow:hidden;background:#0c0a0b;z-index:1}
-.tela video{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.tela video,.tela-serie img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top}
+.tela-serie{position:absolute;inset:0;display:block;pointer-events:auto;z-index:5}
+.tela .tela-serie .som{top:auto;bottom:6%;right:50%;transform:translateX(50%);font-size:11px;padding:7px 12px;white-space:nowrap;background:rgba(255,109,41,.85);border-color:var(--laranja);color:#fff}
 
 /* conteúdo animado do celular (ref. "Need a Project?") */
 .tela .vinheta{position:absolute;inset:0;background:radial-gradient(ellipse 70% 55% at 50% 50%,transparent 30%,rgba(255,109,41,.0) 45%,rgba(194,65,12,.55) 80%,rgba(255,154,92,.85) 100%)}
@@ -403,8 +405,8 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;gap:2
     <img class="nome-gigante" src="assets/hero/nome-gigante.webp" alt="" aria-hidden="true" />
     <div class="maos">
       <div class="tela">
-        <video id="vsl" src="assets/vsl/vox-vsl-hero.mp4" poster="assets/vsl/capa.webp" autoplay muted loop playsinline preload="metadata"></video>
-        <button class="som" id="som" type="button">🔇 toque para ouvir</button>
+        <!-- [VSL v6 em produção] enquanto isso, a tela mostra a série "Caixa Cinza" e leva até ela -->
+        <a class="tela-serie" href="serie/" aria-label="Assistir a série Caixa Cinza"><img src="assets/hero/tela-serie.webp" alt="Página da série Caixa Cinza aberta no celular" fetchpriority="high" /><span class="som">▶ assistir a série</span></a>
       </div>
       <img src="assets/hero/maos-celular.webp" fetchpriority="high" alt="Mãos segurando o celular com a VSL da Vox" />
     </div>
@@ -738,10 +740,10 @@ secs.forEach(([,sec])=>sec&&vigia.observe(sec));
 
 // VSL: começa muda (autoplay); o toque liga o som e volta ao início
 const vsl=document.getElementById('vsl'),som=document.getElementById('som');
-som.addEventListener('click',()=>{vsl.muted=!vsl.muted;if(!vsl.muted){vsl.currentTime=0;vsl.play()}som.textContent=vsl.muted?'🔇 toque para ouvir':'🔊 som ligado'});
+if(vsl){som.addEventListener('click',()=>{vsl.muted=!vsl.muted;if(!vsl.muted){vsl.currentTime=0;vsl.play()}som.textContent=vsl.muted?'🔇 toque para ouvir':'🔊 som ligado'});
 // fora da tela o vídeo pausa (e o som para); volta a tocar quando o hero reaparece
 new IntersectionObserver(([e])=>{if(e.isIntersecting)vsl.play().catch(()=>{});else vsl.pause()},{threshold:.25}).observe(vsl);
-document.addEventListener('visibilitychange',()=>{if(document.hidden)vsl.pause()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)vsl.pause()});}
 
 // cards com vida: injeta a luz e acompanha o mouse
 document.querySelectorAll('.case,.muleta,.pilar,.serv,.passo,.quem .vidro').forEach(c=>{
