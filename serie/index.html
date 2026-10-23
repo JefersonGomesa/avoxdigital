@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>Produto Invisível | Minissérie gratuita da Vox Digital</title>
-<meta name="description" content="Minissérie gratuita em 3 episódios para quem tem produto bom e vende menos do que ele vale. Por que o seu cliente não enxerga o que você entrega." />
+<title>Caixa Cinza | Minissérie gratuita da Vox Digital</title>
+<meta name="description" content="Numa cidade onde é proibido mostrar o produto, tudo é vendido em caixa cinza, só com o preço na etiqueta. Só uma loja vende pelo triplo, e tem fila. Minissérie gratuita em 3 episódios." />
 <link rel="canonical" href="https://avoxdigital.com.br/serie/" />
 <meta name="robots" content="index, follow" />
 <meta name="theme-color" content="#0f0c0e" />
@@ -12,17 +12,17 @@
 <meta property="og:locale" content="pt_BR" />
 <meta property="og:site_name" content="Vox Digital" />
 <meta property="og:url" content="https://avoxdigital.com.br/serie/" />
-<meta property="og:title" content="Produto Invisível · minissérie gratuita em 3 episódios" />
-<meta property="og:description" content="Por que produto bom vende pouco. E o que o seu cliente não está enxergando." />
+<meta property="og:title" content="Caixa Cinza · minissérie gratuita em 3 episódios" />
+<meta property="og:description" content="O mais barato sempre ganha. Só uma loja vende pelo triplo, e tem fila. O terceiro episódio abre a sua caixa." />
 <meta property="og:image" content="https://avoxdigital.com.br/serie/assets/og-serie.jpg" />
 <meta property="og:image:secure_url" content="https://avoxdigital.com.br/serie/assets/og-serie.jpg" />
 <meta property="og:image:type" content="image/jpeg" />
 <meta property="og:image:width" content="1200" />
 <meta property="og:image:height" content="630" />
-<meta property="og:image:alt" content="Produto Invisível: minissérie em 3 episódios da Vox Digital." />
+<meta property="og:image:alt" content="Caixa Cinza: minissérie em 3 episódios da Vox Digital." />
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="Produto Invisível · minissérie gratuita em 3 episódios" />
-<meta name="twitter:description" content="Por que produto bom vende pouco. E o que o seu cliente não está enxergando." />
+<meta name="twitter:title" content="Caixa Cinza · minissérie gratuita em 3 episódios" />
+<meta name="twitter:description" content="O mais barato sempre ganha. Só uma loja vende pelo triplo, e tem fila. O terceiro episódio abre a sua caixa." />
 <meta name="twitter:image" content="https://avoxdigital.com.br/serie/assets/og-serie.jpg" />
 <link rel="icon" href="/favicon.ico" sizes="any" />
 <link rel="icon" href="../assets/vox-simbolo.svg" type="image/svg+xml" />
@@ -100,7 +100,7 @@ img{display:block;max-width:100%}
 .silhueta{position:absolute;right:6%;bottom:0;width:36%;max-width:520px;aspect-ratio:3/4;opacity:.9}
 .fundo.tem-arte .silhueta{display:none}
 /* janela do agente: espelha o celular, digitando e apagando */
-.agente{position:absolute;left:clamp(20px,4vw,48px);top:96px;width:min(44%,560px);border-radius:18px;z-index:1;
+.agente{position:absolute;left:clamp(20px,4vw,48px);top:96px;width:min(48%,640px);border-radius:18px;z-index:1;
   background:linear-gradient(180deg,rgba(33,27,29,.92),rgba(20,17,19,.92));border:1px solid rgba(255,109,41,.28);backdrop-filter:blur(10px);
   box-shadow:0 30px 80px rgba(0,0,0,.55),0 0 80px rgba(255,109,41,.16);transform:perspective(1400px) rotateY(9deg);transform-origin:left center}
 .agente::after{content:"";position:absolute;right:-90px;top:50%;width:90px;height:2px;background:linear-gradient(90deg,rgba(255,109,41,.6),transparent);box-shadow:0 0 12px var(--laranja)}
@@ -109,7 +109,11 @@ img{display:block;max-width:100%}
 .agente .barra b{margin-left:8px;font-weight:500;color:#cfc8cb}
 .agente .barra .ao{margin-left:auto;display:flex;align-items:center;gap:6px;color:var(--brasa)}
 .agente .barra .ao::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--laranja);animation:pisca 1.2s steps(1) infinite}
-.agente .chat{padding:16px 18px 18px;display:flex;flex-direction:column;gap:12px;font-size:14px;line-height:1.5;min-height:150px}
+.agente .chat{padding:18px 20px 20px;display:flex;flex-direction:column;justify-content:flex-end;gap:12px;font-size:14px;line-height:1.5;height:340px;overflow:hidden;
+  -webkit-mask-image:linear-gradient(180deg,transparent 0,#000 46px);mask-image:linear-gradient(180deg,transparent 0,#000 46px);transition:opacity .6s}
+.agente .chat.some{opacity:0}
+.agente .chat>*{flex:none;animation:entra .45s ease both}
+@keyframes entra{from{opacity:0;transform:translateY(10px)}}
 .agente .eu{align-self:flex-end;max-width:80%;padding:9px 13px;border-radius:14px 14px 4px 14px;background:rgba(255,255,255,.08);color:#ddd}
 .agente .ia{display:flex;gap:10px;color:#f1ebed;font-size:16px;font-weight:500}
 .agente .ia .av{flex:none;width:26px;height:26px;border-radius:8px;background:linear-gradient(145deg,#ffb27a,var(--laranja) 55%,#9a3412)}
@@ -237,9 +241,9 @@ h1 .g{background:linear-gradient(100deg,#fff 0%,#fff 30%,var(--brasa) 62%,var(--
   .destaque{min-height:auto;border-radius:0}
   .fundo .arte,.fundo .corpo{object-position:56% top}
   .silhueta{right:-4%;width:62%;bottom:auto;top:70px}
-  .agente{top:74px;width:62%;transform:none;font-size:12px}
+  .agente{top:74px;width:76%;transform:none;font-size:12px}
   .agente::after{display:none}
-  .agente .chat{min-height:110px;padding:12px 14px}.agente .ia{font-size:13px}.agente .eu{font-size:12px}
+  .agente .chat{height:190px;padding:12px 14px;gap:9px}.agente .ia{font-size:13px}.agente .eu{font-size:12px}
   .fundo::after{background:linear-gradient(0deg,rgba(15,12,14,1) 0%,rgba(15,12,14,.9) 40%,rgba(15,12,14,.2) 75%,rgba(15,12,14,.35) 100%)}
   .info{padding-top:330px}
   .menu{display:none}
@@ -278,10 +282,7 @@ h1 .g{background:linear-gradient(100deg,#fff 0%,#fff 30%,var(--brasa) 62%,var(--
     <svg class="fio" id="fio" aria-hidden="true"><defs><linearGradient id="gFio" gradientUnits="userSpaceOnUse"><stop offset="0" stop-color="#FF6D29"/><stop offset="1" stop-color="#FF9A5C"/></linearGradient></defs><path id="fioPath" d=""/><circle id="fioBola" r="3.5"/></svg>
     <div class="agente" id="agente" aria-hidden="true">
       <div class="barra"><i></i><i></i><i></i><b>Agente de copy</b><span class="ao">escrevendo</span></div>
-      <div class="chat">
-        <div class="eu" id="pedido">Escreve a headline do meu produto.</div>
-        <div class="ia"><span class="av"></span><p id="digitando"></p></div>
-      </div>
+      <div class="chat" id="chat"></div>
     </div>
 
     <header class="topo">
@@ -291,10 +292,10 @@ h1 .g{background:linear-gradient(100deg,#fff 0%,#fff 30%,var(--brasa) 62%,var(--
 
     <div class="info">
       <div class="selo">Minissérie · 3 episódios · Original Vox</div>
-      <p class="frase">“Para quem tem produto bom e vende menos do que ele vale.”</p>
-      <h1>Produto<br /><span class="g">Invisível</span></h1>
-      <div class="meta"><span>2026</span><span class="ponto"></span><span class="chip">Negócios</span><span class="ponto"></span><span id="duracaoTotal">3 episódios</span></div>
-      <p class="sinopse">Um restaurante vazio. Um dono que contrata três garçons para chamar gente na calçada. E um prato que ninguém enxerga. Três episódios mostram por que o seu cliente não vê o que você entrega. No terceiro, a história para de ser sobre o restaurante e passa a ser sobre o seu produto.</p>
+      <p class="frase">“Para quem faz o melhor produto da rua e vê o mais barato ter fila.”</p>
+      <h1>Caixa<br /><span class="g">Cinza</span></h1>
+      <div class="meta"><span>2026</span><span class="ponto"></span><span class="chip">Drama</span><span class="ponto"></span><span id="duracaoTotal">3 episódios</span></div>
+      <p class="sinopse">Numa cidade onde a lei proíbe mostrar o produto, tudo é vendido em caixa cinza, só com o preço na etiqueta. O mais barato sempre ganha. Só uma loja vende pelo triplo, e tem fila. Três episódios mostram o que ela faz. O terceiro abre a sua caixa. Aperta o play sabendo.</p>
       <button class="cta" id="ctaPlay"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M7 4.5v15l13-7.5z"/></svg><span id="ctaTexto">Assistir episódio 1</span></button>
       <p class="micro" id="ctaMicro">Gratuito · Episódio 1 sem cadastro · Acesso imediato</p>
       <div class="acoes">
@@ -309,8 +310,8 @@ h1 .g{background:linear-gradient(100deg,#fff 0%,#fff 30%,var(--brasa) 62%,var(--
   <nav class="abas" id="abas"><button class="on" data-aba="episodios">Episódios</button><button data-aba="detalhes">Detalhes</button><button data-aba="passo">Próximo passo</button></nav>
   <div class="painel on" id="p-episodios"><div class="lista-eps"></div></div>
   <div class="painel" id="p-detalhes"><div class="det">
-    <div><b>Ano</b>2026</div><div><b>Categoria</b>Negócios · Marketing</div><div><b>Episódios</b>3</div>
-    <div><b>Sinopse</b>Por que produto bom vende pouco: a Muleta Comercial, o que o seu cliente enxerga antes de comprar e o ponto cego do valor.</div>
+    <div><b>Ano</b>2026</div><div><b>Categoria</b>Drama · Negócios</div><div><b>Episódios</b>3</div>
+    <div><b>Sinopse</b>Numa cidade onde a lei proíbe mostrar o produto, o Davi faz o melhor produto da rua e quase não vende. A Dona Íris vende a mesma caixa cinza pelo triplo, e tem fila. A série mostra o que ela faz. E por que essa cidade é a sua.</div>
     <div><b>Produção</b>Vox Digital · avoxdigital.com.br</div></div></div>
   <div class="painel" id="p-passo"><div class="slot-proximo"></div></div>
 
@@ -364,7 +365,7 @@ h1 .g{background:linear-gradient(100deg,#fff 0%,#fff 30%,var(--brasa) 62%,var(--
 <script>
 /* ================= CONFIGURAÇÃO (o que muda de uma série para outra) ================= */
 const CONFIG = {
-  serieId: "produto-invisivel-v1",
+  serieId: "caixa-cinza-v1",
   proximoPasso: "../?origem=serie",       // página TEN (Site/index.html)
   cadastroAPartirDoEp: 2,                  // 0 = sem cadastro
   webhook: "",                             // [GHL] URL do webhook de entrada (vazio = guarda só no navegador)
@@ -376,12 +377,12 @@ const CONFIG = {
     corpo: { x: 0.6, y: 0.5, rx: 0.24, ry: 0.5 }, quadril: { x: 0.66, y: 0.95 }
   },
   episodios: [
-    { titulo: "O restaurante vazio", dur: "", src: "", thumb: "assets/ep1.webp?v=2", horizontal: true,
-      sinopse: "O salão está vazio e o dono contrata três garçons para chamar gente na calçada. Parece absurdo. É exatamente o que quase todo dono de produto bom faz quando a venda trava." },
-    { titulo: "O que o seu cliente enxerga", dur: "", src: "", thumb: "assets/ep2.webp?v=2", horizontal: true,
-      sinopse: "Seu cliente abre a sua página ao lado de outras cinco e decide em segundos. Se ele não enxerga a diferença, sobra o preço. E o seu produto bom vira só mais uma opção." },
-    { titulo: "O ponto cego", dur: "", src: "", thumb: "assets/ep3.webp?v=2", horizontal: true,
-      sinopse: "Existe uma distância entre o que o seu produto entrega e o que o cliente vê antes de comprar. Três perguntas mostram se o seu está nela. Aqui a história deixa de ser sobre o restaurante." }
+    { titulo: "A Lei da Caixa", dur: "", src: "", thumb: "assets/ep1.webp?v=2", horizontal: true,
+      sinopse: "Na cidade das caixas cinzas, o melhor produto fecha as portas e o mais barato tem fila. Os donos contratam mais gente para gritar na porta. Só uma loja não grita. E vende pelo triplo." },
+    { titulo: "O Experimento", dur: "", src: "", thumb: "assets/ep2.webp?v=2", horizontal: true,
+      sinopse: "Em 2009, dois escritores compraram cem tralhas de brechó e revenderam no eBay por quase vinte e oito vezes mais. Não mudaram nada nos objetos. A resposta explica por que você paga anúncio atrás de anúncio e o cliente continua pedindo desconto." },
+    { titulo: "A Virada", dur: "", src: "", thumb: "assets/ep3.webp?v=2", horizontal: true,
+      sinopse: "Essa série começou numa cidade que não existe. O último episódio mostra que o seu produto mora nela. E faz com você o que a loja da fila faz com quem passa." }
   ]
 };
 // ?demo=1 usa a VSL do site em todos os episódios, só para testar o fluxo
@@ -415,7 +416,7 @@ function desenhar() {
   document.querySelectorAll(".slot-proximo").forEach(s => s.innerHTML = `
     <div class="proximo ${fim ? "" : "travado"}"><div class="r">Passo 3 de 3</div>
     <h3>${fim ? "Você chegou ao fim da série." : "Libera depois do episódio 3"}</h3>
-    <p>Na próxima página a gente mostra o Método VOX: a ordem que muda como o cliente enxerga o seu produto, sem mudar o produto.</p>
+    <p>Na próxima página a gente mostra a ordem que muda como o cliente enxerga o seu produto, sem mudar o produto.</p>
     <a href="${CONFIG.proximoPasso}">Ver o próximo passo →</a></div>`);
   const prox = CONFIG.episodios.findIndex((_, i) => !estado.visto.includes(i));
   const alvo = prox === -1 ? 0 : prox;
@@ -476,8 +477,8 @@ V.addEventListener("ended", () => {
   if (!estado.visto.includes(i)) estado.visto.push(i);
   salvar();
   document.getElementById("fimRotulo").textContent = ultimo ? "Fim da série" : "Fim do episódio " + (i + 1);
-  document.getElementById("fimTitulo").textContent = ultimo ? "Agora vem a parte que ninguém te mostrou." : "Episódio " + (i + 2) + " · " + CONFIG.episodios[i + 1].titulo;
-  document.getElementById("fimTexto").textContent = ultimo ? "Você viu o problema e o ponto cego. Na próxima página, o método para tirar o seu produto dele." : CONFIG.episodios[i + 1].sinopse;
+  document.getElementById("fimTitulo").textContent = ultimo ? "Agora, o que a Dona Íris faz." : "Episódio " + (i + 2) + " · " + CONFIG.episodios[i + 1].titulo;
+  document.getElementById("fimTexto").textContent = ultimo ? "Você viu a cidade e a fila. Na próxima página, o que a Dona Íris faz, na ordem certa. E se o seu produto for bom de verdade, você aplica pra gente abrir a sua caixa." : CONFIG.episodios[i + 1].sinopse;
   const bt = document.getElementById("fimBotao");
   bt.textContent = ultimo ? "Ver o próximo passo →" : "Assistir episódio " + (i + 2) + " →";
   bt.href = ultimo ? CONFIG.proximoPasso : "#";
@@ -520,7 +521,7 @@ document.getElementById("cadastro").onsubmit = async ev => {
 document.getElementById("btCurtir").onclick = () => { estado.curtiu = !estado.curtiu; salvar(); desenhar(); };
 document.getElementById("btSalvar").onclick = () => { estado.salvou = !estado.salvou; salvar(); desenhar(); };
 document.getElementById("btCompartilhar").onclick = async () => {
-  const dados = { title: "Produto Invisível", text: "Minissérie em 3 episódios sobre por que produto bom vende pouco.", url: location.origin + location.pathname };
+  const dados = { title: "Caixa Cinza", text: "Numa cidade onde é proibido mostrar o produto, só uma loja vende pelo triplo. Minissérie em 3 episódios.", url: location.origin + location.pathname };
   if (navigator.share) { try { await navigator.share(dados); } catch {} } else { try { await navigator.clipboard.writeText(dados.url); alert("Link copiado."); } catch {} }
 };
 function aba(nome) { document.querySelectorAll("#abas button").forEach(b => b.classList.toggle("on", b.dataset.aba === nome)); document.querySelectorAll(".painel").forEach(p => p.classList.toggle("on", p.id === "p-" + nome)); }
@@ -573,23 +574,52 @@ function evento(nome, extra) { try { window.fbq && fbq("trackCustom", nome, extr
     (function anda() { k = (k + 0.012) % 1; const q = p.getPointAtLength(L * (1 - k)); const b = document.getElementById("fioBola"); b.setAttribute("cx", q.x); b.setAttribute("cy", q.y); fio.raf = requestAnimationFrame(anda); })();
   }
 
-  const rascunhos = [
-    ["Escreve a headline do meu produto.", "Seu produto não precisa de mais vendedor. Precisa ser desejado."],
-    ["Por que ele vende tão pouco?", "O problema não é quem vende. É como o seu cliente enxerga o que você vende."],
-    ["E se eu contratar mais um vendedor?", "Mais gente empurrando um produto que ninguém enxerga continua sendo empurrar."]
+  // conversa com o agente: 1 pergunta e 1 resposta · 2 perguntas e 1 resposta · 1 pergunta e 1 resposta
+  const conversa = [
+    ["eu", "Escreve a headline do meu produto."],
+    ["ia", "O melhor do mercado. Últimas vagas. Só hoje."],
+    ["eu", "Mas tá igual à do meu concorrente. Quero algo inovador!"],
+    ["eu", "Crie algo que ninguém fez ainda."],
+    ["ia", "O método revolucionário que ninguém te contou. Vagas limitadas."],
+    ["eu", "Isso também é igual. Por que você não consegue?"],
+    ["ia", "Porque eu só leio a etiqueta. O que tem dentro do seu produto, eu não sei. Aperta o play."]
   ];
-  const pedido = document.getElementById("pedido"), alvo = document.getElementById("digitando");
-  let r = 0, n = 0, fase = "digita";
+  const chat = document.getElementById("chat"), status = document.querySelector(".agente .ao");
   const luz = v => box.style.setProperty("--luz", v);
   const destaque = document.querySelector(".destaque");
   const bate = () => { box.classList.add("bate"); setTimeout(() => box.classList.remove("bate"), 60); };
-  const pinta = s => alvo.innerHTML = s.replace(/&/g, "&amp;").replace(/</g, "&lt;") + '<span class="cursor"></span>';
-  (function passo() {
-    const texto = rascunhos[r][1]; let espera = 34;
-    if (fase === "digita") { n++; pinta(texto.slice(0, n)); luz(.58 + ((n * 37) % 42) / 100); bate(); destaque.classList.add("enviando"); espera = texto[n - 1] === " " ? 70 : 30 + (n % 7 === 0 ? 60 : 0); if (n >= texto.length) { fase = "le"; espera = 2400; luz(1); destaque.classList.remove("enviando"); } }
-    else if (fase === "le") { fase = "apaga"; espera = 20; }
-    else { n = Math.max(0, n - 2); pinta(texto.slice(0, n)); espera = 16; luz(.55); if (!n) { r = (r + 1) % rascunhos.length; pedido.textContent = rascunhos[r][0]; fase = "digita"; espera = 700; luz(.4); } }
-    setTimeout(passo, espera);
+  const dorme = ms => new Promise(r => setTimeout(r, ms));
+  const rola = () => { chat.scrollTop = chat.scrollHeight; };
+  const esc = t => t.replace(/&/g, "&amp;").replace(/</g, "&lt;");
+  (async function roda() {
+    for (;;) {
+      chat.innerHTML = ""; chat.classList.remove("some"); await dorme(600);
+      for (const [quem, texto] of conversa) {
+        if (quem === "eu") {
+          // a pessoa digita no celular; a mensagem viaja pelo fio até a janela
+          status.textContent = "online"; destaque.classList.add("enviando"); luz(.75);
+          await dorme(1300);
+          chat.insertAdjacentHTML("beforeend", `<div class="eu">${esc(texto)}</div>`); rola();
+          destaque.classList.remove("enviando"); luz(.5);
+          await dorme(1100);
+        } else {
+          status.textContent = "escrevendo";
+          chat.insertAdjacentHTML("beforeend", '<div class="ia"><span class="av"></span><p></p></div>'); rola();
+          const alvo = chat.lastElementChild.querySelector("p");
+          for (let n = 1; n <= texto.length; n++) {
+            alvo.innerHTML = esc(texto.slice(0, n)) + '<span class="cursor"></span>';
+            luz(.58 + ((n * 37) % 42) / 100); bate(); rola();
+            await dorme(texto[n - 1] === " " ? 70 : 32 + (n % 7 === 0 ? 60 : 0));
+          }
+          alvo.innerHTML = esc(texto); luz(1);
+          await dorme(2600);   // tempo de leitura de cada resposta
+        }
+      }
+      status.textContent = "online";
+      await dorme(6000);     // a conversa inteira fica na tela antes de apagar
+      chat.classList.add("some"); luz(.4);
+      await dorme(900);
+    }
   })();
 })();
 

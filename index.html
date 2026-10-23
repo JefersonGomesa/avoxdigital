@@ -3,8 +3,8 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Vox Digital | Seu produto não precisa de mais vendedor. Precisa ser desejado.</title>
-<meta name="description" content="O valor já está no seu produto. A Vox faz o seu cliente enxergar: estratégia, narrativa e toda a estrutura pronta, de páginas e VSL a criativos e automações." />
+<title>Vox Digital | Fazer anúncio é fácil. Difícil é o cliente pagar o que o seu produto vale.</title>
+<meta name="description" content="Pro seu cliente, o seu produto é uma caixa cinza com o preço na etiqueta. A Vox descobre o que tem dentro, escreve a história que faz o cliente ver antes de abrir e coloca tudo no ar, pronto." />
 <link rel="canonical" href="https://avoxdigital.com.br/" />
 <meta name="robots" content="index, follow" />
 <meta name="theme-color" content="#161316" />
@@ -14,8 +14,8 @@
 <meta property="og:locale" content="pt_BR" />
 <meta property="og:site_name" content="Vox Digital" />
 <meta property="og:url" content="https://avoxdigital.com.br/" />
-<meta property="og:title" content="Seu produto não precisa de mais vendedor. Precisa ser desejado." />
-<meta property="og:description" content="O valor já está no seu produto. A gente faz o seu cliente enxergar." />
+<meta property="og:title" content="Fazer anúncio é fácil. Difícil é o cliente pagar o que o seu produto vale." />
+<meta property="og:description" content="Quem só tem etiqueta vende pelo preço. Quem tem história tem fila." />
 <meta property="og:image" content="https://avoxdigital.com.br/assets/og-vox.jpg?v=3" />
 <meta property="og:image:secure_url" content="https://avoxdigital.com.br/assets/og-vox.jpg?v=3" />
 <meta property="og:image:type" content="image/jpeg" />
@@ -23,13 +23,13 @@
 <meta property="og:image:height" content="630" />
 <meta property="og:image:alt" content="Vox Digital: seu produto não precisa de mais vendedor, precisa ser desejado." />
 <meta name="twitter:card" content="summary_large_image" />
-<meta name="twitter:title" content="Seu produto não precisa de mais vendedor. Precisa ser desejado." />
-<meta name="twitter:description" content="O valor já está no seu produto. A gente faz o seu cliente enxergar." />
+<meta name="twitter:title" content="Fazer anúncio é fácil. Difícil é o cliente pagar o que o seu produto vale." />
+<meta name="twitter:description" content="Quem só tem etiqueta vende pelo preço. Quem tem história tem fila." />
 <meta name="twitter:image" content="https://avoxdigital.com.br/assets/og-vox.jpg?v=3" />
 <link rel="icon" href="/favicon.ico" sizes="any" />
 <link rel="icon" href="assets/vox-simbolo.svg" type="image/svg+xml" />
 <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
-<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Vox Digital","url":"https://avoxdigital.com.br/","logo":"https://avoxdigital.com.br/assets/icone-512.png","description":"Estratégia e copy que fazem o produto bom ser desejado, com toda a estrutura de venda entregue pronta."}</script>
+<script type="application/ld+json">{"@context":"https://schema.org","@type":"Organization","name":"Vox Digital","url":"https://avoxdigital.com.br/","logo":"https://avoxdigital.com.br/assets/icone-512.png","description":"Estratégia e copy que fazem o cliente enxergar o valor de um produto bom, com toda a estrutura entregue pronta."}</script>
 <link rel="preconnect" href="https://api.fontshare.com" /><link rel="preconnect" href="https://cdn.fontshare.com" crossorigin />
 <link href="https://api.fontshare.com/v2/css?f[]=general-sans@400,500,600&display=swap" rel="stylesheet" />
 <style>
@@ -173,7 +173,6 @@ nav .btn .ic{width:42px;border-radius:12px}
 
 /* método (ref. "Built on Principles") */
 .metodo-topo{display:flex;justify-content:space-between;align-items:end;gap:30px;flex-wrap:wrap}
-.vox-letras{font-size:clamp(90px,14vw,190px);font-weight:600;letter-spacing:-.06em;line-height:.8}
 .pilar{display:grid;grid-template-columns:auto 1fr auto;gap:22px;align-items:center;padding:24px 28px;margin-top:14px;position:relative;overflow:hidden}
 .pilar::before{content:"";position:absolute;left:-60px;top:50%;width:220px;height:160px;transform:translateY(-50%);background:radial-gradient(circle,rgba(255,109,41,.35),transparent 70%);filter:blur(20px)}
 .pilar>*{position:relative}
@@ -181,6 +180,7 @@ nav .btn .ic{width:42px;border-radius:12px}
 .pilar h3 em{font-style:normal;color:var(--laranja)}
 .pilar p{color:var(--cinza);font-size:15px;margin-top:4px;max-width:620px}
 .pilar .num{font-size:clamp(34px,4vw,54px);font-weight:500;color:rgba(255,255,255,.18);letter-spacing:-.04em}
+.demo{margin-top:56px;padding-top:40px;border-top:1px solid var(--vidro-borda)}
 .pilar.carro{border-color:rgba(255,109,41,.5);box-shadow:0 0 50px rgba(255,109,41,.12)}
 
 /* serviços (ref. cards quadrados com ícone 3D laranja) */
@@ -249,6 +249,13 @@ nav .btn .ic{width:42px;border-radius:12px}
 .quem .nao li{color:var(--cinza)}
 .quem .nao li::before{content:"✕";background:rgba(255,255,255,.06);color:var(--cinza)}
 
+/* filtro: as perguntas do dono */
+.filtro{margin-top:46px;padding:32px;border-color:rgba(255,109,41,.35)}
+.filtro ol{list-style:none;counter-reset:q;margin:18px 0 20px;display:grid;gap:10px}
+.filtro li{counter-increment:q;font-size:clamp(20px,2vw,26px);letter-spacing:-.02em;line-height:1.25}
+.filtro li::before{content:counter(q,decimal-leading-zero);color:var(--laranja);font-size:14px;margin-right:14px;vertical-align:middle}
+.filtro p{color:var(--cinza);font-size:16px;max-width:640px}
+
 /* processo */
 .passos{margin-top:46px;display:grid;gap:12px}
 .passo{display:grid;grid-template-columns:70px 1fr;gap:18px;align-items:start;padding:22px 26px}
@@ -296,6 +303,40 @@ footer{padding:50px 0;border-top:1px solid var(--vidro-borda);color:var(--cinza)
 footer .wrap{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
 
 /* ===== responsivo ===== */
+/* cidade das caixas cinzas */
+.prateleira{display:flex;flex-wrap:wrap;gap:14px;align-items:flex-end;margin:30px 0 26px;padding:22px 20px 18px;border-bottom:2px solid rgba(255,255,255,.08)}
+.caixa{width:78px;height:78px;border-radius:8px;position:relative;background:linear-gradient(160deg,#5b5659,#353133);border:1px solid rgba(255,255,255,.08);box-shadow:inset 0 -12px 18px rgba(0,0,0,.35)}
+.caixa::before{content:"";position:absolute;left:0;right:0;top:24%;height:3px;background:rgba(0,0,0,.22)}
+.caixa .et{position:absolute;right:-10px;bottom:10px;padding:3px 8px;border-radius:4px;background:#e9e3dc;color:#161316;font:600 12px var(--fonte);transform:rotate(-5deg)}
+.caixa.iris{border-color:rgba(255,109,41,.65);box-shadow:0 0 44px rgba(255,109,41,.55),inset 0 -12px 18px rgba(0,0,0,.35)}
+.caixa.iris .et{background:var(--laranja);color:#fff}
+.fila{display:flex;gap:7px;align-items:flex-end;margin-left:4px}
+.fila i{width:12px;height:34px;border-radius:7px 7px 3px 3px;background:rgba(255,154,92,.5);position:relative}
+.fila i::before{content:"";position:absolute;left:1px;top:-12px;width:10px;height:10px;border-radius:50%;background:rgba(255,154,92,.6)}
+.linhas-dest{font-size:clamp(20px,2vw,26px);letter-spacing:-.02em;line-height:1.35}
+.linhas-dest strong{color:var(--brasa);font-weight:500}
+.sintomas span{text-decoration:none;color:#eee}
+.cards4{grid-template-columns:repeat(2,1fr)}
+/* a conta */
+.calc{margin-top:34px;padding:28px;display:grid;grid-template-columns:1fr 1fr 1.1fr;gap:18px;align-items:end}
+.calc .campo{margin:0}
+.calc .campo span{display:block;font-size:13px;color:var(--cinza);margin-bottom:6px}
+.calc .res{padding:14px 18px;border-radius:14px;background:rgba(255,109,41,.08);border:1px solid rgba(255,109,41,.35)}
+.calc .res span{display:block;font-size:12px;color:var(--cinza);letter-spacing:.04em}
+.calc .res b{display:block;font-size:clamp(28px,3.4vw,42px);font-weight:500;letter-spacing:-.03em;line-height:1.1;margin:4px 0;transition:color .3s}
+.calc .res b.on{color:var(--laranja);text-shadow:0 0 24px rgba(255,109,41,.45)}
+/* o teste do Central Park */
+.teste{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:16px}
+.teste .moeda{color:var(--cinza);font-size:15px}
+.teste input{width:150px;padding:13px 14px;border-radius:12px;border:1px solid var(--vidro-borda);background:rgba(255,255,255,.05);color:#fff;font:16px var(--fonte)}
+.teste input:focus{outline:none;border-color:rgba(255,109,41,.7);box-shadow:0 0 0 4px rgba(255,109,41,.12)}
+.revela{display:none;margin-top:22px;padding-top:18px;border-top:1px solid var(--vidro-borda)}
+.revela.on{display:block;animation:surge .7s ease}
+@keyframes surge{from{opacity:0;transform:translateY(12px)}}
+/* prova de 2ª camada */
+.prova{margin:28px 0 6px;padding:22px 26px;border-color:rgba(255,109,41,.35)}
+.prova p{font-size:17px;color:#eee}
+@media (max-width:900px){.calc{grid-template-columns:1fr}.caixa{width:58px;height:58px}.caixa .et{font-size:11px}.prateleira{gap:12px;padding:18px 6px 14px}}
 @media (max-width:900px){
   .cena-grid,.quem{grid-template-columns:1fr}
   .cards3,.port{grid-template-columns:1fr}
@@ -334,8 +375,8 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;gap:2
     <div class="nav-centro">
     <ul class="menu" id="menu">
       <span class="ind" id="ind"></span>
-      <li><a href="#metodo">Método VOX</a></li>
-      <li><a href="#entregas">Entregas</a></li>
+      <li><a href="#cidade">A cidade</a></li>
+      <li><a href="#metodo">O trabalho</a></li>
       <li><a href="#trabalhos">Trabalhos</a></li>
       <li><a href="#faq">FAQ</a></li>
     </ul>
@@ -349,13 +390,13 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;gap:2
 <header class="hero" id="topo">
   <div class="brilho l"></div>
   <div class="wrap">
-    <p class="rotulo rev">Estratégia · Copy · Estrutura pronta</p>
-    <h1 class="rev d1">Seu produto não precisa de mais vendedor. <span class="feixe">Precisa ser desejado.</span></h1>
-    <p class="sub rev d2">O valor já está no seu produto. A Vox faz ele aparecer: a estratégia e a narrativa certas, e toda a estrutura pronta para o seu cliente enxergar o que você entrega. Páginas, VSL, vídeos, criativos e automações.</p>
+    <p class="rotulo rev" id="rot-hero">Estratégia · Copy · Estrutura pronta</p>
+    <h1 class="rev d1">Fazer anúncio é fácil. <span class="feixe">Qualquer um te ensina isso…</span></h1>
+    <p class="sub rev d2">Difícil é o cliente pagar o que o seu produto vale sem você precisar explicar. Esta página mostra como.</p>
     <div class="acoes rev d3">
-      <a href="#aplicar" class="btn prim"><span class="ic"><svg><use href="#seta"/></svg></span><span class="tx">Quero mostrar o valor do meu produto</span></a>
+      <a href="#aplicar" class="btn prim"><span class="ic"><svg><use href="#seta"/></svg></span><span class="tx">Aplicar para o diagnóstico</span></a>
     </div>
-    <p class="micro rev d4">Formulário de 3 minutos. Lemos um por um. Nem todo mundo é chamado.</p>
+    <p class="micro rev d4">3 minutos. Você recebe o que o seu cliente vê hoje no seu produto e o que ele devia ver. [CONFIRMAR: diagnóstico gratuito? prazo?]</p>
   </div>
 
   <div class="palco">
@@ -370,88 +411,138 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;gap:2
   </div>
 </header>
 
-<!-- 2 · CONCORDÂNCIA → CORREÇÃO -->
-<section>
+<!-- 2 · A CIDADE (mundo da série "Caixa Cinza") -->
+<section id="cidade">
   <div class="brilho c" style="width:600px;height:500px;right:-200px;top:0"></div>
   <div class="wrap coluna" style="position:relative">
-    <p class="rotulo rev">Olha só</p>
-    <h2 class="rev d1" style="margin:16px 0 34px">Seu produto é bom. Quem compra, elogia. <span class="grad">Então por que vende tão pouco?</span></h2>
+    <p class="rotulo rev">Antes de dar play · se você veio da série, já conhece esse lugar</p>
+    <h2 class="rev d1" style="margin:16px 0 30px">Bem-vindo à cidade das <span class="grad">caixas cinzas.</span></h2>
     <div class="linhas">
-      <p class="rev">Você investiu anos no que sabe. Seu aluno sai melhor do que entrou. Seu cliente indica.</p>
-      <p class="rev cinza">Só que, quando a venda trava, o que você faz?</p>
+      <p class="rev">Numa cidade inventada, uma lei proíbe mostrar o produto. Tudo é vendido em caixa cinza, igual, sem foto e sem nome. Na caixa, só a etiqueta de preço.</p>
+      <p class="rev">O cliente pega duas caixas. São iguais. Ele lê a etiqueta. E leva a mais barata.</p>
+      <p class="rev cinza">Por isso o Davi, que faz o melhor produto da cidade, quase não vende. E a loja do Preço Baixo, que entrega metade, tem fila.</p>
     </div>
-    <div class="pilha rev">
-      <span class="vidro">Contrata mais um vendedor</span>
-      <span class="vidro">Assina mais uma ferramenta</span>
-      <span class="vidro">Aumenta a verba do anúncio</span>
-      <span class="vidro">Faz mais uma live de "carrinho aberto"</span>
+    <div class="prateleira rev" aria-hidden="true">
+      <div class="caixa"><span class="et">R$ 97</span></div>
+      <div class="caixa"><span class="et">R$ 89</span></div>
+      <div class="caixa"><span class="et">R$ 97</span></div>
+      <div class="caixa"><span class="et">R$ 79</span></div>
+      <div class="caixa iris"><span class="et">R$ 291</span></div>
+      <div class="fila"><i></i><i></i><i></i><i></i><i></i></div>
     </div>
-    <div class="linhas">
-      <p class="rev">E no fim do mês a conta é a mesma: mais custo, mesma venda.</p>
-    </div>
-    <p class="destaque rev">Alguém já olhou para o seu produto e perguntou <span class="grad-fogo">por que ele não é desejado?</span></p>
-    <p class="rev cinza" style="margin-top:14px;color:var(--cinza);font-size:19px">Pois é. Ninguém pergunta. É mais fácil te vender um vendedor.</p>
+    <p class="rev linhas-dest">Só uma loja foge da regra. A da Dona Íris. Caixa cinza, a mesma lei, nenhum gritador na porta. <strong>Ela vende pelo triplo. E tem fila.</strong></p>
+    <p class="destaque rev">Ela não abre a caixa. <span class="grad-fogo">Como ela faz?</span></p>
   </div>
 </section>
 
-<!-- 3 · IMAGINA A CENA -->
-<section class="cena-sec">
-  <div class="cena-fundo" aria-hidden="true"><!-- [ASSET: foto de silhueta em contraluz laranja, ref. 9] --></div>
+<!-- 3 · A SUA CAIXA -->
+<section>
+  <div class="wrap coluna">
+    <p class="rotulo rev">Olha só</p>
+    <h2 class="rev d1" style="margin:16px 0 30px">A cidade é inventada. <span class="grad">A sua caixa, não.</span></h2>
+    <div class="linhas">
+      <p class="rev">Pro seu cliente, o seu produto é uma caixa cinza. Ele vê o que está na etiqueta: módulos, horas, bônus, preço. O seu concorrente tem a mesma etiqueta.</p>
+      <p class="rev cinza">Então acontece o que você já conhece:</p>
+    </div>
+    <div class="pilha sintomas rev">
+      <span class="vidro">O cliente elogia. E some.</span>
+      <span class="vidro">Pede desconto no produto que mudou a vida dele.</span>
+      <span class="vidro">Diz que vai pensar.</span>
+      <span class="vidro">Leva o do concorrente, que entrega metade.</span>
+    </div>
+    <p class="destaque rev">Não são quatro problemas. <span class="grad-fogo">É um só.</span></p>
+    <p class="rev" style="margin-top:16px;color:var(--cinza);font-size:19px;max-width:640px">Quando o cliente não tem outra régua, ele mede o seu produto pelo preço. E no preço quem entrega mais sempre perde.</p>
+  </div>
+</section>
+
+<!-- 4 · A CONTA (custo de não agir, calculado pelo próprio lead) -->
+<section>
+  <div class="wrap coluna">
+    <p class="rotulo rev">A conta</p>
+    <h2 class="rev d1" style="margin-top:16px">Quanto custa ficar <span class="grad">na prateleira?</span></h2>
+    <div class="calc vidro rev d2">
+      <label class="campo"><span>Quantos "vou pensar" você ouviu este mês?</span><input id="c-qtd" type="number" inputmode="numeric" min="0" placeholder="Ex.: 12" /></label>
+      <label class="campo"><span>Qual o preço do seu produto? (R$)</span><input id="c-preco" type="number" inputmode="decimal" min="0" placeholder="Ex.: 1997" /></label>
+      <div class="res"><span>A caixa cinza te custa</span><b id="c-res">R$ 0</b><span>por mês</span></div>
+    </div>
+    <p class="rev" style="margin-top:18px;color:var(--cinza);font-size:17px">É isso que a caixa cinza te custa. Todo mês. Sem aparecer em relatório nenhum.</p>
+  </div>
+</section>
+
+<!-- 5 · OS GRITADORES (inimigo: a Muleta Comercial) -->
+<section>
+  <div class="wrap">
+    <p class="rotulo rev">Os gritadores</p>
+    <h2 class="rev d1" style="margin-top:16px;max-width:900px">Aí você <span class="grad-fogo">faz o quê?</span></h2>
+    <p class="sub rev d2" style="margin-top:20px">Na cidade, o Davi contratou gritadores para a porta. Aqui eles têm outro nome.</p>
+    <div class="cards3 cards4 grupo">
+      <div class="muleta vidro rev"><span class="x">✕</span><div class="icone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="2" y="14" width="5" height="6" rx="2"/><rect x="17" y="14" width="5" height="6" rx="2"/></svg></div><h3>Mais vendedor.</h3><p>Ele passa o dia explicando por que o seu produto vale o que custa. Se precisa explicar tanto, o problema não é ele.</p></div>
+      <div class="muleta vidro rev d1"><span class="x">✕</span><div class="icone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M7 14v-3M11 14V8M15 14v-5M19 20H5"/></svg></div><h3>Mais ferramenta.</h3><p>Um painel lindo mostrando, com precisão, quantos leads não compraram.</p></div>
+      <div class="muleta vidro rev"><span class="x">✕</span><div class="icone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 11v2l13 5V6L3 11ZM16 9a3 3 0 0 1 0 6M6 14l1 5h3l-1-4"/></svg></div><h3>Mais tráfego.</h3><p>Mais gente lendo a mesma etiqueta. Você pagou para ser rejeitado em escala.</p></div>
+      <div class="muleta vidro rev d1"><span class="x">✕</span><div class="icone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20h4L19 9l-4-4L4 16v4ZM13 7l4 4"/></svg></div><h3>"Últimas vagas" na caixa.</h3><p>O seu concorrente escreve a mesma coisa. O cliente desconfia dos dois.</p></div>
+    </div>
+    <p class="destaque rev" style="text-align:center;margin-top:60px"><span class="grad-fogo">ERRADO.</span> Ninguém mexeu na caixa. Só aumentaram o volume do grito.</p>
+    <p class="rev" style="text-align:center;margin-top:18px;color:var(--cinza);font-size:19px">Quer sentir o que a Dona Íris faz? Faz um teste.</p>
+  </div>
+</section>
+
+<!-- 6 · O TESTE DO CENTRAL PARK (Banksy, 13/10/2013; fatos em Copy/VOZ_VOX.md seção 11) -->
+<section class="cena-sec" id="teste">
+  <div class="cena-fundo" aria-hidden="true"></div>
   <div class="wrap cena-grid">
     <div>
-      <span class="cartela rev">IMAGINA A CENA</span>
+      <span class="cartela rev">NOVA YORK · 13 DE OUTUBRO DE 2013</span>
       <div class="historia vidro rev d1">
-        <p>Restaurante vazio numa sexta à noite.</p>
-        <p>O dono olha o salão e decide: vou contratar três garçons para ficar na calçada chamando gente. Depois instala um sistema novo de reserva. Depois paga um carro de som.</p>
-        <p style="color:var(--cinza)">Absurdo, né?</p>
-        <p>Agora o vizinho. Mesmo arroz, mesma carne, mesmo preço. Só que o prato tem nome, tem história, tem foto que dá fome. Fila na porta. Sem garçom na calçada.</p>
-        <p class="virada">O prato não mudou. <span class="grad-fogo">Mudou o jeito que o cliente enxerga o prato.</span></p>
+        <p>Central Park. Um senhor monta uma barraca na calçada. Em cima, quadros em spray, em preto e branco. Placa: <strong>60 dólares cada</strong>.</p>
+        <p>Passa gente o dia inteiro. Quase ninguém olha. A primeira venda leva umas quatro horas.</p>
+        <p>No fim do dia, a barraca fecha com <strong>420 dólares</strong>.</p>
+        <p class="virada" style="font-size:clamp(22px,2.2vw,28px)">Quanto você pagaria por um desses quadros?</p>
+        <div class="teste">
+          <span class="moeda">US$</span><input id="t-valor" type="number" inputmode="decimal" min="0" placeholder="seu palpite" aria-label="Quanto você pagaria, em dólares" />
+          <button type="button" class="btn prim" id="t-ver"><span class="ic"><svg><use href="#seta"/></svg></span><span class="tx">Ver de quem eram</span></button>
+        </div>
+        <div class="revela" id="t-revela">
+          <p id="t-dito" style="color:var(--cinza)"></p>
+          <p>Os quadros eram do <strong>Banksy</strong>. Originais, assinados. O próprio artista mandou montar a barraca.</p>
+          <p>Em 2014, duas dessas telas foram leiloadas em Londres por <strong>125 mil libras</strong>.</p>
+          <p class="virada">E agora: <span class="grad-fogo">quanto você pagaria?</span></p>
+          <p style="color:var(--cinza)">Ninguém pintou nada de novo. O spray é o mesmo. O papel é o mesmo. Você só soube o que tinha dentro da caixa.</p>
+          <p class="virada">Isso é o que a Dona Íris faz. <span class="grad-fogo">E você sentiu agora, em três linhas.</span></p>
+        </div>
       </div>
     </div>
     <div></div>
   </div>
 </section>
 
-<!-- 4 · INIMIGO -->
-<section>
-  <div class="wrap">
-    <p class="rotulo rev">O inimigo</p>
-    <h2 class="rev d1" style="margin-top:16px;max-width:900px">O mercado te vendeu a <span class="grad-fogo">Muleta Comercial.</span> E você está mancando com ela.</h2>
-    <p class="sub rev d2" style="margin-top:20px">Mais gente para empurrar um produto que ninguém pediu continua sendo empurrar.</p>
-    <div class="cards3 grupo">
-      <div class="muleta vidro rev"><span class="x">✕</span><div class="icone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 14v-2a8 8 0 0 1 16 0v2"/><rect x="2" y="14" width="5" height="6" rx="2"/><rect x="17" y="14" width="5" height="6" rx="2"/></svg></div><h3>"Você precisa de um time comercial."</h3><p>Aí o vendedor passa o dia explicando por que o seu produto vale o que custa. Se ele precisa explicar tanto, o problema não é ele.</p></div>
-      <div class="muleta vidro rev d1"><span class="x">✕</span><div class="icone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="3" y="4" width="18" height="14" rx="2"/><path d="M7 14v-3M11 14V8M15 14v-5M19 20H5"/></svg></div><h3>"Você precisa de um CRM."</h3><p>Agora você tem um painel lindo mostrando, com precisão, quantos leads não compraram.</p></div>
-      <div class="muleta vidro rev d2"><span class="x">✕</span><div class="icone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 11v2l13 5V6L3 11ZM16 9a3 3 0 0 1 0 6M6 14l1 5h3l-1-4"/></svg></div><h3>"Você precisa de mais tráfego."</h3><p>Mais gente vendo uma oferta que não convence. Parabéns: você pagou para ser rejeitado em escala.</p></div>
-    </div>
-    <p class="destaque rev" style="text-align:center;margin-top:60px">Todo mundo mexe em quem vende. <span class="grad-fogo">Ninguém mexe no que está sendo vendido.</span></p>
-    <div style="text-align:center;margin-top:30px" class="rev"><a href="#aplicar" class="btn prim"><span class="ic"><svg><use href="#seta"/></svg></span><span class="tx">Quero largar a muleta</span></a></div>
-  </div>
-</section>
-
-<!-- 5 · MÉTODO VOX (ref. Built on Principles) -->
+<!-- 7 · O QUE A DONA ÍRIS FAZ: três verbos, sem sigla -->
 <section id="metodo">
   <div class="brilho l" style="width:700px;height:600px;left:-300px;top:10%"></div>
   <div class="wrap" style="position:relative">
     <div class="metodo-topo">
       <div>
-        <p class="rotulo rev">O mecanismo</p>
-        <h2 class="rev d1" style="margin-top:16px;max-width:700px">A gente faz o seu produto parecer o que ele é <span class="grad">antes de alguém tentar vendê-lo.</span></h2>
+        <p class="rotulo rev">O que a Dona Íris faz</p>
+        <h2 class="rev d1" style="margin-top:16px;max-width:900px">A gente faz com o seu produto <span class="grad">o que a Dona Íris faz com a caixa dela.</span></h2>
       </div>
-      <div class="vox-letras grad-fogo rev d2">VOX</div>
     </div>
-    <p class="sub rev" style="margin-top:22px">Estratégia primeiro. Palavra depois. Estrutura por último, e pronta.</p>
+    <p class="sub rev" style="margin-top:22px">Ela não muda a caixa. Ela conta o que acontece com quem abre. E faz isso numa ordem: quem começa pela caixa começa pelo fim.</p>
     <div class="grupo" style="margin-top:40px">
-      <div class="pilar vidro carro rev"><div class="icone">V</div><div><h3><em>V</em>alor percebido · a estratégia</h3><p>Posicionamento, ângulo, promessa, inimigo, mecanismo e oferta. O mesmo produto, apresentado de um jeito que o seu cliente não consegue ignorar.</p></div><span class="num">01</span></div>
-      <div class="pilar vidro rev d1"><div class="icone">O</div><div><h3><em>O</em>ferta e palavra · a copy</h3><p>A copy de tudo: captura, página de vendas, VSL, anúncios, e-mails, mensagens e social. Uma voz só, do primeiro anúncio ao último e-mail.</p></div><span class="num">02</span></div>
-      <div class="pilar vidro rev d2"><div class="icone">X</div><div><h3>e<em>X</em>ecução pronta · a estrutura</h3><p>Páginas no ar, VSL em qualquer formato, vídeos editados, motion, peças gráficas, criativos e automações configuradas e testadas.</p></div><span class="num">03</span></div>
+      <div class="pilar vidro carro rev"><div class="icone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-4-4"/></svg></div><div><h3><em>Descobrir</em> · o que tem dentro da sua caixa</h3><p>O que o seu cliente compra de verdade quando compra de você. Posicionamento, promessa, inimigo e oferta: o mesmo produto, medido por algo que o concorrente não tem.</p></div><span class="num">01</span></div>
+      <div class="pilar vidro rev d1"><div class="icone"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20h4L19 9l-4-4L4 16v4ZM13 7l4 4"/></svg></div><div><h3><em>Dizer</em> · a história que faz o cliente ver antes de abrir</h3><p>Uma história só, do primeiro anúncio à última mensagem. Anúncio, série, página, vídeo, e-mail e WhatsApp dizendo a mesma coisa.</p></div><span class="num">02</span></div>
+      <div class="pilar vidro rev d2"><div class="icone"><svg><use href="#raio"/></svg></div><div><h3><em>Colocar no ar</em> · tudo pronto</h3><p>Anúncios, série, página, vídeo, criativos e a automação que leva o cliente até a conversa. Configurado, testado e no ar.</p></div><span class="num">03</span></div>
+    </div>
+    <div class="demo">
+      <p class="rotulo rev">A promessa</p>
+      <p class="destaque rev" style="margin-top:12px">O seu cliente para de medir pelo preço <span class="grad-fogo">e entende por que o seu produto vale o que custa.</span></p>
+      <p class="sub rev d1" style="margin-top:14px">Antes de você precisar explicar.</p>
     </div>
   </div>
 </section>
 
-<!-- 6 · ENTREGAS (ref. cards de serviço com ícone laranja) -->
+<!-- 7b · ENTREGAS (ref. cards de serviço com ícone laranja) -->
 <section id="entregas">
   <div class="wrap">
-    <p class="rotulo rev">Tudo que um lançamento precisa</p>
+    <p class="rotulo rev">O que vai pronto</p>
     <h2 class="rev d1" style="margin-top:16px;max-width:820px">Você não recebe um monte de peças. <span class="grad">Recebe um produto que finalmente parece valer o que vale.</span></h2>
     <div class="servicos grupo">
       <div class="serv dest rev"><span class="n">01 · CARRO-CHEFE</span><div class="g"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="4"/><path d="M12 3v3M21 12h-3"/></svg></div><b>Estratégia de produto e oferta</b></div>
@@ -465,12 +556,13 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;gap:2
   </div>
 </section>
 
-<!-- 7 · TRABALHOS (2ª camada + invalidação) -->
+<!-- 8 · PROVA + TRABALHOS (2ª camada + invalidação) -->
 <section id="trabalhos">
   <div class="brilho c" style="width:700px;height:600px;right:-250px;top:20%"></div>
   <div class="wrap" style="position:relative">
     <p class="rotulo rev">Alguns trabalhos</p>
     <h2 class="rev d1" style="margin-top:16px">Olha rápido. <span class="grad">Depois a gente fala do que importa.</span></h2>
+    <div class="prova vidro rev d2"><p>Numa pós-graduação, a caixa mostrava a grade de disciplinas. A gente contou o que acontece com quem abre: virou uma decisão de carreira. Resultado: [PROVA: NÚMERO] em [PRAZO]. <span style="color:var(--cinza)">[PROVA: só com números reais e autorização do cliente]</span></p></div>
     <div class="port grupo">
       <article class="case vidro rev"><div class="img" data-url="academiadaplenitude.com.br"><img src="assets/portfolio/pos-graduacao-full.webp" alt="Site da pós-graduação" loading="lazy" /></div><div class="info"><span class="tag">Pós-graduação · site</span><h3>Academia da Plenitude</h3><p>A oferta acadêmica apresentada como decisão de carreira, não como grade de disciplinas.</p></div></article>
       <article class="case vidro rev d1"><div class="img" data-url="congressoplenitude.com.br"><img src="assets/portfolio/congresso-full.webp" alt="Site do congresso" loading="lazy" /></div><div class="info"><span class="tag">Evento · site</span><h3>Congresso Plenitude 26</h3><p>[CONFIRMAR: entrega e autorização]</p></div></article>
@@ -482,19 +574,8 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;gap:2
     <div class="invalida">
       <p class="rev">Bonito, né? Agora presta atenção.</p>
       <h3 class="rev d1"><span class="grad-fogo">Portfólio não prova nada.</span></h3>
-      <p class="rev d2" style="max-width:720px;margin:0 auto">A internet está cheia de agência com site lindo e cliente que não vendeu. O que esses projetos têm em comum não é o design. É que, antes de qualquer pixel, alguém perguntou por que aquele produto deveria ser desejado.</p>
-      <div class="rev d3" style="margin-top:30px"><a href="#aplicar" class="btn prim"><span class="ic"><svg><use href="#seta"/></svg></span><span class="tx">Quero essa pergunta sobre o meu produto</span></a></div>
-    </div>
-  </div>
-</section>
-
-<!-- 8 · O TOQUE (ref. Pinterest: mão digital × dedo humano) -->
-<section class="toque">
-  <div class="wrap">
-    <p class="rotulo rev">Estratégia humana. Execução digital.</p>
-    <h2 class="rev d1" style="margin:16px auto 0;max-width:900px">IA escreve rápido. <span class="grad-fogo">Só gente entende por que alguém compra.</span></h2>
-    <div class="toque-visual rev d2">
-      <img class="dedos" src="assets/hero/dedos.webp" alt="Mão digital em wireframe laranja tocando um dedo humano" loading="lazy" /><div class="faisca"></div>
+      <p class="rev d2" style="max-width:720px;margin:0 auto">A internet está cheia de agência com site lindo e cliente que não vendeu. O que prova é o que aconteceu com você no Central Park: você mudou o preço de um quadro sem ver o quadro.</p>
+      <div class="rev d3" style="margin-top:30px"><a href="#aplicar" class="btn prim"><span class="ic"><svg><use href="#seta"/></svg></span><span class="tx">Quero isso no meu produto</span></a></div>
     </div>
   </div>
 </section>
@@ -502,17 +583,22 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;gap:2
 <!-- 9 · PARA QUEM É -->
 <section>
   <div class="wrap">
-    <p class="rotulo rev">Qualificação</p>
-    <h2 class="rev d1" style="margin-top:16px">A Vox não é para todo mundo. <span class="grad">E isso é bom para você.</span></h2>
+    <p class="rotulo rev">As três perguntas</p>
+    <h2 class="rev d1" style="margin-top:16px;max-width:900px">As mesmas três perguntas <span class="grad">que a Dona Íris fez ao Davi.</span></h2>
+    <div class="filtro vidro rev">
+      <p class="rotulo">Antes de aplicar, responde com sinceridade</p>
+      <ol><li>É o melhor produto que você já criou?</li><li>Você olha pra ele e acha que está barato?</li><li>Você compraria?</li></ol>
+      <p>Se alguma resposta foi não, nem aplica. O problema está dentro da caixa, e história nenhuma resolve. Volta quando for sim.</p>
+    </div>
     <div class="quem grupo">
       <div class="vidro sim rev"><h3>É para você se</h3><ul>
         <li>Já tem um produto que entrega resultado: curso, mentoria, pós-graduação, serviço, livro.</li>
         <li>Sente que ele vende menos do que vale.</li>
         <li>Já tentou resolver com mais comercial, ferramenta ou tráfego, e não mudou o suficiente.</li>
         <li>Tem verba para estratégia e estrutura. [QUALIFICADOR]</li>
-        <li>Está disposto a ouvir que o problema pode estar em como você apresenta o que faz.</li></ul></div>
+        <li>Aguenta ouvir que o problema não é quem vende. É o que o cliente vê antes de pagar.</li></ul></div>
       <div class="vidro nao rev d1"><h3>Não é para você se</h3><ul>
-        <li>Ainda não tem produto. Primeiro cria, depois a gente faz desejar.</li>
+        <li>Ainda não tem produto. Primeiro cria. Depois a gente conta o que tem dentro.</li>
         <li>Quer um time comercial terceirizado ou um CRM. Não vendemos isso.</li>
         <li>Quer faturamento garantido. Ninguém sério promete.</li>
         <li>Quer só "uma página bonita". Bonito sem estratégia é decoração.</li>
@@ -529,9 +615,9 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;gap:2
     <div class="passos grupo">
       <div class="passo vidro rev"><span class="n">01</span><div><h3>Você aplica</h3><p>3 minutos. Responda com sinceridade: isso define se faz sentido conversar.</p></div></div>
       <div class="passo vidro rev"><span class="n">02</span><div><h3>A gente lê</h3><p>Um por um, por gente. [PRAZO de retorno]</p></div></div>
-      <div class="passo vidro rev"><span class="n">03</span><div><h3>Diagnóstico</h3><p>Olhamos seu produto, sua oferta e como ele é apresentado hoje. Se não fizer sentido, a gente fala na hora.</p></div></div>
+      <div class="passo vidro rev"><span class="n">03</span><div><h3>Diagnóstico</h3><p>Você recebe o que o seu cliente vê hoje no seu produto e o que ele devia ver. Se não fizer sentido seguir, a gente fala na hora.</p></div></div>
       <div class="passo vidro rev"><span class="n">04</span><div><h3>Proposta</h3><p>Escopo fechado: estratégia, copy e quais peças da estrutura entram.</p></div></div>
-      <div class="passo vidro rev"><span class="n">05</span><div><h3>V → O → X</h3><p>Primeiro a estratégia (você aprova). Depois a copy (você aprova). Depois a estrutura inteira, pronta: páginas no ar, vídeos editados, criativos prontos, automações testadas.</p></div></div>
+      <div class="passo vidro rev"><span class="n">05</span><div><h3>Descobrir → dizer → colocar no ar</h3><p>Primeiro o que tem dentro da caixa (você aprova). Depois a história e a copy (você aprova). Depois tudo no ar: páginas, vídeos, criativos e automações testadas.</p></div></div>
     </div>
   </div>
 </section>
@@ -542,11 +628,10 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;gap:2
     <h2 class="rev" style="font-size:clamp(56px,8vw,110px)">FAQ</h2>
     <div class="faq">
       <details class="rev" open><summary>Quanto custa?</summary><p>Depende do produto e do escopo. Desconfie de quem dá preço sem olhar o seu negócio. O valor sai no diagnóstico, com escopo fechado.</p></details>
+      <details class="rev"><summary>Cadê os cases?</summary><p>Os primeiros projetos entram como casos fundadores. [CONFIRMAR: condição real] E a prova você já viu: a série, o vídeo lá em cima e o Central Park.</p></details>
       <details class="rev"><summary>Vocês garantem faturamento?</summary><p>Não. E fuja de quem garante. Venda depende de mercado, audiência e tráfego. O que a gente entrega é estratégia, copy e estrutura prontas, no prazo combinado.</p></details>
-      <details class="rev"><summary>Mas eu já tenho time comercial.</summary><p>Ótimo. Pensa comigo: o seu vendedor vende mais fácil um produto que ele precisa explicar ou um produto que o cliente já chega querendo? A Vox não substitui o seu comercial. Tira o peso das costas dele.</p></details>
-      <details class="rev"><summary>Eu preciso mudar meu produto?</summary><p>Não. Esse é o ponto. A gente muda como o cliente enxerga o produto, não o produto.</p></details>
-      <details class="rev"><summary>Eu preciso gravar?</summary><p>Se o seu rosto é parte da oferta, sim. A gente roteiriza, dirige e edita. Você não precisa saber o que dizer: a gente te diz.</p></details>
-      <details class="rev"><summary>Quanto tempo leva?</summary><p>[PRAZO REAL]. Se você precisa para semana que vem, a gente vai ser honesto: não dá para fazer bem. E feito mal você já tem.</p></details>
+      <details class="rev"><summary>Eu preciso mudar meu produto?</summary><p>Não. Esse é o ponto. A gente não mexe na caixa. Faz o cliente saber o que tem dentro.</p></details>
+      <details class="rev"><summary>Quanto tempo leva?</summary><p>[PRAZO REAL]. Se é para semana que vem, não dá para fazer bem. E feito mal você já tem.</p></details>
     </div>
   </div>
 </section>
@@ -558,8 +643,8 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;gap:2
       <div class="bolha a"><svg><use href="#mic"/></svg></div>
       <div class="bolha b"><svg><use href="#raio"/></svg></div>
       <div class="bolha c"><svg><use href="#seta"/></svg></div>
-      <h2 class="rev"><span class="grad">Se o seu cliente enxergasse amanhã o que o seu produto vale,</span> <span class="grad-fogo">você ainda precisaria empurrar?</span></h2>
-      <p class="sub rev d1" style="margin:0 auto">Fechar essa distância é o que a Vox faz. Preencha com atenção: quem responde no automático não é chamado.</p>
+      <h2 class="rev"><span class="grad">Na cidade das caixas cinzas, quem só tem etiqueta vende pelo preço.</span> <span class="grad-fogo">Quem tem história tem fila.</span></h2>
+      <p class="sub rev d1" style="margin:0 auto">O seu produto não precisa mudar. Precisa que o seu cliente saiba o que tem dentro antes de abrir. São 3 minutos. Responde com atenção: quem responde no automático não é chamado.</p>
 
       <form class="form vidro rev d2" id="form" onsubmit="return enviar(event)">
         <div class="progresso"><i class="on"></i><i></i><i></i><i></i></div>
@@ -579,6 +664,9 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;gap:2
         </div>
         <div class="etapa">
           <h3>O diagnóstico</h3><p class="inc">É aqui que a gente separa curioso de cliente.</p>
+          <div class="campo"><label>É o melhor produto que você já criou?</label><select required name="melhor"><option value="">Escolha</option><option>Sim</option><option>Não</option></select></div>
+          <div class="campo"><label>Você olha pra ele e acha que está barato?</label><select required name="barato"><option value="">Escolha</option><option>Sim</option><option>Não</option></select></div>
+          <div class="campo"><label>Você compraria?</label><select required name="compraria"><option value="">Escolha</option><option>Sim</option><option>Não</option></select></div>
           <div class="campo"><label>O que você já tentou para vender mais?</label><select required name="tentou"><option value="">Escolha</option><option>Contratei vendedor/SDR</option><option>Assinei CRM</option><option>Aumentei tráfego</option><option>Refiz a página</option><option>Contratei agência</option><option>Nada ainda</option></select></div>
           <div class="campo"><label>O que aconteceu depois?</label><textarea required name="depois"></textarea></div>
           <div class="campo"><label>Em uma frase: por que alguém deveria comprar o seu produto e não o do concorrente?</label><textarea required name="porque"></textarea></div>
@@ -586,7 +674,7 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;gap:2
         </div>
         <div class="etapa">
           <h3>A pergunta que importa</h3><p class="inc">Última. Responda com calma.</p>
-          <div class="campo"><label>Se o seu cliente enxergasse amanhã o que o seu produto vale, o que mudaria no seu negócio?</label><textarea required name="mudaria"></textarea></div>
+          <div class="campo"><label>Se o seu cliente soubesse o que tem dentro da sua caixa antes de abrir, o que mudaria no seu negócio?</label><textarea required name="mudaria"></textarea></div>
           <div class="campo"><label>Para quando você precisa disso?</label><select required name="prazo"><option value="">Escolha</option><option>Em até 30 dias</option><option>30 a 60 dias</option><option>60 a 90 dias</option><option>Sem data</option></select></div>
           <p class="lgpd">Ao enviar, você concorda em ser contatado pela Vox por WhatsApp e e-mail sobre esta aplicação. [JURÍDICO: política de privacidade / LGPD]</p>
         </div>
@@ -608,6 +696,8 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;gap:2
 </footer>
 
 <script>
+// quem chega pelo fim da série (/?origem=serie) vê a continuidade no topo
+if(new URLSearchParams(location.search).get('origem')==='serie')document.getElementById('rot-hero').textContent='Você viu a série · Agora, o que a Dona Íris faz';
 // revelação ao rolar
 const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting){e.target.classList.add('on');io.unobserve(e.target)}}),{threshold:.15});
 document.querySelectorAll('.rev').forEach(el=>io.observe(el));
@@ -667,6 +757,21 @@ document.querySelectorAll('.case .img img').forEach(img=>{
 });
 const pausa=new IntersectionObserver(es=>es.forEach(e=>e.target.style.animationPlayState=e.isIntersecting?'running':'paused'));
 document.querySelectorAll('.case .img img').forEach(i=>pausa.observe(i));
+
+// a conta: "vou pensar" × preço
+const cQtd=document.getElementById('c-qtd'),cPreco=document.getElementById('c-preco'),cRes=document.getElementById('c-res');
+const brl=v=>v.toLocaleString('pt-BR',{style:'currency',currency:'BRL',maximumFractionDigits:0});
+const conta=()=>{const v=(+cQtd.value||0)*(+cPreco.value||0);cRes.textContent=brl(v);cRes.classList.toggle('on',v>0)};
+cQtd.addEventListener('input',conta);cPreco.addEventListener('input',conta);
+
+// o teste do Central Park: o nome só aparece depois do palpite
+const tVer=document.getElementById('t-ver'),tValor=document.getElementById('t-valor');
+tVer.addEventListener('click',()=>{
+  const v=+tValor.value;
+  document.getElementById('t-dito').textContent=v>0?`Você disse US$ ${v.toLocaleString('pt-BR')}.`:'Você nem chutou um valor. Tudo bem. Olha só:';
+  document.getElementById('t-revela').classList.add('on');tVer.style.display='none';tValor.disabled=true;
+});
+tValor.addEventListener('keydown',e=>{if(e.key==='Enter')tVer.click()});
 
 // formulário em etapas
 let atual=0;const etapas=[...document.querySelectorAll('.etapa')],barras=[...document.querySelectorAll('.progresso i')];
