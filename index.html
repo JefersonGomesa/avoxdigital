@@ -50,8 +50,13 @@ a{color:inherit;text-decoration:none}
 .wrap{width:min(1180px,100% - 40px);margin-inline:auto}
 .rotulo{font-size:12px;letter-spacing:.22em;text-transform:uppercase;color:var(--cinza)}
 .grad{background:linear-gradient(100deg,#fff 0%,#fff 35%,var(--brasa) 65%,var(--laranja) 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
-.feixe{background:linear-gradient(100deg,#ffd9c2 0%,var(--brasa) 22%,var(--laranja) 40%,#7a2208 48%,#c2410c 52%,var(--laranja) 60%,var(--brasa) 78%,#ffd9c2 100%);background-size:260% 100%;background-position:100% 0;-webkit-background-clip:text;background-clip:text;color:transparent;animation:feixe 5.5s cubic-bezier(.45,0,.2,1) infinite}
-@keyframes feixe{0%{background-position:100% 0}55%,100%{background-position:0% 0}}
+/* luz orgânica no título: dois clarões e uma sombra que derivam sem ciclo fixo (posições e intensidades vêm do JS) */
+.feixe{--x1:22%;--y1:40%;--x2:78%;--y2:60%;--x3:50%;--a1:.85;--a2:.6;--a3:.45;
+  background:radial-gradient(ellipse 30% 150% at var(--x1) var(--y1),rgba(255,236,222,var(--a1)),rgba(255,190,150,calc(var(--a1)*.35)) 45%,transparent 72%),
+    radial-gradient(ellipse 24% 140% at var(--x2) var(--y2),rgba(255,214,186,var(--a2)),transparent 70%),
+    radial-gradient(ellipse 22% 170% at var(--x3) 50%,rgba(122,34,8,var(--a3)),transparent 75%),
+    linear-gradient(100deg,var(--brasa) 0%,var(--laranja) 55%,#e4501a 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent}
 .grad-fogo{background:linear-gradient(100deg,#ffd9c2 0%,var(--brasa) 40%,var(--laranja) 70%,#c2410c 100%);-webkit-background-clip:text;background-clip:text;color:transparent}
 h1,h2,h3{font-weight:500;letter-spacing:-.035em;line-height:1.02}
 h2{font-size:clamp(36px,5.2vw,68px)}
@@ -792,6 +797,22 @@ addEventListener('scroll',()=>{
   // nome gigante: sobe, cresce e borra com a rolagem
   if(y<1400)nome.style.transform=`translateX(-50%) translateY(${y*.35}px) scale(${1+y*.00025})`,nome.style.opacity=Math.max(0,1-y/1100);
 },{passive:true});
+// luz orgânica no título: soma de senos com frequências que não se repetem juntas (sem começo e fim visíveis)
+(()=>{const f=document.querySelector('.feixe');if(!f||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
+  let vis=true;new IntersectionObserver(([e])=>vis=e.isIntersecting).observe(f);
+  const ond=(t,a,b,c,d)=>(Math.sin(t*a+b)+.6*Math.sin(t*c+d))/1.6;   // -1..1, lento e irregular
+  const t0=performance.now();
+  const passo=agora=>{if(vis){const t=(agora-t0)/1000,st=f.style;
+    st.setProperty('--x1',(50+46*ond(t,.21,0,.53,1.7)).toFixed(1)+'%');
+    st.setProperty('--y1',(45+30*ond(t,.37,2,.19,.4)).toFixed(1)+'%');
+    st.setProperty('--x2',(50-44*ond(t,.17,1.3,.43,3.1)).toFixed(1)+'%');
+    st.setProperty('--y2',(55+28*ond(t,.29,.8,.61,2.2)).toFixed(1)+'%');
+    st.setProperty('--x3',(50+40*ond(t,.13,4,.31,.9)).toFixed(1)+'%');
+    st.setProperty('--a1',(.62+.33*ond(t,.47,.5,1.13,2.6)).toFixed(3));
+    st.setProperty('--a2',(.42+.3*ond(t,.39,3.3,.83,.2)).toFixed(3));
+    st.setProperty('--a3',(.32+.22*ond(t,.23,1.1,.71,4.2)).toFixed(3))}
+    requestAnimationFrame(passo)};
+  requestAnimationFrame(passo)})();
 // luz orbitando a logo: acelera e freia, muda de ângulo, passa na frente e por trás
 (()=>{const o=document.getElementById('orbe');if(!o||matchMedia('(prefers-reduced-motion: reduce)').matches)return;
   let ang=0,t=0,ult=performance.now();
