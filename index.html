@@ -120,6 +120,18 @@ nav .btn .ic{width:42px;border-radius:12px}
 .maos{position:absolute;left:50%;top:3%;transform:translateX(-50%);width:clamp(460px,54vw,820px);aspect-ratio:3/4;z-index:3}
 .maos::before{content:"";position:absolute;left:20%;right:20%;top:2%;height:58%;border-radius:50%;background:radial-gradient(ellipse,rgba(255,109,41,.45),transparent 70%);filter:blur(40px);z-index:0}
 .maos>img{position:absolute;inset:0;width:100%;height:100%;z-index:2;pointer-events:none;-webkit-mask-image:linear-gradient(180deg,#000 52%,rgba(0,0,0,.55) 66%,transparent 84%);mask-image:linear-gradient(180deg,#000 52%,rgba(0,0,0,.55) 66%,transparent 84%)}
+/* notebook aberto (só desktop) */
+.notebook{display:none;position:absolute;left:50%;top:5%;width:min(60vw,980px);transform:translateX(-50%);z-index:3}
+.notebook::before{content:"";position:absolute;left:8%;right:8%;top:6%;height:80%;border-radius:50%;background:radial-gradient(ellipse,rgba(255,109,41,.5),transparent 70%);filter:blur(60px);z-index:-1}
+.notebook .tampa{position:relative;aspect-ratio:16/10.3;padding:1.8% 1.8% 2.6%;border-radius:20px 20px 8px 8px;background:linear-gradient(180deg,#1e1a1c,#0d0b0c);border:1px solid rgba(255,255,255,.14);box-shadow:inset 0 0 0 2px #2b2629,0 30px 90px rgba(0,0,0,.6),0 0 70px rgba(255,109,41,.18)}
+.notebook .tampa::before{content:"";position:absolute;left:50%;top:.75%;width:6px;height:6px;border-radius:50%;background:#2f2a2c;box-shadow:inset 0 0 0 1px #444;transform:translateX(-50%)}
+.notebook .ecra{position:relative;width:100%;height:100%;border-radius:6px;overflow:hidden;background:#000}
+.notebook .tela-serie img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top}
+.notebook .tela-serie .som{position:absolute;left:50%;bottom:7%;transform:translateX(-50%);z-index:2;font:500 13px var(--fonte);padding:9px 16px;border-radius:30px;background:rgba(255,109,41,.9);border:1px solid var(--laranja);color:#fff;box-shadow:0 0 30px rgba(255,109,41,.5);white-space:nowrap}
+.notebook .reflexo{position:absolute;inset:0;pointer-events:none;background:linear-gradient(115deg,rgba(255,255,255,.07) 0%,transparent 35%)}
+.notebook .base{position:relative;height:clamp(12px,1.3vw,20px);margin:0 -8%;border-radius:2px 2px 18px 18px;background:linear-gradient(180deg,#4a4346,#231f21 60%,#141113);box-shadow:0 18px 40px rgba(0,0,0,.6)}
+.notebook .base::before{content:"";position:absolute;left:50%;top:0;width:14%;height:45%;border-radius:0 0 10px 10px;background:#161314;transform:translateX(-50%)}
+@media (min-width:901px){.notebook{display:block}.maos{display:none}.palco{height:calc(min(60vw,980px) * .74)}.palco::after{height:16%}}
 .tela{position:absolute;left:37.4%;top:10%;width:26.8%;height:41.6%;border-radius:11% / 5.2%;overflow:hidden;background:#0c0a0b;z-index:1}
 .tela video,.tela-serie img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top}
 .tela-serie{position:absolute;inset:0;display:block;pointer-events:auto;z-index:5}
@@ -158,7 +170,8 @@ nav .btn .ic{width:42px;border-radius:12px}
 .cena-sec{overflow:hidden}
 .cena-fundo{position:absolute;inset:0;background:radial-gradient(ellipse 45% 65% at 72% 50%,rgba(255,109,41,.75),rgba(194,65,12,.35) 45%,transparent 75%),var(--grafite)}
 .cena-fundo::after{content:"";position:absolute;right:16%;top:12%;width:min(420px,40vw);height:80%;border-radius:45% 45% 10% 10%;background:radial-gradient(ellipse at 50% 30%,rgba(22,19,22,.95),rgba(22,19,22,.6) 60%,transparent 75%);filter:blur(6px)}
-.cena-grid{position:relative;z-index:2;display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:center}
+.cena-grid{position:relative;z-index:2;display:grid;grid-template-columns:1fr 1fr;gap:36px;align-items:center}
+.cena-sec.revelado .cena-grid{align-items:start}
 .cartela{display:inline-block;font-size:12px;letter-spacing:.3em;padding:8px 14px;border-radius:10px;background:rgba(255,109,41,.14);border:1px solid rgba(255,109,41,.4);color:var(--brasa);margin-bottom:22px}
 .historia{padding:34px}
 .historia p{font-size:19px;margin-bottom:10px;color:#eee}
@@ -303,6 +316,7 @@ nav .btn .ic{width:42px;border-radius:12px}
 
 footer{padding:50px 0;border-top:1px solid var(--vidro-borda);color:var(--cinza);font-size:13px}
 footer .wrap{display:flex;justify-content:space-between;align-items:center;gap:20px;flex-wrap:wrap}
+footer .marca img{width:30px;height:30px;flex:none}
 
 /* ===== responsivo ===== */
 /* cidade das caixas cinzas */
@@ -333,6 +347,34 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;gap:2
 .teste input{width:150px;padding:13px 14px;border-radius:12px;border:1px solid var(--vidro-borda);background:rgba(255,255,255,.05);color:#fff;font:16px var(--fonte)}
 .teste input:focus{outline:none;border-color:rgba(255,109,41,.7);box-shadow:0 0 0 4px rgba(255,109,41,.12)}
 .revela{display:none;margin-top:22px;padding-top:18px;border-top:1px solid var(--vidro-borda)}
+.revela .dito{color:var(--cinza);font-size:17px}
+/* galeria: a revelação, em tom claro de parede de galeria */
+.galeria{display:none;position:relative;border-radius:22px;padding:28px;background:linear-gradient(180deg,#f3ece3,#e6dccf);color:#1b1618;box-shadow:0 30px 80px rgba(0,0,0,.45),0 0 0 1px rgba(255,255,255,.4) inset;overflow:hidden}
+.galeria::before{content:"";position:absolute;left:10%;top:-30%;width:60%;height:90%;background:radial-gradient(ellipse at 50% 0%,rgba(255,255,255,.95),rgba(255,236,214,.35) 45%,transparent 70%);pointer-events:none}
+.galeria.on{display:block;animation:abre-dir .8s cubic-bezier(.2,.7,.2,1) both}
+@keyframes abre-dir{from{opacity:0;transform:translateX(60px) scale(.98)}}
+.g-rot{position:relative;display:inline-block;font:600 11px/1 var(--fonte);letter-spacing:.24em;text-transform:uppercase;color:#a6461c}
+.g-topo{position:relative;display:grid;grid-template-columns:minmax(150px,.85fr) 1fr;gap:24px;align-items:center;margin-top:18px}
+.g-quadro{margin:0}
+.g-quadro svg{display:block;width:100%;height:auto;border:10px solid #2a2325;border-radius:3px;box-shadow:0 18px 40px rgba(40,25,15,.45),0 2px 0 #4a3e38}
+.g-quadro figcaption{margin-top:10px;font-size:11px;line-height:1.35;color:#7a6d66}
+.g-texto h3{font-size:clamp(26px,2.6vw,36px);font-weight:600;letter-spacing:-.035em;line-height:1.05}
+.g-texto h3 em{font-style:normal;color:#d2551f}
+.g-texto p{margin-top:10px;font-size:16px;line-height:1.5;color:#4a403c}
+.g-precos{display:grid;gap:10px;margin-top:18px}
+.g-preco{padding:12px 14px;border-radius:12px;background:rgba(255,255,255,.55);border:1px solid rgba(60,40,30,.12)}
+.g-preco span{display:block;font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:#7a6d66}
+.g-preco b{display:block;font-size:26px;font-weight:600;letter-spacing:-.03em;line-height:1.15}
+.g-preco small{font-size:12px;color:#7a6d66}
+.g-preco.antes b{text-decoration:line-through;text-decoration-color:#d2551f;text-decoration-thickness:3px;color:#7a6d66}
+.g-preco.depois{background:#1b1618;border-color:#1b1618;color:#fff;box-shadow:0 10px 30px rgba(210,85,31,.35)}
+.g-preco.depois span,.g-preco.depois small{color:#c9bdb6}.g-preco.depois b{color:#FF9A5C}
+.g-pergunta{position:relative;margin-top:24px;font-size:clamp(26px,2.6vw,36px);font-weight:500;letter-spacing:-.035em;line-height:1.1}
+.g-pergunta span{color:#d2551f}
+.g-fecho{position:relative;margin-top:10px;font-size:16px;line-height:1.55;color:#4a403c}
+.cena-sec.revelado .cena-fundo::after{opacity:0;transition:opacity .6s}
+@media (max-width:900px){.galeria.on{animation-name:abre-baixo}.g-topo{grid-template-columns:1fr}.g-quadro{max-width:260px;margin:0 auto}}
+@keyframes abre-baixo{from{opacity:0;transform:translateY(40px)}}
 .revela.on{display:block;animation:surge .7s ease}
 @keyframes surge{from{opacity:0;transform:translateY(12px)}}
 /* prova de 2ª camada */
@@ -403,6 +445,14 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;gap:2
 
   <div class="palco">
     <img class="nome-gigante" src="assets/hero/nome-gigante.webp" alt="" aria-hidden="true" />
+    <!-- desktop: notebook aberto mostrando a série; no celular continuam as mãos com o celular -->
+    <div class="notebook">
+      <div class="tampa"><div class="ecra">
+        <a class="tela-serie" href="serie/" aria-label="Assistir a série Caixa Cinza"><img src="assets/hero/tela-serie-desktop.webp" alt="Página da série Caixa Cinza aberta no notebook" loading="lazy" /><span class="som">▶ assistir a série</span></a>
+        <span class="reflexo" aria-hidden="true"></span>
+      </div></div>
+      <div class="base" aria-hidden="true"></div>
+    </div>
     <div class="maos">
       <div class="tela">
         <!-- [VSL v6 em produção] enquanto isso, a tela mostra a série "Caixa Cinza" e leva até ela -->
@@ -504,16 +554,46 @@ footer .wrap{display:flex;justify-content:space-between;align-items:center;gap:2
           <button type="button" class="btn prim" id="t-ver"><span class="ic"><svg><use href="#seta"/></svg></span><span class="tx">Ver de quem eram</span></button>
         </div>
         <div class="revela" id="t-revela">
-          <p id="t-dito" style="color:var(--cinza)"></p>
-          <p>Os quadros eram do <strong>Banksy</strong>. Originais, assinados. O próprio artista mandou montar a barraca.</p>
-          <p>Em 2014, duas dessas telas foram leiloadas em Londres por <strong>125 mil libras</strong>.</p>
-          <p class="virada">E agora: <span class="grad-fogo">quanto você pagaria?</span></p>
-          <p style="color:var(--cinza)">Ninguém pintou nada de novo. O spray é o mesmo. O papel é o mesmo. Você só soube o que tinha dentro da caixa.</p>
+          <p id="t-dito" class="dito"></p>
           <p class="virada">Isso é o que a Dona Íris faz. <span class="grad-fogo">E você sentiu agora, em três linhas.</span></p>
         </div>
       </div>
     </div>
-    <div></div>
+    <!-- a revelação abre à direita (desktop) ou embaixo (celular), em tom de galeria -->
+    <aside class="galeria" id="t-galeria" aria-live="polite">
+      <span class="g-rot">De quem eram os quadros</span>
+      <div class="g-topo">
+        <figure class="g-quadro">
+          <svg viewBox="0 0 300 400" role="img" aria-label="Ilustração de exemplo: tela em estêncil de spray com uma caixa e uma luz laranja dentro">
+            <defs><filter id="spray"><feTurbulence type="fractalNoise" baseFrequency=".9" numOctaves="2" result="r"/><feDisplacementMap in="SourceGraphic" in2="r" scale="3"/></filter>
+            <radialGradient id="dentro"><stop offset="0" stop-color="#FF9A5C"/><stop offset="1" stop-color="#FF6D29" stop-opacity="0"/></radialGradient></defs>
+            <rect width="300" height="400" fill="#f1ebe2"/>
+            <g filter="url(#spray)" fill="#161316">
+              <circle cx="40" cy="60" r="2"/><circle cx="252" cy="88" r="1.6"/><circle cx="70" cy="330" r="2.4"/><circle cx="236" cy="300" r="1.4"/><circle cx="58" cy="120" r="1.2"/>
+              <path d="M70 230 L150 270 L230 230 L230 330 L150 370 L70 330 Z" opacity=".92"/>
+              <path d="M70 230 L150 190 L230 230 L150 270 Z" fill="#3a3537"/>
+              <path d="M70 230 L28 196 L108 160 L150 190 Z M230 230 L272 196 L192 160 L150 190 Z" opacity=".85"/>
+              <rect x="96" y="330" width="4" height="34" rx="2"/><rect x="132" y="352" width="3" height="26" rx="1.5"/><rect x="206" y="322" width="4" height="40" rx="2"/>
+              <path d="M180 300 l22 -11 l0 14 l-22 11 z" fill="#f1ebe2"/>
+            </g>
+            <ellipse cx="150" cy="175" rx="70" ry="80" fill="url(#dentro)" opacity=".9"/>
+            <path d="M150 214 c-26 -18 -36 -32 -26 -44 c8 -9 20 -6 26 4 c6 -10 18 -13 26 -4 c10 12 0 26 -26 44z" fill="#FF6D29" filter="url(#spray)"/>
+            <text x="252" y="384" font-family="Georgia,serif" font-style="italic" font-size="13" fill="#161316" opacity=".7">exemplo</text>
+          </svg>
+          <figcaption>Ilustração de exemplo. As telas originais não aparecem aqui por direitos autorais.</figcaption>
+        </figure>
+        <div class="g-texto">
+          <h3>Eram do <em>Banksy</em>.</h3>
+          <p>Originais, assinados. O próprio artista mandou montar a barraca.</p>
+          <div class="g-precos">
+            <div class="g-preco antes"><span>Na barraca, em 2013</span><b>US$ 60</b></div>
+            <div class="g-preco depois"><span>Em leilão, Londres, 2014</span><b>£ 125 mil</b><small>duas dessas telas</small></div>
+          </div>
+        </div>
+      </div>
+      <p class="g-pergunta">E agora: <span>quanto você pagaria?</span></p>
+      <p class="g-fecho">Ninguém pintou nada de novo. O spray é o mesmo. O papel é o mesmo. Você só soube o que tinha dentro da caixa.</p>
+    </aside>
   </div>
 </section>
 
@@ -772,6 +852,8 @@ tVer.addEventListener('click',()=>{
   const v=+tValor.value;
   document.getElementById('t-dito').textContent=v>0?`Você disse US$ ${v.toLocaleString('pt-BR')}.`:'Você nem chutou um valor. Tudo bem. Olha só:';
   document.getElementById('t-revela').classList.add('on');tVer.style.display='none';tValor.disabled=true;
+  const gal=document.getElementById('t-galeria');gal.classList.add('on');document.getElementById('teste').classList.add('revelado');
+  if(matchMedia('(max-width:900px)').matches)setTimeout(()=>gal.scrollIntoView({behavior:'smooth',block:'start'}),250);
 });
 tValor.addEventListener('keydown',e=>{if(e.key==='Enter')tVer.click()});
 
