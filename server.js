@@ -10,7 +10,7 @@ const TIPOS = {
   ".html": "text/html; charset=utf-8", ".css": "text/css", ".js": "text/javascript", ".json": "application/json",
   ".svg": "image/svg+xml", ".png": "image/png", ".jpg": "image/jpeg", ".jpeg": "image/jpeg", ".webp": "image/webp",
   ".gif": "image/gif", ".ico": "image/x-icon", ".mp4": "video/mp4", ".webm": "video/webm", ".mp3": "audio/mpeg",
-  ".woff2": "font/woff2", ".txt": "text/plain; charset=utf-8", ".xml": "application/xml",
+  ".woff2": "font/woff2", ".webmanifest": "application/manifest+json", ".txt": "text/plain; charset=utf-8", ".xml": "application/xml",
 };
 const PRIVADOS = new Set(["server.js", "package.json", "package-lock.json"]);
 
@@ -31,7 +31,16 @@ http.createServer((req, res) => {
   const semQuery = req.url.split("?")[0];
   if (semQuery === "/serie") { res.writeHead(301, { Location: "/serie/" + (req.url.slice(6) || "") }); return res.end(); }
 
-  const alvo = arquivo(req.url);
+  // Painel de finanças (app React em financas/, gerado pelo projeto "contador"):
+  // /financas → /financas/; rotas internas sem arquivo abrem o index.html; fora dos buscadores
+  if (semQuery === "/financas") { res.writeHead(301, { Location: "/financas/" + (req.url.slice(9) || "") }); return res.end(); }
+  const painel = semQuery.startsWith("/financas/");
+  if (painel) {
+    res.setHeader("X-Robots-Tag", "noindex, nofollow");
+    res.setHeader("X-Frame-Options", "DENY");
+  }
+
+  const alvo = arquivo(req.url) || (painel && !path.extname(semQuery) ? path.join(RAIZ, "financas", "index.html") : null);
   if (!alvo) { res.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" }); return res.end("Página não encontrada"); }
 
   const tipo = TIPOS[path.extname(alvo).toLowerCase()] || "application/octet-stream";
