@@ -357,7 +357,7 @@
         <div class="note" id="live" style="margin:10px 6px 0;display:${LIVE ? "block" : "none"}"><span class="dot" style="display:inline-block;background:${S.live ? "var(--verde)" : "var(--cinza)"}"></span> <span>${S.live ? "Live" : "Connecting"}</span></div>
         <div class="note" style="margin:4px 6px 0;line-height:1.5">${window.DESK_IMPORT ? `<i class="ti ti-brand-slack"></i> Slack sync<br>${esc(fStamp(window.DESK_IMPORT.synced_at))}` : ""}</div>
         <div class="me" style="margin-top:10px"><b>${esc(S.me.name)}</b>${esc(S.me.team === "clicklab" ? "ClickLab" : "Pineda Partners")}${LIVE ? "" : " · demo"}<br><button data-act="logout">Sign out</button></div>
-      </aside><main class="main" id="main"></main></div><div id="over"></div>`;
+      </aside><main class="main" id="main"></main></div><div id="over"></div><div id="chat"></div>`;
     }
     renderMain(); renderOver();
   }
@@ -367,7 +367,7 @@
   function onRender() {
     if (!S.me) return;
     if (pres && S.presOn) { const j = JSON.stringify(myPresence()); if (j !== lastTrack) { lastTrack = j; pres.track(myPresence()); } }
-    paintPresence();
+    paintPresence(); renderChat();
   }
   function paintPresence() {
     const pt = window.DESK_I18N && window.DESK_I18N.get() === "pt";
@@ -383,11 +383,31 @@
   window.__deskPresencePreview = l => { S.online = l; paintPresence(); }; /* preview only: changes this browser, nothing is sent */
   function startPresence() {
     pres = sb.channel("desk-presence", { config: { presence: { key: S.me.name } } });
-    pres.on("presence", { event: "sync" }, () => { const st = pres.presenceState(); S.online = Object.values(st).map(a => a[a.length - 1]).filter(Boolean); paintPresence(); })
+    pres.on("presence", { event: "sync" }, () => { const st = pres.presenceState(); S.online = Object.values(st).map(a => a[a.length - 1]).filter(Boolean); paintPresence(); renderChat(); })
       .subscribe(st => { S.presOn = st === "SUBSCRIBED"; if (S.presOn) { lastTrack = ""; onRender(); } });
     const setTyping = v => { if (typing === v) return; typing = v; onRender(); };
     document.addEventListener("focusin", e => { if (e.target.closest && e.target.closest(".drawer") && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) setTyping(true); });
     document.addEventListener("focusout", () => setTimeout(() => { const a = document.activeElement; if (!(a && a.closest && a.closest(".drawer") && /INPUT|TEXTAREA|SELECT/.test(a.tagName))) setTyping(false); }, 200));
+  }
+  /* ---------- team chat: comments with request_id "team" ---------- */
+  const teamMsgs = () => S.items.comments.filter(c => c.request_id === "team").sort((a, b) => a.at.localeCompare(b.at));
+  const chatRead = () => { try { return localStorage.getItem("voxdesk-chatread") || ""; } catch (e) { return ""; } };
+  function renderChat() {
+    const box = $("#chat"); if (!box || !S.me) return;
+    const msgs = teamMsgs();
+    if (S.chat) { try { localStorage.setItem("voxdesk-chatread", now()); } catch (e) {} }
+    const unread = S.chat ? 0 : msgs.filter(m => m.author !== S.me.name && m.at > chatRead()).length;
+    if (!$("#chatbtn")) box.innerHTML = `<button class="chatbtn" id="chatbtn" data-act="chat" aria-label="Team chat"><i class="ti ti-messages"></i><b id="chatn"></b></button><div class="chatpanel" id="chatpanel"><div class="chath"><i class="ti ti-messages"></i><span>Team chat</span><small id="chaton"></small><button class="btn ghost sm" data-act="chat" style="margin-left:auto"><i class="ti ti-x"></i></button></div><div class="chatlist" id="chatlist"></div><div class="chatin"><textarea class="txt" id="chatinput" rows="1" placeholder="Write to the team"></textarea><button class="btn pri sm" data-act="chatsend">Send</button></div></div>`;
+    $("#chatpanel").style.display = S.chat ? "flex" : "none";
+    $("#chatn").textContent = unread || ""; $("#chatn").style.display = unread ? "" : "none";
+    const others = (S.online || []).filter(u => u.name !== S.me.name);
+    $("#chaton").textContent = others.length ? "· " + others.map(u => u.name).join(", ") + " online" : "";
+    const list = $("#chatlist"), atEnd = list.scrollHeight - list.scrollTop - list.clientHeight < 60, n0 = list.dataset.n;
+    let day = "";
+    list.innerHTML = msgs.map(m => { const d = fDay(+new Date(m.at), MYZ), head = d !== day ? `<div class="chatday">${esc(d)}</div>` : ""; day = d; const mine = m.author === S.me.name; return head + `<div class="msg${mine ? " mine" : ""}">${mine ? "" : `<span class="av">${esc(initials(m.author))}</span>`}<div><div class="mh">${mine ? "" : `<b>${esc(m.author)}</b>`}${esc(fTime(+new Date(m.at), MYZ, BR))}</div><div class="mb">${mentions(m.body)}</div></div></div>`; }).join("") || `<div class="empty">No messages yet. Say hi to the team.</div>`;
+    list.dataset.n = msgs.length;
+    if (S.chat && (atEnd || n0 !== String(msgs.length))) list.scrollTop = list.scrollHeight;
+    if (window.DESK_I18N) window.DESK_I18N.apply(box);
   }
   function toast(t) { const e = document.createElement("div"); e.className = "toast"; e.textContent = t; document.body.appendChild(e); setTimeout(() => e.remove(), 2600); }
 
@@ -448,6 +468,8 @@
       save(d.k, o); log((d.fld === "links" ? "added the link " : "added ") + '"' + v + '"', d.k === "requests" ? o.id : null, d.k === "requests" ? o.client_id : o.id, "", v); render(); const n = $(`[data-add="${d.k}|${d.id}|${d.fld}"]`); if (n) n.focus();
     },
     asg(d) { const r = get("requests", d.id), was = asg(r), l = was.includes(d.n) ? was.filter(x => x !== d.n) : [...was, d.n]; r.assignees = l; r.assignee = l[0] || ""; save("requests", r); log(l.length ? "assigned to " + l.join(" and ") : "assigned to nobody", r.id, r.client_id, was.join(", "), l.join(", ")); render(); },
+    chat() { S.chat = !S.chat; renderChat(); if (S.chat) { const l = $("#chatlist"); l.scrollTop = l.scrollHeight; $("#chatinput").focus(); } },
+    chatsend() { const b = $("#chatinput"), v = b.value.trim(); if (!v) return b.focus(); const c = { id: uid(), request_id: "team", author: S.me.name, body: v, at: now() }; S.items.comments.push(c); save("comments", c); b.value = ""; renderChat(); const l = $("#chatlist"); l.scrollTop = l.scrollHeight; b.focus(); },
     at(d) { const b = $("#cbox"); b.value += (b.value && !/\s$/.test(b.value) ? " " : "") + "@" + d.n + " "; b.focus(); },
     comment(d) {
       const b = $("#cbox"), v = b.value.trim(); if (!v) return b.focus();
@@ -470,9 +492,10 @@
     A[el.dataset.act] && A[el.dataset.act](el.dataset, e);
   });
   document.addEventListener("keydown", e => {
-    if (e.key === "Escape") { if (S.modal) A.closemodal(); else if (S.open) A.close(); }
+    if (e.key === "Escape") { if (S.modal) A.closemodal(); else if (S.open) A.close(); else if (S.chat) A.chat(); }
     if (e.key === "Enter" && e.target.dataset.add) { const [k, id, fld] = e.target.dataset.add.split("|"); A.liadd({ k, id, fld }); }
     if (e.key === "Enter" && e.target.id === "lemail") A.login();
+    if (e.key === "Enter" && !e.shiftKey && e.target.id === "chatinput") { e.preventDefault(); A.chatsend(); }
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && e.target.id === "cbox" && S.open) A.comment({ id: S.open });
   });
   document.addEventListener("input", e => {
@@ -526,7 +549,7 @@
             if (i < 0) l.push(o); else l[i] = o;
             const who = (S.members.find(m => m.email === row.updated_by) || {}).name || (row.updated_by === "slack-sync" ? "Slack" : "");
             if (row.kind === "requests" && who) toast(i < 0 ? who + ": new request · " + (o.title || "") : who + " updated · " + (o.title || ""));
-            if (row.kind === "comments" && who) { const r = get("requests", o.request_id); toast(o.author + " commented" + (r ? " · " + (r.title || "") : "")); }
+            if (row.kind === "comments" && who) { if (o.request_id === "team") { if (!S.chat) toast(o.author + ": " + (o.body.length > 70 ? o.body.slice(0, 70) + "…" : o.body)); renderChat(); } else { const r = get("requests", o.request_id); toast(o.author + " commented" + (r ? " · " + (r.title || "") : "")); } }
           }
           S.dirty = true; flush();
         }).subscribe(st => { setLive(st === "SUBSCRIBED"); if (st === "SUBSCRIBED") reload(); });

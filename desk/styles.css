@@ -187,3 +187,23 @@ a.pill:hover{background:rgba(255,109,41,.25);color:var(--brasa)}
 .pres{display:flex;align-items:center;gap:6px;margin-top:9px;padding:6px 8px;border-radius:9px;background:rgba(95,211,154,.1);border:1px solid rgba(95,211,154,.35);font-size:11.5px;color:var(--verde)}
 .pres.big{margin:0 0 10px;font-size:12.5px;padding:8px 10px}
 @media(max-width:900px){#online{display:none}}
+
+.chatbtn{position:fixed;right:22px;bottom:22px;z-index:30;width:54px;height:54px;border-radius:50%;border:0;background:var(--laranja);color:var(--grafite);cursor:pointer;box-shadow:0 10px 34px rgba(255,109,41,.45);display:flex;align-items:center;justify-content:center}
+.chatbtn i{font-size:25px}
+.chatbtn:hover{background:var(--brasa)}
+.chatbtn b{position:absolute;top:-4px;right:-4px;min-width:21px;height:21px;border-radius:11px;background:var(--branco);color:var(--grafite);font-size:11.5px;font-weight:600;display:flex;align-items:center;justify-content:center;padding:0 5px;border:2px solid var(--grafite)}
+.chatpanel{position:fixed;right:22px;bottom:88px;z-index:30;width:min(380px,calc(100vw - 24px));height:min(540px,calc(100vh - 120px));background:#1b171a;border:1px solid var(--borda2);border-radius:20px;box-shadow:0 30px 90px rgba(0,0,0,.6);flex-direction:column;overflow:hidden}
+.chath{display:flex;align-items:center;gap:8px;padding:12px 14px;border-bottom:1px solid var(--borda);font-weight:500}
+.chath i{color:var(--laranja);font-size:18px}
+.chath small{color:var(--verde);font-weight:400;font-size:11.5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.chatlist{flex:1;overflow:auto;padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.chatday{align-self:center;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--cinza);margin:4px 0}
+.msg{display:flex;gap:8px;max-width:88%}
+.msg.mine{align-self:flex-end}
+.msg .mh{font-size:11px;color:var(--cinza);margin-bottom:2px;display:flex;gap:6px}
+.msg .mh b{color:var(--branco);font-weight:500}
+.msg.mine .mh{justify-content:flex-end}
+.msg .mb{background:rgba(255,255,255,.06);border:1px solid var(--borda);border-radius:4px 14px 14px 14px;padding:8px 11px;word-break:break-word}
+.msg.mine .mb{background:rgba(255,109,41,.16);border-color:rgba(255,109,41,.4);border-radius:14px 4px 14px 14px}
+.chatin{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--borda);align-items:flex-end}
+.chatin .txt{min-height:40px;max-height:110px;resize:none}
