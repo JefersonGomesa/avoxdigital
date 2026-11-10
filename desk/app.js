@@ -150,6 +150,8 @@
 
   /* ---------- small renderers ---------- */
   const asg = r => Array.isArray(r.assignees) ? r.assignees : (r.assignee ? [r.assignee] : []);
+  /* Who moved the request between columns: last move of each person, oldest first. */
+  const movers = r => { const m = new Map(); S.items.activity.filter(a => a.ref === r.id && /^set status to/.test(a.text)).sort((a, b) => a.at.localeCompare(b.at)).forEach(a => { m.delete(a.actor); m.set(a.actor, a); }); return [...m.values()]; };
   const typeOf = r => TYPES.find(t => t.id === r.type) || TYPES[1];
   const prog = l => { const n = (l || []).length, d = (l || []).filter(x => x.done).length; return { n, d, pct: n ? Math.round(d / n * 100) : 0 }; };
   const opt = (v, l, cur) => `<option value="${esc(v)}"${v === cur ? " selected" : ""}>${esc(l)}</option>`;
@@ -179,6 +181,7 @@
       `<div class="add"><input class="inp" placeholder="Paste a link (Drive, page, Zoom, doc)" data-add="${kind}|${id}|links"><button class="btn sm" data-act="liadd" data-k="${kind}" data-id="${id}" data-fld="links"><i class="ti ti-plus"></i>Add</button></div>`;
   }
   function cardHTML(r) {
+    const mv = movers(r);
     const p = prog(r.checklist), t = typeOf(r), late = r.due_date && r.due_date < today() && r.status !== "done" && r.status !== "tested";
     return `<div class="card" draggable="true" data-act="open" data-id="${r.id}">
       <div style="display:flex;gap:8px;align-items:flex-start"><div style="flex:1;min-width:0"><div class="cl">${esc(clientName(r.client_id))}</div><div class="sub">${esc(r.title || t.label)}</div></div><button class="chk${r.status === "done" ? " on" : ""}" data-act="quick" data-id="${r.id}" title="${r.status === "done" ? "Reopen" : "Mark as done"}" aria-label="Mark as done">${r.status === "done" ? '<i class="ti ti-check"></i>' : ""}</button></div>
@@ -191,7 +194,8 @@
       ${r.due_date ? `<span class="pill${late ? " r" : ""}">Due ${esc(fDue(r.due_date))}</span>` : ""}
       ${p.n ? `<span>${p.d}/${p.n}</span>` : ""}
       ${r.slack_url ? `<a class="pill" href="${esc(r.slack_url)}" target="_blank" rel="noopener" style="text-decoration:none" title="Open the message in Slack"><i class="ti ti-brand-slack"></i>Slack</a>` : r.src === "slack" ? `<i class="ti ti-brand-slack" title="From Slack"></i>` : ""}
-      <span style="margin-left:auto;display:inline-flex;gap:3px">${asg(r).map(n => `<span class="av" title="${esc(n)}">${esc(initials(n))}</span>`).join("")}</span></div></div>`;
+      <span style="margin-left:auto;display:inline-flex;gap:3px">${asg(r).map(n => `<span class="av" title="Assigned to ${esc(n)}">${esc(initials(n))}</span>`).join("")}</span></div>
+      ${mv.length ? `<div class="mv"><i class="ti ti-arrows-exchange"></i><span>Moved by</span>${mv.map(m => `<span class="av m" title="${esc(m.actor)} · ${esc(m.text.replace("set status to", "→"))} · ${esc(fStamp(m.at))}">${esc(initials(m.actor))}</span>`).join("")}<small>${esc(fStamp(mv[mv.length - 1].at))}</small></div>` : ""}</div>`;
   }
 
   /* ---------- views ---------- */

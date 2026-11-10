@@ -168,3 +168,9 @@ details.hist[open] summary .ti-chevron-down{transform:rotate(180deg)}
 .card .q span{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
 .card .q b{color:var(--branco);font-weight:500}
 a.pill:hover{background:rgba(255,109,41,.25);color:var(--brasa)}
+
+.mv{display:flex;align-items:center;gap:5px;margin-top:9px;padding-top:8px;border-top:1px solid rgba(255,255,255,.07);font-size:11.5px;color:var(--cinza)}
+.mv i{font-size:14px;color:var(--laranja)}
+.mv small{margin-left:auto;font-size:11px;color:rgba(186,186,186,.65)}
+.av.m{background:var(--laranja);border-color:var(--laranja);color:var(--grafite)}
+.mv span,.mv small{white-space:nowrap}

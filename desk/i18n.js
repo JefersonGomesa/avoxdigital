@@ -24,7 +24,7 @@
     "Paste the copy or the instruction here.": "Cole a copy ou a instrução aqui.", "Brand colours, rules, anything the team must know": "Cores da marca, regras e tudo que a equipe precisa saber", "Brand or program": "Marca ou programa", "What needs to be done": "O que precisa ser feito",
     "Requests, deliveries and launch dates in one place.": "Pedidos, entregas e datas de lançamento em um só lugar.", "Enter": "Entrar", "Email me a sign-in link": "Enviar link de acesso por e-mail",
     "Demo mode. Data stays in this browser only.": "Modo demonstração. Os dados ficam só neste navegador.", "No password. The link signs you in.": "Sem senha. O link faz o login.", "Slack sync": "Sincronização do Slack",
-    "Everyone": "Todos", "Live": "Ao vivo", "Connecting": "Conectando", "Before": "Antes", "After": "Depois", "(empty)": "(vazio)",
+    "Everyone": "Todos", "Moved by": "Movido por", "Live": "Ao vivo", "Connecting": "Conectando", "Before": "Antes", "After": "Depois", "(empty)": "(vazio)",
     "One checklist line per client is added.": "A lista recebe uma linha por cliente.",
   };
   const ST = "New|Needs info|In progress|Updated & tested|Done";
