@@ -46,7 +46,7 @@ a{color:var(--brasa)}
 .bare:focus{border-color:var(--laranja);background:rgba(255,255,255,.05)}
 input[type=date],input[type=time]{color-scheme:dark}
 
-.board{display:grid;grid-template-columns:repeat(5,minmax(210px,1fr));gap:14px;overflow-x:auto;padding-bottom:10px}
+.board{display:grid;grid-template-columns:repeat(6,minmax(215px,1fr));gap:14px;overflow-x:auto;padding-bottom:10px}
 .col{background:var(--vidro);border:1px solid var(--borda);border-radius:18px;padding:12px;min-height:300px}
 .col.over{border-color:var(--laranja);background:rgba(255,109,41,.07)}
 .colh{display:flex;align-items:center;gap:8px;margin:2px 4px 12px;font-size:12px;letter-spacing:.12em;text-transform:uppercase;color:var(--cinza)}

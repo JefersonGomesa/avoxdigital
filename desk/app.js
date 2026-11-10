@@ -207,12 +207,12 @@
       <select class="sel" style="width:150px" data-ui="who">${opt("", "Everyone", S.who || "")}${team.map(n => opt(n, n, S.who)).join("")}</select>
       <select class="sel" style="width:220px" data-ui="filter">${opt("", "All clients", S.filter)}${clientOpts(S.filter)}</select>
       <button class="btn pri" data-act="new"><i class="ti ti-plus"></i>Add request</button></div>
-      <div class="board">${STATUS.map(s => {
-        let l = rs.filter(r => r.status === s.id);
+      <div class="board">${[{ id: "new", sub: "client", label: "New clients", color: "#FF6D29", empty: "No new client to build" }, { id: "new", sub: "update", label: "Updates", color: "#8AB8FF", empty: "No new update" }, ...STATUS.slice(1)].map(s => {
+        let l = rs.filter(r => r.status === s.id && (!s.sub || (s.sub === "client") === (r.type === "client")));
         if (s.id === "done") l = l.filter(r => !r.done_at || +new Date(r.done_at) > cut);
         l.sort((a, b) => (a.due_date || "9") < (b.due_date || "9") ? -1 : 1);
-        return `<div class="col" data-drop="${s.id}"><div class="colh"><span class="dot" style="background:${s.color}"></span>${s.label}<span class="q">${l.length}</span></div>
-        ${l.map(cardHTML).join("") || `<div class="empty">${s.id === "new" ? "No new requests" : s.id === "done" ? "Done in the last 7 days shows here" : "Drag a card here"}</div>`}</div>`;
+        return `<div class="col" data-drop="${s.id}" data-sub="${s.sub || ""}"><div class="colh"><span class="dot" style="background:${s.color}"></span>${s.label}<span class="q">${l.length}</span></div>
+        ${l.map(cardHTML).join("") || `<div class="empty">${s.empty || (s.id === "done" ? "Done in the last 7 days shows here" : "Drag a card here")}</div>`}</div>`;
       }).join("")}</div>`;
   }
   function vClients() {
@@ -522,7 +522,7 @@
   document.addEventListener("dragstart", e => { const c = e.target.closest && e.target.closest(".card[draggable]"); if (c) { drag = c.dataset.id; e.dataTransfer.effectAllowed = "move"; } });
   document.addEventListener("dragover", e => { const c = e.target.closest && e.target.closest("[data-drop]"); if (c && drag) { e.preventDefault(); c.classList.add("over"); } });
   document.addEventListener("dragleave", e => { const c = e.target.closest && e.target.closest("[data-drop]"); if (c && !c.contains(e.relatedTarget)) c.classList.remove("over"); });
-  document.addEventListener("drop", e => { const c = e.target.closest && e.target.closest("[data-drop]"); if (c && drag) { e.preventDefault(); const r = get("requests", drag); if (r) setStatus(r, c.dataset.drop); drag = null; render(); } });
+  document.addEventListener("drop", e => { const c = e.target.closest && e.target.closest("[data-drop]"); if (c && drag) { e.preventDefault(); const r = get("requests", drag); if (r) { const sub = c.dataset.sub; if (sub && (sub === "client") !== (r.type === "client")) { const was = typeOf(r).label; r.type = sub === "client" ? "client" : "update"; save("requests", r); log("edited the type", r.id, r.client_id, was, typeOf(r).label); } setStatus(r, c.dataset.drop); } drag = null; render(); } });
 
   /* ---------- boot ---------- */
   async function boot() {
