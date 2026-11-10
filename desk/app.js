@@ -281,6 +281,7 @@
     return `<div class="veil" data-act="close"><div class="drawer" data-stop>
       <div class="dh"><span class="pill o"><i class="ti ${typeOf(r).icon}"></i>${esc(typeOf(r).label)}</span><span class="sp"></span>
         <button class="btn ghost sm" data-act="delreq" data-id="${r.id}"><i class="ti ti-trash"></i>Delete</button><button class="btn ghost sm" data-act="close"><i class="ti ti-x"></i></button></div>
+      <div id="pbar"></div>
       <input class="bare ttl" value="${esc(r.title || "")}" placeholder="Short title" data-f="title" ${A}>
       <div class="steps">${STATUS.map(s => `<button class="step${r.status === s.id ? " on" : ""}" data-act="status" data-id="${r.id}" data-s="${s.id}">${s.label}</button>`).join("")}</div>
       ${r.status === "tested" ? `<div class="note" style="color:var(--verde)"><i class="ti ti-rocket"></i> Pages and automations are updated and tested. Ads can launch.</div>` : ""}
@@ -336,12 +337,14 @@
     const n = S.items.requests.filter(r => r.status === "new").length;
     document.querySelectorAll(".nav").forEach(b => b.classList.toggle("on", b.dataset.v === S.view));
     $("#nnew").textContent = n || ""; $("#nnew").style.display = n ? "" : "none";
+    onRender();
   }
   function renderOver() {
     const r = S.open && get("requests", S.open);
     const sc = $(".drawer") ? $(".drawer").scrollTop : 0;
     $("#over").innerHTML = (r ? drawerHTML(r) : "") + (S.modal ? newHTML() : "");
     if ($(".drawer")) $(".drawer").scrollTop = sc;
+    onRender();
   }
   function render() {
     if (!S.me) return;
@@ -349,13 +352,42 @@
       $("#app").innerHTML = `<div class="shell"><aside class="side">
         <div class="brand"><img src="assets/vox-simbolo.svg" alt="Vox Digital"><div><b>VOX</b><span>Desk</span></div></div>
         ${[["board", "ti-layout-kanban", "Requests"], ["clients", "ti-users", "Clients"], ["calendar", "ti-calendar", "Calendar"], ["history", "ti-history", "History"]].map(n => `<button class="nav" data-act="view" data-v="${n[0]}"><i class="ti ${n[1]}"></i><span>${n[2]}</span>${n[0] === "board" ? '<b class="n" id="nnew"></b>' : ""}</button>`).join("")}
-        <button class="btn sm" data-act="lang" style="margin:auto 6px 0;align-self:flex-start" title="Trocar o idioma da interface · Switch the interface language"><i class="ti ti-language"></i><span data-i18n>${window.DESK_I18N && window.DESK_I18N.get() === "pt" ? "Português · EN" : "English · PT"}</span></button>
+        <button class="btn sm" data-act="lang" style="margin:0 6px 0;align-self:flex-start" title="Trocar o idioma da interface · Switch the interface language"><i class="ti ti-language"></i><span data-i18n>${window.DESK_I18N && window.DESK_I18N.get() === "pt" ? "Português · EN" : "English · PT"}</span></button>
+        <div id="online" style="margin:auto 6px 10px"></div>
         <div class="note" id="live" style="margin:10px 6px 0;display:${LIVE ? "block" : "none"}"><span class="dot" style="display:inline-block;background:${S.live ? "var(--verde)" : "var(--cinza)"}"></span> <span>${S.live ? "Live" : "Connecting"}</span></div>
         <div class="note" style="margin:4px 6px 0;line-height:1.5">${window.DESK_IMPORT ? `<i class="ti ti-brand-slack"></i> Slack sync<br>${esc(fStamp(window.DESK_IMPORT.synced_at))}` : ""}</div>
         <div class="me" style="margin-top:10px"><b>${esc(S.me.name)}</b>${esc(S.me.team === "clicklab" ? "ClickLab" : "Pineda Partners")}${LIVE ? "" : " · demo"}<br><button data-act="logout">Sign out</button></div>
       </aside><main class="main" id="main"></main></div><div id="over"></div>`;
     }
     renderMain(); renderOver();
+  }
+  /* ---------- presence: who is online and what each person has open ---------- */
+  let pres = null, lastTrack = "", typing = false;
+  const myPresence = () => ({ name: S.me.name, team: S.me.team, view: S.client ? "client" : S.view, open: S.open || null, client: S.client || null, typing });
+  function onRender() {
+    if (!S.me) return;
+    if (pres && S.presOn) { const j = JSON.stringify(myPresence()); if (j !== lastTrack) { lastTrack = j; pres.track(myPresence()); } }
+    paintPresence();
+  }
+  function paintPresence() {
+    const pt = window.DESK_I18N && window.DESK_I18N.get() === "pt";
+    const W = pt ? { you: "você", edit: "editando", view: "vendo", on: "Online agora", alone: "Só você está online", too: "também está neste pedido", tooP: "também estão neste pedido", views: { board: "no quadro", clients: "em Clientes", client: "em um cliente", calendar: "no calendário", history: "no histórico" } }
+                 : { you: "you", edit: "editing", view: "viewing", on: "Online now", alone: "Only you are online", too: "is also in this request", tooP: "are also in this request", views: { board: "on the board", clients: "in Clients", client: "in a client", calendar: "in the calendar", history: "in the history" } };
+    const others = (S.online || []).filter(u => u.name !== S.me.name);
+    const box = $("#online");
+    if (box) box.innerHTML = (!LIVE && !others.length) ? "" : `<span class="lab" data-i18n>${W.on} · ${others.length + 1}</span><div class="on"><span class="av live">${esc(initials(S.me.name))}</span><span data-i18n>${esc(S.me.name)} (${W.you})</span></div>` + others.map(u => { const r = u.open && get("requests", u.open); return `<div class="on${r ? " go" : ""}" ${r ? `data-act="open" data-id="${r.id}"` : ""}><span class="av live${u.typing ? " ty" : ""}">${esc(initials(u.name))}</span><span data-i18n><b>${esc(u.name)}</b><small>${r ? (u.typing ? W.edit : W.view) + " · " + esc(r.title || "") : W.views[u.view] || ""}</small></span></div>`; }).join("");
+    document.querySelectorAll(".card .pres").forEach(e => e.remove());
+    document.querySelectorAll('.card[data-act="open"]').forEach(c => { const here = others.filter(u => u.open === c.dataset.id); if (!here.length) return; c.insertAdjacentHTML("beforeend", `<div class="pres" data-i18n>${here.map(u => `<span class="av live${u.typing ? " ty" : ""}">${esc(initials(u.name))}</span>`).join("")}<span>${here.map(u => esc(u.name)).join(", ")} · ${here.some(u => u.typing) ? W.edit : W.view}</span></div>`); });
+    const bar = $("#pbar"); if (bar) { const here = others.filter(u => u.open === S.open); bar.innerHTML = here.length ? `<div class="pres big" data-i18n>${here.map(u => `<span class="av live${u.typing ? " ty" : ""}">${esc(initials(u.name))}</span>`).join("")}<span>${here.map(u => esc(u.name) + (u.typing ? " (" + W.edit + ")" : "")).join(", ")} ${here.length > 1 ? W.tooP : W.too}</span></div>` : ""; }
+  }
+  window.__deskPresencePreview = l => { S.online = l; paintPresence(); }; /* preview only: changes this browser, nothing is sent */
+  function startPresence() {
+    pres = sb.channel("desk-presence", { config: { presence: { key: S.me.name } } });
+    pres.on("presence", { event: "sync" }, () => { const st = pres.presenceState(); S.online = Object.values(st).map(a => a[a.length - 1]).filter(Boolean); paintPresence(); })
+      .subscribe(st => { S.presOn = st === "SUBSCRIBED"; if (S.presOn) { lastTrack = ""; onRender(); } });
+    const setTyping = v => { if (typing === v) return; typing = v; onRender(); };
+    document.addEventListener("focusin", e => { if (e.target.closest && e.target.closest(".drawer") && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) setTyping(true); });
+    document.addEventListener("focusout", () => setTimeout(() => { const a = document.activeElement; if (!(a && a.closest && a.closest(".drawer") && /INPUT|TEXTAREA|SELECT/.test(a.tagName))) setTyping(false); }, 200));
   }
   function toast(t) { const e = document.createElement("div"); e.className = "toast"; e.textContent = t; document.body.appendChild(e); setTimeout(() => e.remove(), 2600); }
 
@@ -499,6 +531,7 @@
           S.dirty = true; flush();
         }).subscribe(st => { setLive(st === "SUBSCRIBED"); if (st === "SUBSCRIBED") reload(); });
         window.addEventListener("focus", reload);
+        startPresence();
         setInterval(() => { if (!S.live) reload(); }, 60000);
       } else {
         const d = await local.load(); S.items = d.items; S.members = d.members;
