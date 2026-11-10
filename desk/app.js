@@ -138,7 +138,7 @@
       const t = TYPES.find(x => x.id === r.type);
       let list = r.global ? I.clients.map(c => ({ label: c.name + (c.brand ? " · " + c.brand : ""), done: (r.done || []).includes(c.key), by: "Alex" })) : (r.checklist || t.list);
       if (r.allDone) list = list.map(x => ({ label: x.label || x, done: true, url: x.url || "", by: r.assignee }));
-      const o = { id, client_id: cid, type: r.type, title: r.title, status: r.status, assignee: r.assignee || "", requester: r.requester || "", waiting_on: r.waiting_on || "", due_date: "", event_date: r.event_date || "", event_time: r.event_time || "", event_tz: r.event_tz || "America/Chicago", details: r.note || "", source_text: r.text || "", slack_url: r.slack || "", src: "slack", links: (r.links || []).map((x, i) => lk(x, id, i)), checklist: list.map((x, i) => li(x, id, i)), created_at: r.at, done_at: r.done_at || null };
+      const o = { id, client_id: cid, type: r.type, title: r.title, status: r.status, assignee: (r.tagged || [r.assignee]).filter(Boolean)[0] || "", assignees: (r.tagged || [r.assignee]).filter(Boolean), requester: r.requester || "", waiting_on: r.waiting_on || "", due_date: "", event_date: r.event_date || "", event_time: r.event_time || "", event_tz: r.event_tz || "America/Chicago", details: r.note || "", source_text: r.text || "", slack_url: r.slack || "", src: "slack", links: (r.links || []).map((x, i) => lk(x, id, i)), checklist: list.map((x, i) => li(x, id, i)), created_at: r.at, done_at: r.done_at || null };
       S.items.requests.push(o); save("requests", o);
       const a = { id: hid("act:" + r.ts), ref: id, client_id: cid, actor: r.requester || "Slack", text: "sent the request in Slack", at: r.at }; S.items.activity.push(a); save("activity", a);
       if (r.done_at) { const d = { id: hid("actd:" + r.ts), ref: id, client_id: cid, actor: r.assignee || "ClickLab", text: "set status to Done", at: r.done_at }; S.items.activity.push(d); save("activity", d); }
@@ -149,6 +149,7 @@
   }
 
   /* ---------- small renderers ---------- */
+  const asg = r => Array.isArray(r.assignees) ? r.assignees : (r.assignee ? [r.assignee] : []);
   const typeOf = r => TYPES.find(t => t.id === r.type) || TYPES[1];
   const prog = l => { const n = (l || []).length, d = (l || []).filter(x => x.done).length; return { n, d, pct: n ? Math.round(d / n * 100) : 0 }; };
   const opt = (v, l, cur) => `<option value="${esc(v)}"${v === cur ? " selected" : ""}>${esc(l)}</option>`;
@@ -182,21 +183,24 @@
     return `<div class="card" draggable="true" data-act="open" data-id="${r.id}">
       <div class="cl">${esc(clientName(r.client_id))}</div><div class="sub">${esc(r.title || t.label)}</div>
       ${whenHTML(r)}
+      ${r.source_text ? `<div class="q"><i class="ti ti-brand-slack"></i><span><b>${esc(r.requester || "Slack")}:</b> ${esc(r.source_text.length > 150 ? r.source_text.slice(0, 150) + "…" : r.source_text)}</span></div>` : ""}
       ${p.n ? `<div class="bar"><b style="width:${p.pct}%"></b></div>` : ""}
       <div class="meta"><span class="pill o"><i class="ti ${t.icon}"></i>${esc(t.label)}</span>
       ${r.status === "info" && r.waiting_on ? `<span class="pill a">Waiting on ${esc(r.waiting_on)}</span>` : ""}
       ${r.status === "tested" ? `<span class="pill g"><i class="ti ti-rocket"></i>Cleared to launch</span>` : ""}
       ${r.due_date ? `<span class="pill${late ? " r" : ""}">Due ${esc(fDue(r.due_date))}</span>` : ""}
       ${p.n ? `<span>${p.d}/${p.n}</span>` : ""}
-      ${r.src === "slack" ? `<i class="ti ti-brand-slack" title="From Slack"></i>` : ""}
-      ${r.assignee ? `<span class="av" style="margin-left:auto" title="${esc(r.assignee)}">${esc(initials(r.assignee))}</span>` : ""}</div></div>`;
+      ${r.slack_url ? `<a class="pill" href="${esc(r.slack_url)}" target="_blank" rel="noopener" style="text-decoration:none" title="Open the message in Slack"><i class="ti ti-brand-slack"></i>Slack</a>` : r.src === "slack" ? `<i class="ti ti-brand-slack" title="From Slack"></i>` : ""}
+      <span style="margin-left:auto;display:inline-flex;gap:3px">${asg(r).map(n => `<span class="av" title="${esc(n)}">${esc(initials(n))}</span>`).join("")}</span></div></div>`;
   }
 
   /* ---------- views ---------- */
   function vBoard() {
-    const rs = S.items.requests.filter(r => !S.filter || r.client_id === S.filter);
+    const rs = S.items.requests.filter(r => (!S.filter || r.client_id === S.filter) && (!S.who || asg(r).includes(S.who)));
+    const team = [...new Set(S.members.filter(m => m.team === "clicklab").map(m => m.name))];
     const cut = Date.now() - 7 * 864e5;
     return `<div class="top"><h1>Requests</h1>
+      <select class="sel" style="width:150px" data-ui="who">${opt("", "Everyone", S.who || "")}${team.map(n => opt(n, n, S.who)).join("")}</select>
       <select class="sel" style="width:220px" data-ui="filter">${opt("", "All clients", S.filter)}${clientOpts(S.filter)}</select>
       <button class="btn pri" data-act="new"><i class="ti ti-plus"></i>Add request</button></div>
       <div class="board">${STATUS.map(s => {
@@ -280,7 +284,7 @@
       <div class="sec fg">
         <div><span class="lab">Client</span><select class="sel" data-f="client_id" ${A}>${opt("", "No client", r.client_id)}${clientOpts(r.client_id, true)}</select></div>
         <div><span class="lab">Type</span><select class="sel" data-f="type" ${A}>${TYPES.map(t => opt(t.id, t.label, r.type)).join("")}</select></div>
-        <div><span class="lab">Assigned to</span><select class="sel" data-f="assignee" ${A}>${memberOpts(r.assignee)}</select></div>
+        <div><span class="lab">Assigned to</span><div style="display:flex;gap:6px;flex-wrap:wrap">${[...new Set([...S.members.filter(m => m.team === "clicklab").map(m => m.name), ...asg(r)])].map(n => `<button class="step${asg(r).includes(n) ? " on" : ""}" data-act="asg" data-id="${r.id}" data-n="${esc(n)}"><span class="av" style="width:18px;height:18px;font-size:9px">${esc(initials(n))}</span><span data-i18n>${esc(n)}</span></button>`).join("")}</div></div>
         <div><span class="lab">Due date</span><input type="date" class="inp" value="${esc(r.due_date || "")}" data-f="due_date" ${A}></div>
         <div><span class="lab">Requested by</span><select class="sel" data-f="requester" ${A}>${memberOpts(r.requester)}</select></div>
         <div><span class="lab">Waiting on</span><select class="sel" data-f="waiting_on" ${A}>${memberOpts(r.waiting_on, "Nobody")}</select></div>
@@ -403,6 +407,7 @@
       else o[d.fld].push({ id: uid(), label: v, done: false, url: "" });
       save(d.k, o); log((d.fld === "links" ? "added the link " : "added ") + '"' + v + '"', d.k === "requests" ? o.id : null, d.k === "requests" ? o.client_id : o.id, "", v); render(); const n = $(`[data-add="${d.k}|${d.id}|${d.fld}"]`); if (n) n.focus();
     },
+    asg(d) { const r = get("requests", d.id), was = asg(r), l = was.includes(d.n) ? was.filter(x => x !== d.n) : [...was, d.n]; r.assignees = l; r.assignee = l[0] || ""; save("requests", r); log(l.length ? "assigned to " + l.join(" and ") : "assigned to nobody", r.id, r.client_id, was.join(", "), l.join(", ")); render(); },
     at(d) { const b = $("#cbox"); b.value += (b.value && !/\s$/.test(b.value) ? " " : "") + "@" + d.n + " "; b.focus(); },
     comment(d) {
       const b = $("#cbox"), v = b.value.trim(); if (!v) return b.focus();

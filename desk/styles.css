@@ -162,3 +162,9 @@ details.hist[open] summary .ti-chevron-down{transform:rotate(180deg)}
 .diff span{display:block;font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--cinza);margin-bottom:3px}
 .diff p{margin:0;color:var(--branco);word-break:break-word;white-space:pre-wrap}
 .diff em{color:var(--cinza)}
+
+.card .q{display:flex;gap:6px;font-size:12px;color:var(--cinza);background:rgba(255,255,255,.035);border-left:2px solid rgba(255,109,41,.6);padding:6px 8px;margin-top:8px;border-radius:0 8px 8px 0}
+.card .q i{color:var(--laranja);font-size:14px;margin-top:1px;flex:none}
+.card .q span{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;word-break:break-word}
+.card .q b{color:var(--branco);font-weight:500}
+a.pill:hover{background:rgba(255,109,41,.25);color:var(--brasa)}

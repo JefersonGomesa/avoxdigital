@@ -24,7 +24,7 @@
     "Paste the copy or the instruction here.": "Cole a copy ou a instrução aqui.", "Brand colours, rules, anything the team must know": "Cores da marca, regras e tudo que a equipe precisa saber", "Brand or program": "Marca ou programa", "What needs to be done": "O que precisa ser feito",
     "Requests, deliveries and launch dates in one place.": "Pedidos, entregas e datas de lançamento em um só lugar.", "Enter": "Entrar", "Email me a sign-in link": "Enviar link de acesso por e-mail",
     "Demo mode. Data stays in this browser only.": "Modo demonstração. Os dados ficam só neste navegador.", "No password. The link signs you in.": "Sem senha. O link faz o login.", "Slack sync": "Sincronização do Slack",
-    "Before": "Antes", "After": "Depois", "(empty)": "(vazio)",
+    "Everyone": "Todos", "Before": "Antes", "After": "Depois", "(empty)": "(vazio)",
     "One checklist line per client is added.": "A lista recebe uma linha por cliente.",
   };
   const ST = "New|Needs info|In progress|Updated & tested|Done";
@@ -49,7 +49,7 @@
     while ((n = w.nextNode())) nodes.push(n);
     nodes.forEach(node => {
       const p = node.parentElement; if (!p || /^(TEXTAREA|SCRIPT|STYLE)$/.test(p.tagName)) return;
-      if (p.classList.contains("cm") || p.matches(".diff p") || p.closest(".cl,.sub,.at,[data-i18n]")) return;
+      if (p.classList.contains("cm") || p.matches(".diff p") || p.closest(".cl,.sub,.at,.q,[data-i18n]")) return;
       const raw = node.nodeValue, s = raw.trim(); if (!s) return;
       const pt = conv(s, !!p.closest(".hist")); if (!pt) return;
       if (lang === "pt") { node.nodeValue = raw.replace(s, pt); p.setAttribute("data-i18n", ""); }
