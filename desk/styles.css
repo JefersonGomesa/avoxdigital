@@ -207,3 +207,11 @@ a.pill:hover{background:rgba(255,109,41,.25);color:var(--brasa)}
 .msg.mine .mb{background:rgba(255,109,41,.16);border-color:rgba(255,109,41,.4);border-radius:14px 4px 14px 14px}
 .chatin{display:flex;gap:8px;padding:10px 12px;border-top:1px solid var(--borda);align-items:flex-end}
 .chatin .txt{min-height:40px;max-height:110px;resize:none}
+
+.rooms{display:flex;gap:6px;padding:8px 12px;border-bottom:1px solid var(--borda);overflow-x:auto}
+.rooms .step{padding:5px 10px;flex:none}
+.rooms .step .n{background:var(--branco);color:var(--grafite);border-radius:10px;padding:0 6px;font-size:11px;font-weight:600}
+#online .on .dm{margin-left:auto;position:relative;color:var(--brasa);font-size:17px;padding:4px 6px}
+#online .on .dm:hover{background:rgba(255,109,41,.18);color:var(--brasa)}
+#online .on .dm b{position:absolute;top:-4px;right:-4px;min-width:16px;height:16px;border-radius:8px;background:var(--laranja);color:var(--grafite);font-size:10px;font-weight:600;display:flex;align-items:center;justify-content:center;padding:0 4px}
+#online .on.off .av{opacity:.55}#online .on.off b{color:var(--cinza)}

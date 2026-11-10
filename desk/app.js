@@ -367,7 +367,7 @@
   function onRender() {
     if (!S.me) return;
     if (pres && S.presOn) { const j = JSON.stringify(myPresence()); if (j !== lastTrack) { lastTrack = j; pres.track(myPresence()); } }
-    paintPresence(); renderChat();
+    renderChat(); paintPresence();
   }
   function paintPresence() {
     const pt = window.DESK_I18N && window.DESK_I18N.get() === "pt";
@@ -375,7 +375,9 @@
                  : { you: "you", edit: "editing", view: "viewing", on: "Online now", alone: "Only you are online", too: "is also in this request", tooP: "are also in this request", views: { board: "on the board", clients: "in Clients", client: "in a client", calendar: "in the calendar", history: "in the history" } };
     const others = (S.online || []).filter(u => u.name !== S.me.name);
     const box = $("#online");
-    if (box) box.innerHTML = (!LIVE && !others.length) ? "" : `<span class="lab" data-i18n>${W.on} · ${others.length + 1}</span><div class="on"><span class="av live">${esc(initials(S.me.name))}</span><span data-i18n>${esc(S.me.name)} (${W.you})</span></div>` + others.map(u => { const r = u.open && get("requests", u.open); return `<div class="on${r ? " go" : ""}" ${r ? `data-act="open" data-id="${r.id}"` : ""}><span class="av live${u.typing ? " ty" : ""}">${esc(initials(u.name))}</span><span data-i18n><b>${esc(u.name)}</b><small>${r ? (u.typing ? W.edit : W.view) + " · " + esc(r.title || "") : W.views[u.view] || ""}</small></span></div>`; }).join("");
+    const un = S.unreadDm || {}, dmBtn = n => `<button class="x dm" data-act="dm" data-n="${esc(n)}" title="${pt ? "Conversar com " : "Chat with "}${esc(n)}" aria-label="Chat with ${esc(n)}"><i class="ti ti-message-circle"></i>${un[dmKey(n)] ? `<b>${un[dmKey(n)]}</b>` : ""}</button>`;
+    const off = peers().filter(n => !others.some(u => u.name === n));
+    if (box) box.innerHTML = `<span class="lab" data-i18n>${W.on} · ${others.length + 1}</span><div class="on"><span class="av live">${esc(initials(S.me.name))}</span><span data-i18n>${esc(S.me.name)} (${W.you})</span></div>` + others.map(u => { const r = u.open && get("requests", u.open); return `<div class="on${r ? " go" : ""}" ${r ? `data-act="open" data-id="${r.id}"` : ""}><span class="av live${u.typing ? " ty" : ""}">${esc(initials(u.name))}</span><span data-i18n><b>${esc(u.name)}</b><small>${r ? (u.typing ? W.edit : W.view) + " · " + esc(r.title || "") : W.views[u.view] || ""}</small></span>${dmBtn(u.name)}</div>`; }).join("") + off.map(n => `<div class="on off"><span class="av">${esc(initials(n))}</span><span data-i18n><b>${esc(n)}</b><small>offline</small></span>${dmBtn(n)}</div>`).join("");
     document.querySelectorAll(".card .pres").forEach(e => e.remove());
     document.querySelectorAll('.card[data-act="open"]').forEach(c => { const here = others.filter(u => u.open === c.dataset.id); if (!here.length) return; c.insertAdjacentHTML("beforeend", `<div class="pres" data-i18n>${here.map(u => `<span class="av live${u.typing ? " ty" : ""}">${esc(initials(u.name))}</span>`).join("")}<span>${here.map(u => esc(u.name)).join(", ")} · ${here.some(u => u.typing) ? W.edit : W.view}</span></div>`); });
     const bar = $("#pbar"); if (bar) { const here = others.filter(u => u.open === S.open); bar.innerHTML = here.length ? `<div class="pres big" data-i18n>${here.map(u => `<span class="av live${u.typing ? " ty" : ""}">${esc(initials(u.name))}</span>`).join("")}<span>${here.map(u => esc(u.name) + (u.typing ? " (" + W.edit + ")" : "")).join(", ")} ${here.length > 1 ? W.tooP : W.too}</span></div>` : ""; }
@@ -383,30 +385,43 @@
   window.__deskPresencePreview = l => { S.online = l; paintPresence(); }; /* preview only: changes this browser, nothing is sent */
   function startPresence() {
     pres = sb.channel("desk-presence", { config: { presence: { key: S.me.name } } });
-    pres.on("presence", { event: "sync" }, () => { const st = pres.presenceState(); S.online = Object.values(st).map(a => a[a.length - 1]).filter(Boolean); paintPresence(); renderChat(); })
+    pres.on("presence", { event: "sync" }, () => { const st = pres.presenceState(); S.online = Object.values(st).map(a => a[a.length - 1]).filter(Boolean); renderChat(); paintPresence(); })
       .subscribe(st => { S.presOn = st === "SUBSCRIBED"; if (S.presOn) { lastTrack = ""; onRender(); } });
     const setTyping = v => { if (typing === v) return; typing = v; onRender(); };
     document.addEventListener("focusin", e => { if (e.target.closest && e.target.closest(".drawer") && /INPUT|TEXTAREA|SELECT/.test(e.target.tagName)) setTyping(true); });
     document.addEventListener("focusout", () => setTimeout(() => { const a = document.activeElement; if (!(a && a.closest && a.closest(".drawer") && /INPUT|TEXTAREA|SELECT/.test(a.tagName))) setTyping(false); }, 200));
   }
-  /* ---------- team chat: comments with request_id "team" ---------- */
-  const teamMsgs = () => S.items.comments.filter(c => c.request_id === "team").sort((a, b) => a.at.localeCompare(b.at));
-  const chatRead = () => { try { return localStorage.getItem("voxdesk-chatread") || ""; } catch (e) { return ""; } };
+  /* ---------- chat: comments with request_id "team" (everyone) or "dm:A|B" (two people) ---------- */
+  const dmKey = n => "dm:" + [S.me.name, n].sort().join("|");
+  const dmOther = k => k.slice(3).split("|").find(n => n !== S.me.name) || "";
+  const isMyRoom = k => k === "team" || (typeof k === "string" && k.startsWith("dm:") && k.slice(3).split("|").includes(S.me.name));
+  const roomMsgs = k => S.items.comments.filter(c => c.request_id === k).sort((a, b) => a.at.localeCompare(b.at));
+  const peers = () => [...new Set(S.members.filter(m => m.can_login !== false && m.name !== S.me.name).map(m => m.name))];
+  const readMap = () => { try { return JSON.parse(localStorage.getItem("voxdesk-chatread2") || "{}"); } catch (e) { return {}; } };
+  const unreadIn = (k, rm) => roomMsgs(k).filter(m => m.author !== S.me.name && m.at > (rm[k] || "")).length;
   function renderChat() {
     const box = $("#chat"); if (!box || !S.me) return;
-    const msgs = teamMsgs();
-    if (S.chat) { try { localStorage.setItem("voxdesk-chatread", now()); } catch (e) {} }
-    const unread = S.chat ? 0 : msgs.filter(m => m.author !== S.me.name && m.at > chatRead()).length;
-    if (!$("#chatbtn")) box.innerHTML = `<button class="chatbtn" id="chatbtn" data-act="chat" aria-label="Team chat"><i class="ti ti-messages"></i><b id="chatn"></b></button><div class="chatpanel" id="chatpanel"><div class="chath"><i class="ti ti-messages"></i><span>Team chat</span><small id="chaton"></small><button class="btn ghost sm" data-act="chat" style="margin-left:auto"><i class="ti ti-x"></i></button></div><div class="chatlist" id="chatlist"></div><div class="chatin"><textarea class="txt" id="chatinput" rows="1" placeholder="Write to the team"></textarea><button class="btn pri sm" data-act="chatsend">Send</button></div></div>`;
+    S.room = S.room && isMyRoom(S.room) ? S.room : "team";
+    const rm = readMap();
+    if (S.chat) { rm[S.room] = now(); try { localStorage.setItem("voxdesk-chatread2", JSON.stringify(rm)); } catch (e) {} }
+    const rooms = ["team", ...peers().map(dmKey)];
+    S.items.comments.forEach(c => { if (isMyRoom(c.request_id) && !rooms.includes(c.request_id)) rooms.push(c.request_id); });
+    const un = {}; let total = 0; rooms.forEach(k => { un[k] = S.chat && k === S.room ? 0 : unreadIn(k, rm); total += un[k]; });
+    S.unreadDm = un;
+    if (!$("#chatbtn")) box.innerHTML = `<button class="chatbtn" id="chatbtn" data-act="chat" aria-label="Chat"><i class="ti ti-messages"></i><b id="chatn"></b></button><div class="chatpanel" id="chatpanel"><div class="chath"><i class="ti ti-messages"></i><span>Chat</span><small id="chaton"></small><button class="btn ghost sm" data-act="chat" style="margin-left:auto"><i class="ti ti-x"></i></button></div><div class="rooms" id="rooms"></div><div class="chatlist" id="chatlist"></div><div class="chatin"><textarea class="txt" id="chatinput" rows="1"></textarea><button class="btn pri sm" data-act="chatsend">Send</button></div></div>`;
     $("#chatpanel").style.display = S.chat ? "flex" : "none";
-    $("#chatn").textContent = unread || ""; $("#chatn").style.display = unread ? "" : "none";
-    const others = (S.online || []).filter(u => u.name !== S.me.name);
-    $("#chaton").textContent = others.length ? "· " + others.map(u => u.name).join(", ") + " online" : "";
-    const list = $("#chatlist"), atEnd = list.scrollHeight - list.scrollTop - list.clientHeight < 60, n0 = list.dataset.n;
+    $("#chatn").textContent = total || ""; $("#chatn").style.display = total ? "" : "none";
+    const on = (S.online || []).map(u => u.name);
+    $("#rooms").innerHTML = rooms.map(k => { const n = k === "team" ? "" : dmOther(k); return `<button class="step${k === S.room ? " on" : ""}" data-act="room" data-r="${esc(k)}">${k === "team" ? '<i class="ti ti-users"></i><span>Team</span>' : `<span class="av${on.includes(n) ? " live" : ""}" style="width:18px;height:18px;font-size:9px">${esc(initials(n))}</span><span data-i18n>${esc(n)}</span>`}${un[k] ? `<b class="n" data-i18n>${un[k]}</b>` : ""}</button>`; }).join("");
+    const other = S.room === "team" ? "" : dmOther(S.room);
+    $("#chaton").textContent = S.room === "team" ? "" : (on.includes(other) ? "· online" : "· offline");
+    $("#chaton").style.color = S.room !== "team" && !on.includes(other) ? "var(--cinza)" : "";
+    const inp = $("#chatinput"); inp.placeholder = S.room === "team" ? "Write to the team" : "Private message";
+    const list = $("#chatlist"), msgs = roomMsgs(S.room), atEnd = list.scrollHeight - list.scrollTop - list.clientHeight < 60, k0 = list.dataset.k;
     let day = "";
-    list.innerHTML = msgs.map(m => { const d = fDay(+new Date(m.at), MYZ), head = d !== day ? `<div class="chatday">${esc(d)}</div>` : ""; day = d; const mine = m.author === S.me.name; return head + `<div class="msg${mine ? " mine" : ""}">${mine ? "" : `<span class="av">${esc(initials(m.author))}</span>`}<div><div class="mh">${mine ? "" : `<b>${esc(m.author)}</b>`}${esc(fTime(+new Date(m.at), MYZ, BR))}</div><div class="mb">${mentions(m.body)}</div></div></div>`; }).join("") || `<div class="empty">No messages yet. Say hi to the team.</div>`;
-    list.dataset.n = msgs.length;
-    if (S.chat && (atEnd || n0 !== String(msgs.length))) list.scrollTop = list.scrollHeight;
+    list.innerHTML = msgs.map(m => { const d = fDay(+new Date(m.at), MYZ), head = d !== day ? `<div class="chatday">${esc(d)}</div>` : ""; day = d; const mine = m.author === S.me.name; return head + `<div class="msg${mine ? " mine" : ""}">${mine ? "" : `<span class="av">${esc(initials(m.author))}</span>`}<div><div class="mh">${mine ? "" : `<b>${esc(m.author)}</b>`}${esc(fTime(+new Date(m.at), MYZ, BR))}</div><div class="mb">${mentions(m.body)}</div></div></div>`; }).join("") || `<div class="empty">${S.room === "team" ? "No messages yet. Say hi to the team." : "No messages yet. Only you two see this chat."}</div>`;
+    list.dataset.k = S.room + ":" + msgs.length;
+    if (S.chat && (atEnd || k0 !== list.dataset.k)) list.scrollTop = list.scrollHeight;
     if (window.DESK_I18N) window.DESK_I18N.apply(box);
   }
   function toast(t) { const e = document.createElement("div"); e.className = "toast"; e.textContent = t; document.body.appendChild(e); setTimeout(() => e.remove(), 2600); }
@@ -468,8 +483,10 @@
       save(d.k, o); log((d.fld === "links" ? "added the link " : "added ") + '"' + v + '"', d.k === "requests" ? o.id : null, d.k === "requests" ? o.client_id : o.id, "", v); render(); const n = $(`[data-add="${d.k}|${d.id}|${d.fld}"]`); if (n) n.focus();
     },
     asg(d) { const r = get("requests", d.id), was = asg(r), l = was.includes(d.n) ? was.filter(x => x !== d.n) : [...was, d.n]; r.assignees = l; r.assignee = l[0] || ""; save("requests", r); log(l.length ? "assigned to " + l.join(" and ") : "assigned to nobody", r.id, r.client_id, was.join(", "), l.join(", ")); render(); },
-    chat() { S.chat = !S.chat; renderChat(); if (S.chat) { const l = $("#chatlist"); l.scrollTop = l.scrollHeight; $("#chatinput").focus(); } },
-    chatsend() { const b = $("#chatinput"), v = b.value.trim(); if (!v) return b.focus(); const c = { id: uid(), request_id: "team", author: S.me.name, body: v, at: now() }; S.items.comments.push(c); save("comments", c); b.value = ""; renderChat(); const l = $("#chatlist"); l.scrollTop = l.scrollHeight; b.focus(); },
+    chat() { S.chat = !S.chat; renderChat(); paintPresence(); if (S.chat) { const l = $("#chatlist"); l.scrollTop = l.scrollHeight; $("#chatinput").focus(); } },
+    room(d) { S.room = d.r; S.chat = true; renderChat(); paintPresence(); const l = $("#chatlist"); l.scrollTop = l.scrollHeight; $("#chatinput").focus(); },
+    dm(d) { A.room({ r: dmKey(d.n) }); },
+    chatsend() { const b = $("#chatinput"), v = b.value.trim(); if (!v) return b.focus(); const c = { id: uid(), request_id: S.room || "team", author: S.me.name, body: v, at: now() }; S.items.comments.push(c); save("comments", c); b.value = ""; renderChat(); const l = $("#chatlist"); l.scrollTop = l.scrollHeight; b.focus(); },
     at(d) { const b = $("#cbox"); b.value += (b.value && !/\s$/.test(b.value) ? " " : "") + "@" + d.n + " "; b.focus(); },
     comment(d) {
       const b = $("#cbox"), v = b.value.trim(); if (!v) return b.focus();
@@ -549,7 +566,7 @@
             if (i < 0) l.push(o); else l[i] = o;
             const who = (S.members.find(m => m.email === row.updated_by) || {}).name || (row.updated_by === "slack-sync" ? "Slack" : "");
             if (row.kind === "requests" && who) toast(i < 0 ? who + ": new request · " + (o.title || "") : who + " updated · " + (o.title || ""));
-            if (row.kind === "comments" && who) { if (o.request_id === "team") { if (!S.chat) toast(o.author + ": " + (o.body.length > 70 ? o.body.slice(0, 70) + "…" : o.body)); renderChat(); } else { const r = get("requests", o.request_id); toast(o.author + " commented" + (r ? " · " + (r.title || "") : "")); } }
+            if (row.kind === "comments" && who) { if (o.request_id === "team" || String(o.request_id).startsWith("dm:")) { if (isMyRoom(o.request_id)) { if (!S.chat || S.room !== o.request_id) toast((o.request_id === "team" ? "" : "\u2709 ") + o.author + ": " + (o.body.length > 70 ? o.body.slice(0, 70) + "…" : o.body)); renderChat(); paintPresence(); } } else { const r = get("requests", o.request_id); toast(o.author + " commented" + (r ? " · " + (r.title || "") : "")); } }
           }
           S.dirty = true; flush();
         }).subscribe(st => { setLive(st === "SUBSCRIBED"); if (st === "SUBSCRIBED") reload(); });
