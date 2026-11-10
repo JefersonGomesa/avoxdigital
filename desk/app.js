@@ -533,7 +533,7 @@
         if (!data.session) return loginScreen();
         const d = await remote.load(); S.items = d.items; S.members = d.members;
         const email = (data.session.user.email || "").toLowerCase();
-        S.me = S.members.find(m => m.email.toLowerCase() === email);
+        S.me = S.members.find(m => m.email.toLowerCase() === email && m.can_login !== false);
         if (!S.me) { await sb.auth.signOut(); return loginScreen("This email has no access yet. Ask Jeferson to add you."); }
         if (location.hash.includes("access_token")) history.replaceState(null, "", location.pathname);
         const reload = async () => { try { const n = await remote.load(); S.items = n.items; S.members = n.members; S.dirty = true; flush(); } catch (e) {} };
@@ -563,7 +563,7 @@
         if (!S.me) return loginScreen();
       }
       render();
-    } catch (err) { console.error(err); loginScreen(LIVE ? "This email has no access yet. Ask Jeferson to add you." : "Could not load. Reload the page."); }
+    } catch (err) { console.error(err); if (LIVE && sb) { try { await sb.auth.signOut(); } catch (e) {} } loginScreen(LIVE ? "This email has no access yet. Ask Jeferson to add you." : "Could not load. Reload the page."); }
   }
   const I18 = window.DESK_I18N;
   if (I18) {
