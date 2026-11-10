@@ -61,7 +61,7 @@
   }
 
   /* ---------- state + storage ---------- */
-  const S = { items: { clients: [], requests: [], comments: [], activity: [] }, members: [], me: null, view: "board", open: null, client: null, modal: null, filter: "", cal: null, hfilter: "" };
+  const S = { items: { clients: [], requests: [], comments: [], activity: [] }, members: [], me: null, view: "board", open: null, client: null, modal: null, filter: "", cal: null, hfilter: "", live: false, dirty: false };
   const KINDS = ["clients", "requests", "comments", "activity"];
   let sb = null;
 
@@ -181,7 +181,7 @@
   function cardHTML(r) {
     const p = prog(r.checklist), t = typeOf(r), late = r.due_date && r.due_date < today() && r.status !== "done" && r.status !== "tested";
     return `<div class="card" draggable="true" data-act="open" data-id="${r.id}">
-      <div class="cl">${esc(clientName(r.client_id))}</div><div class="sub">${esc(r.title || t.label)}</div>
+      <div style="display:flex;gap:8px;align-items:flex-start"><div style="flex:1;min-width:0"><div class="cl">${esc(clientName(r.client_id))}</div><div class="sub">${esc(r.title || t.label)}</div></div><button class="chk${r.status === "done" ? " on" : ""}" data-act="quick" data-id="${r.id}" title="${r.status === "done" ? "Reopen" : "Mark as done"}" aria-label="Mark as done">${r.status === "done" ? '<i class="ti ti-check"></i>' : ""}</button></div>
       ${whenHTML(r)}
       ${r.source_text ? `<div class="q"><i class="ti ti-brand-slack"></i><span><b>${esc(r.requester || "Slack")}:</b> ${esc(r.source_text.length > 150 ? r.source_text.slice(0, 150) + "…" : r.source_text)}</span></div>` : ""}
       ${p.n ? `<div class="bar"><b style="width:${p.pct}%"></b></div>` : ""}
@@ -346,7 +346,8 @@
         <div class="brand"><img src="assets/vox-simbolo.svg" alt="Vox Digital"><div><b>VOX</b><span>Desk</span></div></div>
         ${[["board", "ti-layout-kanban", "Requests"], ["clients", "ti-users", "Clients"], ["calendar", "ti-calendar", "Calendar"], ["history", "ti-history", "History"]].map(n => `<button class="nav" data-act="view" data-v="${n[0]}"><i class="ti ${n[1]}"></i><span>${n[2]}</span>${n[0] === "board" ? '<b class="n" id="nnew"></b>' : ""}</button>`).join("")}
         <button class="btn sm" data-act="lang" style="margin:auto 6px 0;align-self:flex-start" title="Trocar o idioma da interface · Switch the interface language"><i class="ti ti-language"></i><span data-i18n>${window.DESK_I18N && window.DESK_I18N.get() === "pt" ? "Português · EN" : "English · PT"}</span></button>
-        <div class="note" style="margin:10px 6px 0;line-height:1.5">${window.DESK_IMPORT ? `<i class="ti ti-brand-slack"></i> Slack sync<br>${esc(fStamp(window.DESK_IMPORT.synced_at))}` : ""}</div>
+        <div class="note" id="live" style="margin:10px 6px 0;display:${LIVE ? "block" : "none"}"><span class="dot" style="display:inline-block;background:${S.live ? "var(--verde)" : "var(--cinza)"}"></span> <span>${S.live ? "Live" : "Connecting"}</span></div>
+        <div class="note" style="margin:4px 6px 0;line-height:1.5">${window.DESK_IMPORT ? `<i class="ti ti-brand-slack"></i> Slack sync<br>${esc(fStamp(window.DESK_IMPORT.synced_at))}` : ""}</div>
         <div class="me" style="margin-top:10px"><b>${esc(S.me.name)}</b>${esc(S.me.team === "clicklab" ? "ClickLab" : "Pineda Partners")}${LIVE ? "" : " · demo"}<br><button data-act="logout">Sign out</button></div>
       </aside><main class="main" id="main"></main></div><div id="over"></div>`;
     }
@@ -398,7 +399,10 @@
     delclient(d) { const c = get("clients", d.id); if (!confirm('Delete the client "' + c.name + '"? Requests stay in the history.')) return; S.items.clients = S.items.clients.filter(x => x.id !== d.id); store.remove("clients", d.id); log('deleted the client "' + c.name + '"', null, null); S.client = null; renderMain(); },
     delreq(d) { const r = get("requests", d.id); if (!confirm("Delete this request? This cannot be undone.")) return; S.items.requests = S.items.requests.filter(x => x.id !== d.id); store.remove("requests", d.id); log('deleted the request "' + (r.title || "") + '"', null, r.client_id); S.open = null; render(); },
     status(d) { setStatus(get("requests", d.id), d.s); render(); },
-    tgl(d) { const o = get(d.k, d.id), it = o[d.fld].find(x => x.id === d.it); it.done = !it.done; it.by = it.done ? S.me.name : ""; it.at = it.done ? now() : ""; save(d.k, o); log((it.done ? "checked" : "unchecked") + ' "' + it.label + '"', d.k === "requests" ? o.id : null, d.k === "requests" ? o.client_id : o.id); render(); },
+    tgl(d) { const o = get(d.k, d.id), it = o[d.fld].find(x => x.id === d.it); it.done = !it.done; it.by = it.done ? S.me.name : ""; it.at = it.done ? now() : ""; save(d.k, o); log((it.done ? "checked" : "unchecked") + ' "' + it.label + '"', d.k === "requests" ? o.id : null, d.k === "requests" ? o.client_id : o.id);
+      if (d.k === "requests" && d.fld === "checklist" && o.checklist.length) { if (o.checklist.every(x => x.done)) { if (o.status !== "done") { setStatus(o, "done"); toast("All steps checked. Moved to Done."); } } else if (o.status === "done") setStatus(o, "doing"); }
+      render(); },
+    quick(d) { const r = get("requests", d.id); setStatus(r, r.status === "done" ? "doing" : "done"); render(); },
     lidel(d) { const o = get(d.k, d.id), it = o[d.fld].find(x => x.id === d.it); o[d.fld] = o[d.fld].filter(x => x.id !== d.it); save(d.k, o); if (it) log('removed "' + it.label + '"', d.k === "requests" ? o.id : null, d.k === "requests" ? o.client_id : o.id, it.label + (it.url ? "\n" + it.url : ""), ""); render(); },
     liadd(d) {
       const inp = $(`[data-add="${d.k}|${d.id}|${d.fld}"]`), v = inp.value.trim(); if (!v) return inp.focus();
@@ -473,7 +477,25 @@
         S.me = S.members.find(m => m.email.toLowerCase() === email);
         if (!S.me) { await sb.auth.signOut(); return loginScreen("This email has no access yet. Ask Jeferson to add you."); }
         if (location.hash.includes("access_token")) history.replaceState(null, "", location.pathname);
-        window.addEventListener("focus", async () => { if (S.open || S.modal || document.activeElement.matches("input,textarea,select")) return; try { const n = await remote.load(); S.items = n.items; S.members = n.members; renderMain(); } catch (e) {} });
+        const reload = async () => { try { const n = await remote.load(); S.items = n.items; S.members = n.members; S.dirty = true; flush(); } catch (e) {} };
+        const typingIn = sel => { const a = document.activeElement; return !!(a && /INPUT|TEXTAREA|SELECT/.test(a.tagName) && a.closest(sel)); };
+        const flush = () => { if (!S.dirty) return; if (typingIn("#main") || typingIn(".drawer,.modal")) return; S.dirty = false; if (S.open && !get("requests", S.open)) S.open = null; renderMain(); renderOver(); };
+        document.addEventListener("focusout", () => setTimeout(flush, 150));
+        const setLive = on => { S.live = on; const e = $("#live"); if (e) { e.querySelector(".dot").style.background = on ? "var(--verde)" : "var(--cinza)"; e.lastElementChild.textContent = on ? "Live" : "Connecting"; e.lastElementChild.removeAttribute("data-i18n"); if (I18) I18.apply(e); } };
+        sb.channel("desk-items").on("postgres_changes", { event: "*", schema: "public", table: "desk_items" }, p => {
+          if (p.eventType === "DELETE") { const id = p.old && p.old.id; if (!id) return reload(); KINDS.forEach(k => { S.items[k] = S.items[k].filter(x => x.id !== id); }); }
+          else {
+            const row = p.new; if (!row || !S.items[row.kind]) return; if (row.updated_by === S.me.email) return;
+            const o = Object.assign({}, row.data, { id: row.id }), l = S.items[row.kind], i = l.findIndex(x => x.id === o.id);
+            if (i < 0) l.push(o); else l[i] = o;
+            const who = (S.members.find(m => m.email === row.updated_by) || {}).name || (row.updated_by === "slack-sync" ? "Slack" : "");
+            if (row.kind === "requests" && who) toast(i < 0 ? who + ": new request · " + (o.title || "") : who + " updated · " + (o.title || ""));
+            if (row.kind === "comments" && who) { const r = get("requests", o.request_id); toast(o.author + " commented" + (r ? " · " + (r.title || "") : "")); }
+          }
+          S.dirty = true; flush();
+        }).subscribe(st => { setLive(st === "SUBSCRIBED"); if (st === "SUBSCRIBED") reload(); });
+        window.addEventListener("focus", reload);
+        setInterval(() => { if (!S.live) reload(); }, 60000);
       } else {
         const d = await local.load(); S.items = d.items; S.members = d.members;
         S.me = { name: "Slack", email: "" }; mergeImport(); S.me = null;
