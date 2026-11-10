@@ -34,6 +34,9 @@ http.createServer((req, res) => {
   // Painel de finanças (app React em financas/, gerado pelo projeto "contador"):
   // /financas → /financas/; rotas internas sem arquivo abrem o index.html; fora dos buscadores
   if (semQuery === "/financas") { res.writeHead(301, { Location: "/financas/" + (req.url.slice(9) || "") }); return res.end(); }
+  // Vox Desk (painel de pedidos em desk/): /desk → /desk/; fora dos buscadores
+  if (semQuery === "/desk") { res.writeHead(301, { Location: "/desk/" + (req.url.slice(5) || "") }); return res.end(); }
+  if (semQuery.startsWith("/desk/")) { res.setHeader("X-Robots-Tag", "noindex, nofollow"); res.setHeader("X-Frame-Options", "DENY"); }
   const painel = semQuery.startsWith("/financas/");
   if (painel) {
     res.setHeader("X-Robots-Tag", "noindex, nofollow");
