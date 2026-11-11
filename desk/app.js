@@ -129,7 +129,7 @@
     const lk = (x, pre, i) => ({ id: hid(pre + "l" + i), label: x.label, url: x.url });
     I.clients.forEach(c => {
       const id = hid("client:" + c.key); if (S2.has(id) || get("clients", id)) return;
-      const o = { id, key: c.key, name: c.name, brand: c.brand, am: c.am, tz: c.tz, slack: c.slack, notes: c.notes, src: "slack", links: (c.links || []).map((x, i) => lk(x, id, i)), deliverables: c.deliverables.map((x, i) => li(x, id, i)) };
+      const o = { id, key: c.key, name: c.name, brand: c.brand, am: c.am, tz: c.tz, slack: c.slack, notes: c.notes, src: "slack", links: (c.links || []).map((x, i) => lk(x, id, i)), deliverables: c.deliverables.map((x, i) => li(x, id, i)), requirements: REQS.map((l, i) => ({ id: hid(id + 'rq' + i), label: l, done: i % 3 === 0, url: '', by: i % 3 === 0 ? 'Pineda' : '', at: '' })) };
       S.items.clients.push(o); save("clients", o); S2.add(id); n++;
     });
     I.requests.forEach(r => {
@@ -152,6 +152,18 @@
   const asg = r => Array.isArray(r.assignees) ? r.assignees : (r.assignee ? [r.assignee] : []);
   /* Who moved the request between columns: last move of each person, oldest first. */
   const movers = r => { const m = new Map(); S.items.activity.filter(a => a.ref === r.id && /^set status to/.test(a.text)).sort((a, b) => a.at.localeCompare(b.at)).forEach(a => { m.delete(a.actor); m.set(a.actor, a); }); return [...m.values()]; };
+  /* What Pineda must send before a launch. Stored per client in `requirements` (done = received). */
+  const REQS = ["GHL access (sub-account)", "Copy · Webinar landing page", "Copy · Book a Call (VSL) page", "Copy · Homework page", "Brand assets or client website (logo, colours, photos)", "Booking calendar for Book a Call", "Copy · Reminder automation (SMS and email)", "Zoom registration link", "Webinar or masterclass date and time (with time zone)", "Extra questions for the application form", "Domain or subdomain connected to the CRM", "VSL or registration video for the pages", "Founder voice memo for the reminder voicemail", "Testimonials and proof for the Homework page", "SMS number approved (A2P) and sending email", "Tracking: pixel, UTM and PAI webhook"];
+  const newReqs = () => REQS.map(l => ({ id: uid(), label: l, done: false, url: "", by: "", at: "" }));
+  const missing = c => c && Array.isArray(c.requirements) ? c.requirements.filter(x => !x.done) : [];
+  const building = () => { const ids = new Set(S.items.requests.filter(r => r.type === "client" && r.status !== "done").map(r => r.client_id)); return S.items.clients.filter(c => ids.has(c.id) && missing(c).length).sort((a, b) => a.name.localeCompare(b.name)); };
+  const missPill = c => { const m = missing(c); return m.length ? `<span class="pill r" title="${esc(m.map(x => x.label).join("\n"))}"><i class="ti ti-alert-triangle"></i><span>Missing from Pineda</span><b data-i18n>${m.length}</b></span>` : ""; };
+  function missBanner() {
+    const l = building(); if (!l.length) return "";
+    const mine = S.me.team === "pineda", tot = l.reduce((a, c) => a + missing(c).length, 0);
+    return `<div class="missb"><div class="mbh"><i class="ti ti-alert-triangle"></i><b>${mine ? "Waiting on you to launch" : "Waiting on Pineda to launch"}</b><span class="pill r" data-i18n>${tot}</span><button class="btn sm ghost" data-act="mbtog" style="margin-left:auto"><i class="ti ti-chevron-${S.mbOpen ? "up" : "down"}"></i><span>${S.mbOpen ? "Hide" : "Show items"}</span></button></div>
+      <div class="mbc">${l.map(c => `<button class="mbi" data-act="client" data-id="${c.id}" data-go="1"><b class="cl">${esc(c.name)}</b><small class="sub">${esc(c.brand || "")}</small><span class="pill r" data-i18n>${missing(c).length}</span>${S.mbOpen ? `<ul>${missing(c).map(x => `<li class="cl">${esc(x.label)}</li>`).join("")}</ul>` : ""}</button>`).join("")}</div></div>`;
+  }
   const typeOf = r => TYPES.find(t => t.id === r.type) || TYPES[1];
   const prog = l => { const n = (l || []).length, d = (l || []).filter(x => x.done).length; return { n, d, pct: n ? Math.round(d / n * 100) : 0 }; };
   const opt = (v, l, cur) => `<option value="${esc(v)}"${v === cur ? " selected" : ""}>${esc(l)}</option>`;
@@ -194,6 +206,7 @@
       <div class="meta"><span class="pill o"><i class="ti ${t.icon}"></i>${esc(t.label)}</span>
       ${r.status === "info" && r.waiting_on ? `<span class="pill a">Waiting on ${esc(r.waiting_on)}</span>` : ""}
       ${r.status === "tested" ? `<span class="pill g"><i class="ti ti-rocket"></i>Cleared to launch</span>` : ""}
+      ${r.type === "client" && r.status !== "done" ? missPill(get("clients", r.client_id)) : ""}
       ${r.due_date ? `<span class="pill${late ? " r" : ""}">Due ${esc(fDue(r.due_date))}</span>` : ""}
       ${p.n ? `<span>${p.d}/${p.n}</span>` : ""}
       ${r.slack_url ? `<a class="pill" href="${esc(r.slack_url)}" target="_blank" rel="noopener" style="text-decoration:none" title="Open the message in Slack"><i class="ti ti-brand-slack"></i>Slack</a>` : r.src === "slack" ? `<i class="ti ti-brand-slack" title="From Slack"></i>` : ""}
@@ -210,6 +223,7 @@
       <select class="sel" style="width:150px" data-ui="who">${opt("", "Everyone", S.who || "")}${team.map(n => opt(n, n, S.who)).join("")}</select>
       <select class="sel" style="width:220px" data-ui="filter">${opt("", "All clients", S.filter)}${clientOpts(S.filter)}</select>
       <button class="btn pri" data-act="new"><i class="ti ti-plus"></i>Add request</button></div>
+      ${missBanner()}
       <div class="board">${[{ id: "new", sub: "client", label: "New clients", color: "#FF6D29", empty: "No new client to build" }, { id: "new", sub: "update", label: "Updates", color: "#8AB8FF", empty: "No new update" }, ...STATUS.slice(1)].map(s => {
         let l = rs.filter(r => r.status === s.id && (!s.sub || (s.sub === "client") === (r.type === "client")));
         if (s.id === "done") l = l.filter(r => !r.done_at || +new Date(r.done_at) > cut);
@@ -227,7 +241,7 @@
         return `<div class="card" data-act="client" data-id="${c.id}"><div class="cl">${esc(c.name)}</div><div class="sub">${esc(c.brand || "")}</div>
           ${nx ? whenHTML(nx) : `<div class="when"><i class="ti ti-calendar-off" style="color:var(--cinza)"></i><div style="color:var(--cinza)">No webinar date set</div></div>`}
           <div class="bar"><b style="width:${p.pct}%"></b></div>
-          <div class="meta"><span>${p.d} of ${p.n} delivered</span>${open ? `<span class="pill o">${open} open</span>` : ""}${c.am ? `<span class="av" style="margin-left:auto" title="${esc(c.am)}">${esc(initials(c.am))}</span>` : ""}</div></div>`;
+          <div class="meta"><span>${p.d} of ${p.n} delivered</span>${missPill(c)}${open ? `<span class="pill o">${open} open</span>` : ""}${c.am ? `<span class="av" style="margin-left:auto" title="${esc(c.am)}">${esc(initials(c.am))}</span>` : ""}</div></div>`;
       }).join("")}</div>`;
   }
   function vClient(c) {
@@ -237,6 +251,9 @@
     return `<div class="top"><button class="btn ghost" data-act="clients"><i class="ti ti-arrow-left"></i>Clients</button><h1>${esc(c.name)}</h1>
       <button class="btn" data-act="new" data-client="${c.id}"><i class="ti ti-plus"></i>New request</button><button class="btn ghost" data-act="delclient" data-id="${c.id}"><i class="ti ti-trash"></i></button></div>
       <div class="two"><div>
+        <div class="panel reqp${missing(c).length ? " bad" : ""}" style="margin-bottom:16px"><h3><i class="ti ti-${missing(c).length ? "alert-triangle" : "circle-check"}"></i><span>Needed from Pineda to launch</span><span class="pill ${missing(c).length ? "r" : "g"}" data-i18n style="margin-left:auto;letter-spacing:0;text-transform:none">${(c.requirements || []).filter(x => x.done).length} / ${(c.requirements || []).length}</span></h3>
+          <div class="note" style="margin:0 0 8px">Check an item when Pineda sends it. Paste the link beside it.</div>
+          ${Array.isArray(c.requirements) ? listHTML("clients", c.id, "requirements", "Add something Pineda must send") : `<button class="btn sm" data-act="reqinit" data-id="${c.id}"><i class="ti ti-plus"></i><span>Create the list</span></button>`}</div>
         <div class="panel"><h3><i class="ti ti-checklist"></i>Deliveries · ${p.d} of ${p.n}</h3>${listHTML("clients", c.id, "deliverables", "Add a delivery (page, automation, funnel)")}</div>
         <div class="panel" style="margin-top:16px"><h3><i class="ti ti-inbox"></i>Requests</h3>
         ${rs.map(r => `<div class="hist go" data-act="open" data-id="${r.id}"><time>${esc(fDue(r.due_date) || "No due date")}</time><span><b>${esc(r.title || typeOf(r).label)}</b> · ${esc(STATUS.find(s => s.id === r.status).label)}</span></div>`).join("") || `<div class="empty">No requests yet</div>`}</div>
@@ -342,10 +359,10 @@
       ${sel("who", [["", "Everyone"], ...team.map(n => [n, n])])}</div>
       <div class="kpis">${kpi(served(td), "Clients served today")}${kpi(served(weekStart()), "Clients served this week")}${kpi(served(td.slice(0, 8) + "01"), "Clients served this month")}${kpi(doneM, "Deliveries this month")}${kpi(prod, "In production")}${kpi(wait.length, "Waiting", wait.length ? "<span>Average wait</span> " + esc(durTxt(avg(wait.map(waitMs)))) : "")}</div>
       <div class="panel"><h3><i class="ti ti-users"></i><span>By client</span><span class="q" data-i18n style="margin-left:auto;letter-spacing:0">${cl.length}</span></h3>
-        <div class="tbw"><table class="tb"><thead><tr><th>Client</th><th>Requests</th><th>Done</th><th>In production</th><th>Waiting</th><th>Average delivery time</th><th>Oldest open request</th><th>Deliveries</th></tr></thead><tbody>
-        ${cl.map(c => `<tr class="go" data-act="dopen" data-id="${esc(c.id)}"><td><i class="ti ti-chevron-${D.open === c.id ? "down" : "right"}"></i> <b class="cl">${esc(c.name)}</b>${c.brand ? ` <span class="sub" style="display:inline;margin:0">· ${esc(c.brand)}</span>` : ""}</td><td>${c.l.length}</td><td><span class="pill g">${c.done}</span></td><td><span class="pill ${c.prod ? "o" : ""}">${c.prod}</span></td><td><span class="pill ${c.wait ? "a" : ""}">${c.wait}</span></td><td>${esc(durTxt(c.avg))}</td><td>${c.old == null ? "—" : `<span class="pill ${c.old > 2 * 864e5 ? "r" : ""}">${esc(durTxt(c.old))}</span>`}</td><td>${c.p ? `<span style="display:inline-flex;align-items:center;gap:8px"><span class="bar" style="width:70px;margin:0"><b style="width:${c.p.pct}%"></b></span>${c.p.d} / ${c.p.n}</span>` : "—"}</td></tr>` +
-          (D.open === c.id ? `<tr class="ex"><td colspan="8"><div class="exg"><div><span class="lab">Requests</span>${c.l.slice().sort((a, b) => (b.created_at || "").localeCompare(a.created_at || "")).map(r => `<div class="hist go" data-act="open" data-id="${r.id}"><time>${esc(fDate(r.created_at))}</time><span><b>${esc(r.title || typeOf(r).label)}</b></span><span class="pill ${GRP[grpOf(r)][1]}" style="margin-left:auto">${esc(STATUS.find(x => x.id === r.status).label)}</span><span style="width:64px;text-align:right">${esc(durTxt(waitMs(r)))}</span></div>`).join("")}</div>
-            <div>${c.c ? `<span class="lab">Done</span>${c.c.deliverables.filter(x => x.done).map(x => `<div class="hist"><i class="ti ti-check" style="color:var(--verde)"></i><span class="cl" style="font-weight:400">${esc(x.label)}</span>${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener" style="margin-left:auto"><i class="ti ti-external-link"></i></a>` : ""}</div>`).join("") || `<div class="hist">—</div>`}<span class="lab" style="margin-top:12px">Missing</span>${c.c.deliverables.filter(x => !x.done).map(x => `<div class="hist"><i class="ti ti-circle-dashed" style="color:var(--ambar)"></i><span class="cl" style="font-weight:400">${esc(x.label)}</span></div>`).join("") || `<div class="hist">—</div>`}<button class="btn sm" style="margin-top:10px" data-act="client" data-id="${c.c.id}" data-go="1"><i class="ti ti-arrow-up-right"></i><span>Open client</span></button>` : ""}</div></div></td></tr>` : "")).join("") || `<tr><td colspan="8"><div class="empty">No requests match these filters</div></td></tr>`}
+        <div class="tbw"><table class="tb"><thead><tr><th>Client</th><th>Requests</th><th>Done</th><th>In production</th><th>Waiting</th><th>Average delivery time</th><th>Oldest open request</th><th>Deliveries</th><th>Missing from Pineda</th></tr></thead><tbody>
+        ${cl.map(c => `<tr class="go" data-act="dopen" data-id="${esc(c.id)}"><td><i class="ti ti-chevron-${D.open === c.id ? "down" : "right"}"></i> <b class="cl">${esc(c.name)}</b>${c.brand ? ` <span class="sub" style="display:inline;margin:0">· ${esc(c.brand)}</span>` : ""}</td><td>${c.l.length}</td><td><span class="pill g">${c.done}</span></td><td><span class="pill ${c.prod ? "o" : ""}">${c.prod}</span></td><td><span class="pill ${c.wait ? "a" : ""}">${c.wait}</span></td><td>${esc(durTxt(c.avg))}</td><td>${c.old == null ? "—" : `<span class="pill ${c.old > 2 * 864e5 ? "r" : ""}">${esc(durTxt(c.old))}</span>`}</td><td>${c.p ? `<span style="display:inline-flex;align-items:center;gap:8px"><span class="bar" style="width:70px;margin:0"><b style="width:${c.p.pct}%"></b></span>${c.p.d} / ${c.p.n}</span>` : "—"}</td><td>${c.c && missing(c.c).length ? `<span class="pill r" title="${esc(missing(c.c).map(x => x.label).join("\n"))}">${missing(c.c).length}</span>` : c.c && c.c.requirements ? `<span class="pill g">0</span>` : "—"}</td></tr>` +
+          (D.open === c.id ? `<tr class="ex"><td colspan="9"><div class="exg"><div><span class="lab">Requests</span>${c.l.slice().sort((a, b) => (b.created_at || "").localeCompare(a.created_at || "")).map(r => `<div class="hist go" data-act="open" data-id="${r.id}"><time>${esc(fDate(r.created_at))}</time><span><b>${esc(r.title || typeOf(r).label)}</b></span><span class="pill ${GRP[grpOf(r)][1]}" style="margin-left:auto">${esc(STATUS.find(x => x.id === r.status).label)}</span><span style="width:64px;text-align:right">${esc(durTxt(waitMs(r)))}</span></div>`).join("")}</div>
+            <div>${c.c ? `<span class="lab">Done</span>${c.c.deliverables.filter(x => x.done).map(x => `<div class="hist"><i class="ti ti-check" style="color:var(--verde)"></i><span class="cl" style="font-weight:400">${esc(x.label)}</span>${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener" style="margin-left:auto"><i class="ti ti-external-link"></i></a>` : ""}</div>`).join("") || `<div class="hist">—</div>`}<span class="lab" style="margin-top:12px">Missing</span>${c.c.deliverables.filter(x => !x.done).map(x => `<div class="hist"><i class="ti ti-circle-dashed" style="color:var(--ambar)"></i><span class="cl" style="font-weight:400">${esc(x.label)}</span></div>`).join("") || `<div class="hist">—</div>`}<button class="btn sm" style="margin-top:10px" data-act="client" data-id="${c.c.id}" data-go="1"><i class="ti ti-arrow-up-right"></i><span>Open client</span></button>` : ""}</div></div></td></tr>` : "")).join("") || `<tr><td colspan="9"><div class="empty">No requests match these filters</div></td></tr>`}
         </tbody></table></div></div>
       <div class="panel" style="margin-top:16px"><h3><i class="ti ti-table"></i><span>Requests</span><span class="q" data-i18n style="margin-left:auto;letter-spacing:0">${rows.length}</span></h3>
         <div class="colpick"><span class="lab" style="margin:0">Columns</span>${DCOLS.map(c => `<button class="step${D.cols.includes(c[0]) ? " on" : ""}" data-act="dcol" data-c="${c[0]}">${c[1]}</button>`).join("")}</div>
@@ -374,6 +391,7 @@
       <div class="lgrid"><div class="panel lside"><h3><i class="ti ti-users"></i><span>Clients with open work</span></h3>
         ${info.map(x => `<button class="lcl${x.id === cur ? " on" : ""}" data-act="lpick" data-id="${esc(x.id)}"><span style="flex:1;min-width:0"><b class="cl">${esc(x.name)}</b><small class="sub">${esc(x.brand)}</small><span class="bar" style="margin-top:6px"><b style="width:${x.st.n ? Math.round(x.st.d / x.st.n * 100) : 0}%"></b></span></span><span class="pill o">${x.l.length}</span></button>`).join("") || `<div class="empty">No open work. All done.</div>`}</div>
       <div><div class="lhead"><div><div class="ttl">${esc(clientName(cur))}</div><div class="sub">${esc(c ? c.brand || "" : "")}</div></div>${c ? `<button class="btn sm" data-act="client" data-id="${c.id}" data-go="1"><i class="ti ti-arrow-up-right"></i><span>Open client</span></button>` : ""}</div>
+        ${c && missing(c).length ? `<div class="panel reqp bad lsec"><h3><i class="ti ti-alert-triangle"></i><span>Needed from Pineda to launch</span><span class="pill r" data-i18n style="margin-left:auto;letter-spacing:0;text-transform:none">${missing(c).length}</span></h3>${listHTML("clients", c.id, "requirements", "Add something Pineda must send")}</div>` : ""}
         ${todo.map(sec).join("") || `<div class="panel"><div class="empty">Nothing open for this client</div></div>`}
         ${done.length ? `<div class="panel" style="margin-top:14px"><h3><i class="ti ti-circle-check"></i><span>Done</span><span class="q" data-i18n style="margin-left:auto;letter-spacing:0">${done.length}</span></h3>${done.map(r => `<div class="hist go" data-act="open" data-id="${r.id}"><i class="ti ti-check" style="color:var(--verde)"></i><span><b>${esc(r.title || typeOf(r).label)}</b></span><span style="margin-left:auto">${esc(fDate(r.done_at))}</span></div>`).join("")}</div>` : ""}
       </div></div>`;
@@ -409,11 +427,9 @@
         <button class="x" data-act="ndel" data-id="${n.id}" aria-label="Delete"><i class="ti ti-trash"></i></button></div>
         <textarea class="bare nb" data-nf="body" data-id="${n.id}" placeholder="Write here" rows="${Math.min(14, Math.max(2, String(n.body || "").split("\n").length + 1))}">${esc(n.body || "")}</textarea></div>`;
     return `<div class="top"><h1>Notes</h1><span class="pill"><i class="ti ti-lock"></i><span>Private. Only you see this page.</span></span><button class="btn pri" data-act="nnew"><i class="ti ti-plus"></i>New note</button></div>
-      <div class="ngrid"><div>${open.map(card).join("") || `<div class="panel"><div class="empty">No notes yet. Write to the assistant on the right, in Portuguese or in English.</div></div>`}
+      <div class="ngrid"><div>${open.map(card).join("") || `<div class="panel"><div class="empty">No notes yet. Click "New note" to write the first one.</div></div>`}
         ${done.length ? `<div class="colh" style="margin:18px 4px 10px"><span class="dot" style="background:#BABABA"></span>Done<span class="q">${done.length}</span></div>${done.map(card).join("")}` : ""}</div>
-      <div class="panel aipanel"><h3><i class="ti ti-sparkles"></i><span>Notes assistant</span></h3>
-        <div class="chatlist" id="ailist">${P.ai.map(m => `<div class="msg${m.role === "user" ? " mine" : ""}">${m.role === "user" ? "" : `<span class="av"><i class="ti ti-sparkles" style="font-size:12px"></i></span>`}<div><div class="mb">${mentions(m.text || "")}</div></div></div>`).join("") || `<div class="empty">Tell me what to remember, what you left for later, or what you finished. I write everything in English and update your notes and the board.</div>`}${P.busy ? `<div class="msg"><span class="av"><i class="ti ti-sparkles" style="font-size:12px"></i></span><div><div class="mb" style="color:var(--cinza)">Writing…</div></div></div>` : ""}</div>
-        <div class="chatin" style="padding:10px 0 0"><textarea class="txt" id="aiinput" rows="2" placeholder="Write in Portuguese or in English" ${P.busy ? "disabled" : ""}></textarea><button class="btn pri sm" data-act="aisend" ${P.busy ? "disabled" : ""}>Send</button></div></div></div>`;
+</div>`;
   }
   function vHistory() {
     const l = S.items.activity.filter(a => !S.hfilter || a.client_id === S.hfilter).sort((a, b) => b.at.localeCompare(a.at)).slice(0, 300);
@@ -597,19 +613,6 @@
     nnew() { const n = { id: uid(), title: "", body: "", client: "", done: false, at: now() }; P.notes.unshift(n); saveNote(n); renderMain(); const i = $('[data-nf="title"][data-id="' + n.id + '"]'); if (i) i.focus(); },
     ntgl(d) { const n = P.notes.find(x => x.id === d.id); if (!n) return; n.done = !n.done; saveNote(n); renderMain(); },
     async ndel(d) { const n = P.notes.find(x => x.id === d.id); if (!n || !confirm("Delete this note? This cannot be undone.")) return; P.notes = P.notes.filter(x => x.id !== d.id); if (LIVE) { const { error } = await sb.from("desk_private").delete().eq("id", d.id); if (error) toast("Could not delete."); } else privFlush(); renderMain(); },
-    async aisend() {
-      const b = $("#aiinput"), v = b ? b.value.trim() : ""; if (!v || P.busy) return b && b.focus();
-      P.ai.push({ role: "user", text: v, at: now() }); P.busy = true; renderMain(); aiScroll();
-      let reply = "";
-      if (!LIVE) reply = "The assistant works on the published panel only. This is the demo copy.";
-      else {
-        const { data, error } = await sb.functions.invoke("desk-ai", { body: { message: v } });
-        if (error) { let code = ""; try { code = (await error.context.json()).error; } catch (e) {} reply = code === "no_key" || code === "bad_key" ? "The assistant is not connected yet. The Anthropic API key is missing or wrong in Supabase (Edge Functions, Secrets, ANTHROPIC_API_KEY)." : code === "rate_limit" ? "Too many requests right now. Try again in a minute." : "The assistant could not answer. Try again."; P.ai.push({ role: "assistant", text: reply, at: now() }); }
-        else { await loadPriv(); if (data && data.changedBoard) { try { const n = await remote.load(); S.items = n.items; S.members = n.members; } catch (e) {} } }
-      }
-      if (!LIVE) { P.ai.push({ role: "assistant", text: reply, at: now() }); privFlush(); }
-      P.busy = false; renderMain(); aiScroll(); const i = $("#aiinput"); if (i) i.focus();
-    },
     lpick(d) { S.listClient = d.id; renderMain(); window.scrollTo(0, 0); },
     dopen(d) { const D = dashState(); D.open = D.open === d.id ? null : d.id; renderMain(); },
     dgran(d) { dashState().gran = d.g; renderMain(); },
@@ -624,7 +627,7 @@
       if (d.type !== "global" && !cid) return ($("#nerr").textContent = "Choose a client first.");
       if (cid === "+") {
         if (!d.newname.trim()) return ($("#nerr").textContent = "Enter the new client name.");
-        const c = { id: uid(), name: d.newname.trim(), brand: d.newbrand.trim(), am: S.me.team === "pineda" ? S.me.name : "", tz: d.event_tz, notes: "", links: [], deliverables: DELIVERABLES.map(l => ({ id: uid(), label: l, done: false, url: "" })) };
+        const c = { id: uid(), name: d.newname.trim(), brand: d.newbrand.trim(), am: S.me.team === "pineda" ? S.me.name : "", tz: d.event_tz, notes: "", links: [], deliverables: DELIVERABLES.map(l => ({ id: uid(), label: l, done: false, url: "" })), requirements: newReqs() };
         S.items.clients.push(c); save("clients", c); cid = c.id; log("added the client", c.id, c.id);
       }
       if (d.type === "launch" && !d.event_date) return ($("#nerr").textContent = "Pick the webinar date.");
@@ -635,11 +638,11 @@
       S.items.requests.push(r); save("requests", r); log("created the request", r.id, cid);
       S.modal = null; S.view = "board"; S.open = r.id; render(); toast("Request sent");
     },
-    newclient() { const c = { id: uid(), name: "New client", brand: "", am: "", tz: "America/Chicago", notes: "", links: [], deliverables: DELIVERABLES.map(l => ({ id: uid(), label: l, done: false, url: "" })) }; S.items.clients.push(c); save("clients", c); log("added the client", c.id, c.id); S.client = c.id; renderMain(); },
+    newclient() { const c = { id: uid(), name: "New client", brand: "", am: "", tz: "America/Chicago", notes: "", links: [], deliverables: DELIVERABLES.map(l => ({ id: uid(), label: l, done: false, url: "" })), requirements: newReqs() }; S.items.clients.push(c); save("clients", c); log("added the client", c.id, c.id); S.client = c.id; renderMain(); },
     delclient(d) { const c = get("clients", d.id); if (!confirm('Delete the client "' + c.name + '"? Requests stay in the history.')) return; S.items.clients = S.items.clients.filter(x => x.id !== d.id); store.remove("clients", d.id); log('deleted the client "' + c.name + '"', null, null); S.client = null; renderMain(); },
     delreq(d) { const r = get("requests", d.id); if (!confirm("Delete this request? This cannot be undone.")) return; S.items.requests = S.items.requests.filter(x => x.id !== d.id); store.remove("requests", d.id); log('deleted the request "' + (r.title || "") + '"', null, r.client_id); S.open = null; render(); },
     status(d) { setStatus(get("requests", d.id), d.s); render(); },
-    tgl(d) { const o = get(d.k, d.id), it = o[d.fld].find(x => x.id === d.it); it.done = !it.done; it.by = it.done ? S.me.name : ""; it.at = it.done ? now() : ""; save(d.k, o); log((it.done ? "checked" : "unchecked") + ' "' + it.label + '"', d.k === "requests" ? o.id : null, d.k === "requests" ? o.client_id : o.id);
+    tgl(d) { const o = get(d.k, d.id), it = o[d.fld].find(x => x.id === d.it); it.done = !it.done; it.by = it.done ? S.me.name : ""; it.at = it.done ? now() : ""; save(d.k, o); log((d.fld === "requirements" ? (it.done ? "received from Pineda" : "marked as missing") : (it.done ? "checked" : "unchecked")) + ' "' + it.label + '"', d.k === "requests" ? o.id : null, d.k === "requests" ? o.client_id : o.id);
       if (d.k === "requests" && d.fld === "checklist" && o.checklist.length) { if (o.checklist.every(x => x.done)) { if (o.status !== "done") { setStatus(o, "done"); toast("All steps checked. Moved to Done."); } } else if (o.status === "done") setStatus(o, "doing"); }
       render(); },
     quick(d) { const r = get("requests", d.id); setStatus(r, r.status === "done" ? "doing" : "done"); render(); },
@@ -682,7 +685,6 @@
     if (e.key === "Enter" && e.target.dataset.add) { const [k, id, fld] = e.target.dataset.add.split("|"); A.liadd({ k, id, fld }); }
     if (e.key === "Enter" && e.target.id === "lemail") A.login();
     if (e.key === "Enter" && !e.shiftKey && e.target.id === "chatinput") { e.preventDefault(); A.chatsend(); }
-    if (e.key === "Enter" && !e.shiftKey && e.target.id === "aiinput") { e.preventDefault(); A.aisend(); }
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && e.target.id === "cbox" && S.open) A.comment({ id: S.open });
   });
   document.addEventListener("input", e => {
