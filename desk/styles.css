@@ -338,3 +338,15 @@ a.pill:hover{background:rgba(255,109,41,.25);color:var(--brasa)}
 .stb .lab{margin:6px 0 2px;font-size:10px}
 .stb ul{margin:0;padding-left:15px;line-height:1.5;color:var(--branco)}
 .stb ul.soft{color:var(--cinza)}
+
+.ibtn{background:none;border:0;cursor:pointer;margin-left:10px;padding:0;vertical-align:middle;color:var(--cinza);-webkit-text-fill-color:currentColor;display:inline-flex}
+.ibtn i{font-size:20px}
+.ibtn:hover{color:var(--laranja)}
+.helpm{width:min(720px,100%)}
+.hsec{margin-top:14px}
+.hsec h4{margin:0 0 6px;font-size:14px;font-weight:600;color:var(--brasa)}
+.hsec ul{margin:0;padding-left:18px;line-height:1.6;color:var(--branco)}
+.hsec li{margin-bottom:3px}.hsec b{color:var(--branco);font-weight:600}
+a.btn{text-decoration:none;color:var(--branco)}
+.btn.ghl{border-color:rgba(138,184,255,.6);color:var(--azul)}
+.btn.ghl:hover{background:rgba(138,184,255,.14)}

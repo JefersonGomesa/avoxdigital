@@ -220,6 +220,16 @@
     return `<details class="panel vrep ${v.verdict}" ${open || v.verdict !== "approved" ? "open" : ""}><summary><i class="ti ti-shield-${v.verdict === "approved" ? "check" : "x"}"></i><b>${v.verdict === "approved" ? "Validation: approved" : "Validation: not approved"}</b><span class="pill ${v.fails ? "r" : "g"}" data-i18n>${v.fails} ✕</span><span class="pill ${v.warns ? "a" : ""}" data-i18n>${v.warns} !</span><small data-i18n>${esc(v.by)} · ${esc(fStamp(v.at))}</small><i class="ti ti-chevron-down" style="margin-left:auto"></i></summary>
       ${Object.keys(by).map(pg => `<div class="vpg"><div class="vph cl">${esc(pg)}</div>${by[pg].map(c => `<div class="vck ${c.level}"><i class="ti ti-${ic[c.level][0]}" style="color:${ic[c.level][1]}"></i><span><b>${esc(c.name)}</b><small class="cl">${mentions(c.detail || "")}</small></span></div>`).join("")}</div>`).join("")}</details>`;
   }
+  /* ---------- GHL link + help ---------- */
+  const ghlBtn = (c, always) => c && c.ghl ? `<a class="btn sm ghl" href="${esc(c.ghl)}" target="_blank" rel="noopener" title="Open the client's GoHighLevel account"><i class="ti ti-external-link"></i><span data-i18n>GHL</span></a>` : c && always ? `<span class="pill" title="Paste the GHL account link in Details">No GHL link</span>` : "";
+  const HELPKEY = { board: ["board", "card"], clients: ["clients"], list: ["list"], dash: ["dash"], notes: ["notes"], calendar: ["calendar"], history: ["history"] };
+  function helpHTML() {
+    const H = window.DESK_HELP; if (!H || !S.help) return "";
+    const L = H[window.DESK_I18N && window.DESK_I18N.get() === "pt" ? "pt" : "en"], keys = S.help === "all" ? H.order : (HELPKEY[S.help] || ["start"]);
+    return `<div class="veil mid" data-act="helpclose"><div class="modal helpm" data-stop data-i18n><div class="dh"><i class="ti ti-info-circle" style="font-size:22px;color:var(--laranja)"></i><span class="ttl">${esc(S.help === "all" ? L.title : L.open)}</span><span class="sp"></span><button class="btn ghost sm" data-act="helpclose"><i class="ti ti-x"></i></button></div>
+      ${keys.map(k => `<div class="hsec"><h4>${esc(L[k][0])}</h4><ul>${L[k][1].map(x => `<li>${x}</li>`).join("")}</ul></div>`).join("")}
+      ${S.help === "all" ? "" : `<button class="btn sm" data-act="help" data-h="all" style="margin-top:6px"><i class="ti ti-book"></i>${esc(L.all)}</button>`}</div></div>`;
+  }
   const typeOf = r => TYPES.find(t => t.id === r.type) || TYPES[1];
   const prog = l => { const n = (l || []).length, d = (l || []).filter(x => x.done).length; return { n, d, pct: n ? Math.round(d / n * 100) : 0 }; };
   const opt = (v, l, cur) => `<option value="${esc(v)}"${v === cur ? " selected" : ""}>${esc(l)}</option>`;
@@ -299,7 +309,7 @@
         return `<div class="card" data-act="client" data-id="${c.id}"><div class="cl">${esc(c.name)}</div><div class="sub">${esc(c.brand || "")}</div>
           ${nx ? whenHTML(nx) : `<div class="when"><i class="ti ti-calendar-off" style="color:var(--cinza)"></i><div style="color:var(--cinza)">No webinar date set</div></div>`}
           <div class="bar"><b style="width:${p.pct}%"></b></div>
-          <div class="meta"><span>${p.d} of ${p.n} delivered</span>${missPill(c)}${valPill(c)}${open ? `<span class="pill o">${open} open</span>` : ""}${c.am ? `<span class="av" style="margin-left:auto" title="${esc(c.am)}">${esc(initials(c.am))}</span>` : ""}</div></div>`;
+          <div class="meta"><span>${p.d} of ${p.n} delivered</span>${ghlBtn(c)}${missPill(c)}${valPill(c)}${open ? `<span class="pill o">${open} open</span>` : ""}${c.am ? `<span class="av" style="margin-left:auto" title="${esc(c.am)}">${esc(initials(c.am))}</span>` : ""}</div></div>`;
       }).join("")}</div>`;
   }
   function vClient(c) {
@@ -307,7 +317,7 @@
     const p = prog(c.deliverables);
     const F = (f, ph, cls) => `<input class="${cls || "inp"}" value="${esc(c[f] || "")}" placeholder="${ph}" data-f="${f}" data-k="clients" data-id="${c.id}">`;
     return `<div class="top"><button class="btn ghost" data-act="clients"><i class="ti ti-arrow-left"></i>Clients</button><h1>${esc(c.name)}</h1>
-      ${valPill(c)}${valBtn("clients", c.id, true)}<button class="btn" data-act="new" data-client="${c.id}"><i class="ti ti-plus"></i>New request</button><button class="btn ghost" data-act="delclient" data-id="${c.id}"><i class="ti ti-trash"></i></button></div>
+      ${ghlBtn(c, true)}${valPill(c)}${valBtn("clients", c.id, true)}<button class="btn" data-act="new" data-client="${c.id}"><i class="ti ti-plus"></i>New request</button><button class="btn ghost" data-act="delclient" data-id="${c.id}"><i class="ti ti-trash"></i></button></div>
       ${c.validation ? `<div style="margin-bottom:16px">${valReport(c)}</div>` : ""}
       <div class="two"><div>
         <div class="panel reqp${missing(c).length ? " bad" : ""}" style="margin-bottom:16px"><h3><i class="ti ti-${missing(c).length ? "alert-triangle" : "circle-check"}"></i><span>Needed from Pineda to launch</span><span class="pill ${missing(c).length ? "r" : "g"}" data-i18n style="margin-left:auto;letter-spacing:0;text-transform:none">${(c.requirements || []).filter(x => x.done).length} / ${(c.requirements || []).length}</span></h3>
@@ -321,6 +331,7 @@
           <div><span class="lab">Spokesperson</span>${F("name", "Name")}</div><div><span class="lab">Brand</span>${F("brand", "Brand or program")}</div>
           <div><span class="lab">Account manager</span><select class="sel" data-f="am" data-k="clients" data-id="${c.id}">${memberOpts(c.am)}</select></div>
           <div><span class="lab">Usual time zone</span><select class="sel" data-f="tz" data-k="clients" data-id="${c.id}">${zoneOpts(c.tz, true)}</select></div>
+          <div class="w"><span class="lab">GHL account link</span>${F("ghl", "https://app.gohighlevel.com/v2/location/...")}</div>
           <div class="w"><span class="lab">Slack channel</span>${F("slack", "pinedapartners-...")}</div>
           <div class="w"><span class="lab">Notes</span><textarea class="txt" style="min-height:150px" data-f="notes" data-k="clients" data-id="${c.id}" placeholder="Brand colours, rules, anything the team must know">${esc(c.notes || "")}</textarea></div></div></div>
         <div class="panel" style="margin-top:16px"><h3><i class="ti ti-link"></i>Links</h3>${linksHTML("clients", c.id)}</div>
@@ -451,7 +462,7 @@
     return `<div class="top"><h1>Checklist</h1><button class="btn pri" data-act="new" data-client="${c ? c.id : ""}"><i class="ti ti-plus"></i>Add request</button></div>
       <div class="lgrid"><div class="panel lside"><h3><i class="ti ti-users"></i><span>Clients with open work</span></h3>
         ${info.map(x => `<button class="lcl${x.id === cur ? " on" : ""}" data-act="lpick" data-id="${esc(x.id)}"><span style="flex:1;min-width:0"><b class="cl">${esc(x.name)}</b><small class="sub">${esc(x.brand)}</small><span class="bar" style="margin-top:6px"><b style="width:${x.st.n ? Math.round(x.st.d / x.st.n * 100) : 0}%"></b></span></span><span class="pill o">${x.l.length}</span></button>`).join("") || `<div class="empty">No open work. All done.</div>`}</div>
-      <div><div class="lhead"><div><div class="ttl">${esc(clientName(cur))}</div><div class="sub">${esc(c ? c.brand || "" : "")}</div></div>${c ? `<span style="display:flex;gap:8px;align-items:center">${valPill(c)}${valBtn("clients", c.id, true)}<button class="btn sm" data-act="client" data-id="${c.id}" data-go="1"><i class="ti ti-arrow-up-right"></i><span>Open client</span></button></span>` : ""}</div>
+      <div><div class="lhead"><div><div class="ttl">${esc(clientName(cur))}</div><div class="sub">${esc(c ? c.brand || "" : "")}</div></div>${c ? `<span style="display:flex;gap:8px;align-items:center">${ghlBtn(c)}${valPill(c)}${valBtn("clients", c.id, true)}<button class="btn sm" data-act="client" data-id="${c.id}" data-go="1"><i class="ti ti-arrow-up-right"></i><span>Open client</span></button></span>` : ""}</div>
         ${c && c.validation ? `<div style="margin-bottom:14px">${valReport(c)}</div>` : ""}
         ${c && missing(c).length ? `<div class="panel reqp bad lsec"><h3><i class="ti ti-alert-triangle"></i><span>Needed from Pineda to launch</span><span class="pill r" data-i18n style="margin-left:auto;letter-spacing:0;text-transform:none">${missing(c).length}</span></h3>${listHTML("clients", c.id, "requirements", "Add something Pineda must send")}</div>` : ""}
         ${todo.map(sec).join("") || `<div class="panel"><div class="empty">Nothing open for this client</div></div>`}
@@ -526,7 +537,7 @@
       ${r.source_text ? `<div class="sec cm" style="border-color:rgba(255,109,41,.35)"><div class="h"><i class="ti ti-brand-slack" style="color:var(--laranja);font-size:16px"></i><b>${esc(r.requester || "Slack")}</b>${esc(fStamp(r.created_at))}${r.slack_url ? `<a href="${esc(r.slack_url)}" target="_blank" rel="noopener" style="margin-left:auto">Open in Slack</a>` : ""}</div>${mentions(r.source_text)}</div>` : ""}
       ${r.validation ? `<div class="sec">${valReport(r)}</div>` : ""}
       <div class="sec fg">
-        <div><span class="lab">Client</span><select class="sel" data-f="client_id" ${A}>${opt("", "No client", r.client_id)}${clientOpts(r.client_id, true)}</select></div>
+        <div><span class="lab" style="display:flex;align-items:center;gap:8px">Client ${get("clients", r.client_id) && get("clients", r.client_id).ghl ? `<a href="${esc(get("clients", r.client_id).ghl)}" target="_blank" rel="noopener" style="margin-left:auto;letter-spacing:0;text-transform:none" data-i18n><i class="ti ti-external-link"></i> GHL</a>` : ""}</span><select class="sel" data-f="client_id" ${A}>${opt("", "No client", r.client_id)}${clientOpts(r.client_id, true)}</select></div>
         <div><span class="lab">Type</span><select class="sel" data-f="type" ${A}>${TYPES.map(t => opt(t.id, t.label, r.type)).join("")}</select></div>
         <div><span class="lab">Assigned to</span><div style="display:flex;gap:6px;flex-wrap:wrap">${[...new Set([...S.members.filter(m => m.team === "clicklab").map(m => m.name), ...asg(r)])].map(n => `<button class="step${asg(r).includes(n) ? " on" : ""}" data-act="asg" data-id="${r.id}" data-n="${esc(n)}"><span class="av" style="width:18px;height:18px;font-size:9px">${esc(initials(n))}</span><span data-i18n>${esc(n)}</span></button>`).join("")}</div></div>
         <div><span class="lab">Due date</span><input type="date" class="inp" value="${esc(r.due_date || "")}" data-f="due_date" ${A}></div>
@@ -573,6 +584,7 @@
   function renderMain() {
     const v = { board: vBoard, clients: vClients, calendar: vCalendar, history: vHistory, dash: vDash, list: vList, notes: vNotes }[S.view]();
     $("#main").innerHTML = v;
+    const h1 = $("#main .top h1"); if (h1 && window.DESK_HELP) h1.insertAdjacentHTML("beforeend", `<button class="ibtn" data-act="help" data-h="${S.view}" title="How this screen works" aria-label="How this screen works"><i class="ti ti-info-circle"></i></button>`);
     const n = S.items.requests.filter(r => r.status === "new").length;
     document.querySelectorAll(".nav").forEach(b => b.classList.toggle("on", b.dataset.v === S.view));
     $("#nnew").textContent = n || ""; $("#nnew").style.display = n ? "" : "none";
@@ -581,7 +593,7 @@
   function renderOver() {
     const r = S.open && get("requests", S.open);
     const sc = $(".drawer") ? $(".drawer").scrollTop : 0;
-    $("#over").innerHTML = (r ? drawerHTML(r) : "") + (S.modal ? newHTML() : "");
+    $("#over").innerHTML = (r ? drawerHTML(r) : "") + (S.modal ? newHTML() : "") + helpHTML();
     if ($(".drawer")) $(".drawer").scrollTop = sc;
     onRender();
   }
@@ -592,6 +604,7 @@
         <div class="brand"><img src="assets/vox-simbolo.svg" alt="Vox Digital"><div><b>VOX</b><span>Desk</span></div></div>
         ${[["board", "ti-layout-kanban", "Requests"], ["clients", "ti-users", "Clients"], ["list", "ti-list-check", "Checklist"], ["dash", "ti-chart-bar", "Dashboard"], ["notes", "ti-notebook", "Notes"], ["calendar", "ti-calendar", "Calendar"], ["history", "ti-history", "History"]].map(n => `<button class="nav" data-act="view" data-v="${n[0]}"><i class="ti ${n[1]}"></i><span>${n[2]}</span>${n[0] === "board" ? '<b class="n" id="nnew"></b>' : ""}</button>`).join("")}
         <button class="btn sm" data-act="lang" style="margin:0 6px 0;align-self:flex-start" title="Trocar o idioma da interface · Switch the interface language"><i class="ti ti-language"></i><span data-i18n>${window.DESK_I18N && window.DESK_I18N.get() === "pt" ? "Português · EN" : "English · PT"}</span></button>
+        <button class="btn sm ghost" data-act="help" data-h="all" style="margin:6px 6px 0;align-self:flex-start"><i class="ti ti-help-circle"></i><span>Help</span></button>
         <div id="online" style="margin:auto 6px 10px"></div>
         <div class="note" id="live" style="margin:10px 6px 0;display:${LIVE ? "block" : "none"}"><span class="dot" style="display:inline-block;background:${S.live ? "var(--verde)" : "var(--cinza)"}"></span> <span>${S.live ? "Live" : "Connecting"}</span></div>
         <div class="note" style="margin:4px 6px 0;line-height:1.5">${window.DESK_IMPORT ? `<i class="ti ti-brand-slack"></i> Slack sync<br>${esc(fStamp(window.DESK_IMPORT.synced_at))}` : ""}</div>
@@ -729,6 +742,8 @@
       render();
     },
     undo() { undoLast(); },
+    help(d) { S.help = d.h || "all"; renderOver(); },
+    helpclose() { S.help = null; renderOver(); },
     async validate(d) {
       if (VB.has(d.id)) return;
       if (!LIVE) return toast("The validator works on the published panel only.");
@@ -771,12 +786,12 @@
 
   document.addEventListener("click", e => {
     const el = e.target.closest("[data-act]"); if (!el) return;
-    if ((el.dataset.act === "close" || el.dataset.act === "closemodal") && el.classList.contains("veil") && e.target !== el) return;
+    if ((el.dataset.act === "close" || el.dataset.act === "closemodal" || el.dataset.act === "helpclose") && el.classList.contains("veil") && e.target !== el) return;
     if (e.target.closest("a")) return;
     A[el.dataset.act] && A[el.dataset.act](el.dataset, e);
   });
   document.addEventListener("keydown", e => {
-    if (e.key === "Escape") { if (S.modal) A.closemodal(); else if (S.open) A.close(); else if (S.chat) A.chat(); }
+    if (e.key === "Escape") { if (S.help) A.helpclose(); else if (S.modal) A.closemodal(); else if (S.open) A.close(); else if (S.chat) A.chat(); }
     if (e.key === "Enter" && e.target.dataset.add) { const [k, id, fld] = e.target.dataset.add.split("|"); A.liadd({ k, id, fld }); }
     if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === "z" && !/INPUT|TEXTAREA|SELECT/.test(e.target.tagName) && U.stack.length) { e.preventDefault(); undoLast(); }
     if (e.key === "Enter" && e.target.id === "lemail") A.login();
@@ -796,7 +811,7 @@
       const o = get(d.k, d.id); if (!o || o[d.f] === t.value) return;
       const old = o[d.f]; o[d.f] = t.value; save(d.k, o);
       const names = { assignee: "assigned to " + (t.value || "nobody"), due_date: "set due date to " + (fDue(t.value) || "none"), event_date: "changed the webinar date", event_time: "changed the webinar time", event_tz: "changed the time zone to " + zAbbr(t.value), client_id: "moved to " + clientName(t.value), waiting_on: t.value ? "is waiting on " + t.value : "cleared waiting on" };
-      const lab = { title: "title", details: "notes", notes: "notes", name: "spokesperson", brand: "brand", am: "account manager", tz: "time zone", slack: "Slack channel", type: "type", requester: "requested by" };
+      const lab = { title: "title", details: "notes", notes: "notes", name: "spokesperson", brand: "brand", am: "account manager", tz: "time zone", slack: "Slack channel", ghl: "GHL account link", type: "type", requester: "requested by" };
       const show = v => d.f === "client_id" ? clientName(v) : /tz$/.test(d.f) ? (v ? zAbbr(v) : "") : d.f === "type" ? (TYPES.find(x => x.id === v) || {}).label || v : /_date$/.test(d.f) ? fDue(v) : v;
       log(names[d.f] && d.k === "requests" ? names[d.f] : "edited the " + (lab[d.f] || d.f), d.k === "requests" ? o.id : null, d.k === "requests" ? o.client_id : o.id, show(old), show(t.value));
       if (d.k === "requests" && d.f === "waiting_on" && t.value && o.status !== "info") setStatus(o, "info");
