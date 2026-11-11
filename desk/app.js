@@ -180,11 +180,14 @@
       <button class="x" data-act="lidel" data-k="${kind}" data-id="${id}" data-fld="links" data-it="${it.id}" aria-label="Remove"><i class="ti ti-x"></i></button></div>`).join("") +
       `<div class="add"><input class="inp" placeholder="Paste a link (Drive, page, Zoom, doc)" data-add="${kind}|${id}|links"><button class="btn sm" data-act="liadd" data-k="${kind}" data-id="${id}" data-fld="links"><i class="ti ti-plus"></i>Add</button></div>`;
   }
-  function cardHTML(r) {
+  /* Column order: manual priority (rank) first, then due date, then newest. */
+  const byRank = (a, b) => ((a.rank == null ? 1e9 : a.rank) - (b.rank == null ? 1e9 : b.rank)) || ((a.due_date || "9") < (b.due_date || "9") ? -1 : (a.due_date || "9") > (b.due_date || "9") ? 1 : (b.created_at || "").localeCompare(a.created_at || ""));
+  const inCol = (r, st, sub) => r.status === st && (!sub || (sub === "client") === (r.type === "client"));
+  function cardHTML(r, pos) {
     const mv = movers(r);
     const p = prog(r.checklist), t = typeOf(r), late = r.due_date && r.due_date < today() && r.status !== "done" && r.status !== "tested";
     return `<div class="card" draggable="true" data-act="open" data-id="${r.id}">
-      <div style="display:flex;gap:8px;align-items:flex-start"><div style="flex:1;min-width:0"><div class="cl">${esc(clientName(r.client_id))}</div><div class="sub">${esc(r.title || t.label)}</div></div><button class="chk${r.status === "done" ? " on" : ""}" data-act="quick" data-id="${r.id}" title="${r.status === "done" ? "Reopen" : "Mark as done"}" aria-label="Mark as done">${r.status === "done" ? '<i class="ti ti-check"></i>' : ""}</button></div>
+      <div style="display:flex;gap:8px;align-items:flex-start">${typeof pos === "number" && r.status !== "done" ? `<span class="rk" title="Priority ${pos + 1}">${pos + 1}</span>` : ""}<div style="flex:1;min-width:0"><div class="cl">${esc(clientName(r.client_id))}</div><div class="sub">${esc(r.title || t.label)}</div></div><button class="chk${r.status === "done" ? " on" : ""}" data-act="quick" data-id="${r.id}" title="${r.status === "done" ? "Reopen" : "Mark as done"}" aria-label="Mark as done">${r.status === "done" ? '<i class="ti ti-check"></i>' : ""}</button></div>
       ${whenHTML(r)}
       ${r.source_text ? `<div class="q"><i class="ti ti-brand-slack"></i><span><b>${esc(r.requester || "Slack")}:</b> ${esc(r.source_text.length > 150 ? r.source_text.slice(0, 150) + "…" : r.source_text)}</span></div>` : ""}
       ${p.n ? `<div class="bar"><b style="width:${p.pct}%"></b></div>` : ""}
@@ -210,7 +213,7 @@
       <div class="board">${[{ id: "new", sub: "client", label: "New clients", color: "#FF6D29", empty: "No new client to build" }, { id: "new", sub: "update", label: "Updates", color: "#8AB8FF", empty: "No new update" }, ...STATUS.slice(1)].map(s => {
         let l = rs.filter(r => r.status === s.id && (!s.sub || (s.sub === "client") === (r.type === "client")));
         if (s.id === "done") l = l.filter(r => !r.done_at || +new Date(r.done_at) > cut);
-        l.sort((a, b) => (a.due_date || "9") < (b.due_date || "9") ? -1 : 1);
+        l.sort(s.id === "done" ? (a, b) => (b.done_at || "").localeCompare(a.done_at || "") : byRank);
         return `<div class="col" data-drop="${s.id}" data-sub="${s.sub || ""}"><div class="colh"><span class="dot" style="background:${s.color}"></span>${s.label}<span class="q">${l.length}</span></div>
         ${l.map(cardHTML).join("") || `<div class="empty">${s.empty || (s.id === "done" ? "Done in the last 7 days shows here" : "Drag a card here")}</div>`}</div>`;
       }).join("")}</div>`;
@@ -537,9 +540,33 @@
   });
   let drag = null;
   document.addEventListener("dragstart", e => { const c = e.target.closest && e.target.closest(".card[draggable]"); if (c) { drag = c.dataset.id; e.dataTransfer.effectAllowed = "move"; } });
-  document.addEventListener("dragover", e => { const c = e.target.closest && e.target.closest("[data-drop]"); if (c && drag) { e.preventDefault(); c.classList.add("over"); } });
-  document.addEventListener("dragleave", e => { const c = e.target.closest && e.target.closest("[data-drop]"); if (c && !c.contains(e.relatedTarget)) c.classList.remove("over"); });
-  document.addEventListener("drop", e => { const c = e.target.closest && e.target.closest("[data-drop]"); if (c && drag) { e.preventDefault(); const r = get("requests", drag); if (r) { const sub = c.dataset.sub; if (sub && (sub === "client") !== (r.type === "client")) { const was = typeOf(r).label; r.type = sub === "client" ? "client" : "update"; save("requests", r); log("edited the type", r.id, r.client_id, was, typeOf(r).label); } setStatus(r, c.dataset.drop); } drag = null; render(); } });
+  let dropRef = null;
+  const clearMarks = () => document.querySelectorAll(".card.dropb,.card.dropa").forEach(x => x.classList.remove("dropb", "dropa"));
+  document.addEventListener("dragover", e => {
+    const c = e.target.closest && e.target.closest("[data-drop]"); if (!c || !drag) return;
+    e.preventDefault(); c.classList.add("over"); clearMarks(); dropRef = null;
+    const t = e.target.closest('.card[data-act="open"]');
+    if (t && t.dataset.id !== drag) { const r = t.getBoundingClientRect(), before = e.clientY < r.top + r.height / 2; t.classList.add(before ? "dropb" : "dropa"); dropRef = { id: t.dataset.id, before }; }
+  });
+  document.addEventListener("dragleave", e => { const c = e.target.closest && e.target.closest("[data-drop]"); if (c && !c.contains(e.relatedTarget)) { c.classList.remove("over"); clearMarks(); } });
+  document.addEventListener("dragend", () => { drag = null; dropRef = null; clearMarks(); document.querySelectorAll(".col.over").forEach(x => x.classList.remove("over")); });
+  document.addEventListener("drop", e => {
+    const c = e.target.closest && e.target.closest("[data-drop]"); if (!c || !drag) return;
+    e.preventDefault(); const r = get("requests", drag), st = c.dataset.drop, sub = c.dataset.sub;
+    if (r) {
+      const sameCol = inCol(r, st, sub), oldPos = sameCol ? S.items.requests.filter(x => inCol(x, st, sub)).sort(byRank).findIndex(x => x.id === r.id) + 1 : 0;
+      if (sub && (sub === "client") !== (r.type === "client")) { const was = typeOf(r).label; r.type = sub === "client" ? "client" : "update"; save("requests", r); log("edited the type", r.id, r.client_id, was, typeOf(r).label); }
+      setStatus(r, st);
+      if (st !== "done") {
+        const ids = S.items.requests.filter(x => inCol(x, st, sub) && x.id !== r.id).sort(byRank).map(x => x.id);
+        let i = dropRef ? ids.indexOf(dropRef.id) : -1; i = i < 0 ? ids.length : i + (dropRef.before ? 0 : 1);
+        ids.splice(i, 0, r.id);
+        ids.forEach((id, k) => { const o = get("requests", id), rk = (k + 1) * 10; if (o && o.rank !== rk) { o.rank = rk; save("requests", o); } });
+        if (sameCol && oldPos !== i + 1) log("changed the priority", r.id, r.client_id, "#" + oldPos, "#" + (i + 1));
+      }
+    }
+    drag = null; dropRef = null; render();
+  });
 
   /* ---------- boot ---------- */
   async function boot() {
