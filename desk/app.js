@@ -270,6 +270,114 @@
       <button class="btn sm" data-act="cal" data-d="-1"><i class="ti ti-chevron-left"></i></button><button class="btn sm" data-act="cal" data-d="0">Today</button><button class="btn sm" data-act="cal" data-d="1"><i class="ti ti-chevron-right"></i></button></div>
       <div class="cal">${["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => `<div class="dn">${d}</div>`).join("")}${cells}</div>`;
   }
+
+  /* ---------- dashboard ---------- */
+  const DCOL = { delivered: "#E8632A", upd: "#4F8FE8", neu: "#2FA883" };
+  const durTxt = ms => ms == null ? "—" : ms < 36e5 ? Math.max(1, Math.round(ms / 6e4)) + " min" : ms < 864e5 ? Math.round(ms / 36e5) + " h" : (ms / 864e5 < 10 ? (ms / 864e5).toFixed(1) : Math.round(ms / 864e5)) + " d";
+  const grpOf = r => r.status === "done" ? "done" : (r.status === "doing" || r.status === "tested") ? "prod" : "wait";
+  const GRP = { done: ["Done", "g"], prod: ["In production", "o"], wait: ["Waiting", "a"] };
+  const waitMs = r => r.created_at ? (r.status === "done" ? (r.done_at ? +new Date(r.done_at) - +new Date(r.created_at) : null) : Date.now() - +new Date(r.created_at)) : null;
+  const fDate = iso => iso ? new Date(iso).toLocaleDateString("en-US", { timeZone: MYZ, month: "short", day: "numeric" }) + " · " + fTime(+new Date(iso), MYZ, BR) : "—";
+  const weekStart = () => { const t = today().split("-"), d = new Date(Date.UTC(+t[0], +t[1] - 1, +t[2])); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d.toISOString().slice(0, 10); };
+  const DCOLS = [
+    ["client", "Client", r => clientName(r.client_id), r => `<b>${esc(clientName(r.client_id))}</b>`],
+    ["title", "Request", r => r.title || "", r => esc(r.title || typeOf(r).label)],
+    ["type", "Type", r => r.type === "client" ? "0" : "1", r => `<span class="pill o">${esc(r.type === "client" ? "New client" : typeOf(r).label)}</span>`],
+    ["status", "Status", r => STATUS.findIndex(x => x.id === r.status), r => `<span class="pill ${GRP[grpOf(r)][1]}">${esc(STATUS.find(x => x.id === r.status).label)}</span>`],
+    ["requested", "Requested on", r => r.created_at || "", r => esc(fDate(r.created_at))],
+    ["requester", "Requested by", r => r.requester || "", r => esc(r.requester || "—")],
+    ["assignees", "Assigned to", r => asg(r).join(","), r => asg(r).map(n => `<span class="av" title="${esc(n)}">${esc(initials(n))}</span>`).join(" ") || "—"],
+    ["done", "Done on", r => r.done_at || "", r => r.status === "done" ? esc(fDate(r.done_at)) : "—"],
+    ["wait", "Waiting time", r => waitMs(r) || 0, r => r.status === "done" ? `<span title="Time from request to done">${esc(durTxt(waitMs(r)))}</span>` : `<span class="pill ${waitMs(r) > 2 * 864e5 ? "r" : "a"}" title="Waiting since the request">${esc(durTxt(waitMs(r)))}</span>`],
+    ["webinar", "Webinar date", r => evUTC(r) || 0, r => { const u = evUTC(r); return u ? esc(fDay(u, r.event_tz || "America/Chicago") + (r.event_time ? " · " + fTime(u, r.event_tz) + " " + zAbbr(r.event_tz) : "")) : "—"; }],
+    ["due", "Due date", r => r.due_date || "9", r => esc(fDue(r.due_date) || "—")],
+    ["steps", "Steps", r => prog(r.checklist).pct, r => { const p = prog(r.checklist); return p.n ? p.d + " / " + p.n : "—"; }],
+    ["moved", "Moved by", r => movers(r).map(m => m.actor).join(","), r => movers(r).map(m => `<span class="av m" title="${esc(m.actor)}">${esc(initials(m.actor))}</span>`).join(" ") || "—"],
+  ];
+  function dashState() {
+    if (!S.dash) { let cols = null; try { cols = JSON.parse(localStorage.getItem("voxdesk-dcols")); } catch (e) {} S.dash = { period: "all", client: "", type: "", grp: "", who: "", sort: "requested", dir: -1, gran: "day", open: null, cols: Array.isArray(cols) && cols.length ? cols : ["client", "title", "type", "status", "requested", "requester", "assignees", "done", "wait"] }; }
+    return S.dash;
+  }
+  function chartHTML(reqs) {
+    const D = dashState(), g = D.gran, B = [], td = today().split("-"), base = new Date(Date.UTC(+td[0], +td[1] - 1, +td[2]));
+    const keyOf = iso => { if (!iso) return null; const k = ymdIn(+new Date(iso), MYZ); if (g === "day") return k; if (g === "month") return k.slice(0, 7); const p = k.split("-"), d = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2])); d.setUTCDate(d.getUTCDate() - ((d.getUTCDay() + 6) % 7)); return d.toISOString().slice(0, 10); };
+    if (g === "day") { const n = new Date(Date.UTC(+td[0], +td[1], 0)).getUTCDate(); for (let i = 1; i <= n; i++) { const d = new Date(Date.UTC(+td[0], +td[1] - 1, i)); B.push({ k: d.toISOString().slice(0, 10), lab: String(i), full: d.toLocaleDateString("en-US", { timeZone: "UTC", weekday: "short", month: "short", day: "numeric" }) }); } }
+    else if (g === "week") { const ws = new Date(base); ws.setUTCDate(ws.getUTCDate() - ((ws.getUTCDay() + 6) % 7)); for (let i = 11; i >= 0; i--) { const d = new Date(ws); d.setUTCDate(d.getUTCDate() - i * 7); const l = d.toLocaleDateString("en-US", { timeZone: "UTC", month: "short", day: "numeric" }); B.push({ k: d.toISOString().slice(0, 10), lab: l, full: "Week of " + l }); } }
+    else for (let i = 5; i >= 0; i--) { const d = new Date(Date.UTC(+td[0], +td[1] - 1 - i, 1)); B.push({ k: d.toISOString().slice(0, 7), lab: d.toLocaleDateString("en-US", { timeZone: "UTC", month: "short" }), full: d.toLocaleDateString("en-US", { timeZone: "UTC", month: "long", year: "numeric" }) }); }
+    const ix = {}; B.forEach((b, i) => { b.delivered = 0; b.upd = 0; b.neu = 0; ix[b.k] = i; });
+    reqs.forEach(r => { const c = ix[keyOf(r.created_at)]; if (c != null) B[c][r.type === "client" ? "neu" : "upd"]++; if (r.status === "done") { const d = ix[keyOf(r.done_at)]; if (d != null) B[d].delivered++; } });
+    const tot = k => B.reduce((a, b) => a + b[k], 0), max = Math.max(1, ...B.map(b => Math.max(b.delivered, b.upd, b.neu)));
+    const step = max <= 5 ? 1 : max <= 10 ? 2 : max <= 25 ? 5 : max <= 50 ? 10 : Math.ceil(max / 5 / 10) * 10, top = Math.ceil(max / step) * step;
+    const W = 960, H = 250, L = 30, R = 6, T = 10, Bt = 26, pw = W - L - R, ph = H - T - Bt, bw = pw / B.length, gap = 2, w = Math.max(2, Math.min(16, (bw - 8 - 2 * gap) / 3));
+    const y = v => T + ph - (v / top) * ph;
+    const bar = (x, v, c) => { if (!v) return ""; const h = (v / top) * ph, r = Math.min(4, w / 2, h); return `<path d="M${x.toFixed(1)} ${(T + ph).toFixed(1)}v${(-(h - r)).toFixed(1)}q0 ${-r} ${r} ${-r}h${(w - 2 * r).toFixed(1)}q${r} 0 ${r} ${r}v${(h - r).toFixed(1)}z" fill="${c}"/>`; };
+    let grid = "", bars = "", labs = "", hits = ""; const every = Math.ceil(B.length / 16);
+    for (let v = 0; v <= top; v += step) grid += `<line x1="${L}" x2="${W - R}" y1="${y(v)}" y2="${y(v)}" stroke="rgba(255,255,255,${v ? 0.07 : 0.2})"/><text x="${L - 6}" y="${y(v) + 4}" text-anchor="end" class="ax">${v}</text>`;
+    B.forEach((b, i) => { const x0 = L + i * bw + (bw - (3 * w + 2 * gap)) / 2; bars += bar(x0, b.delivered, DCOL.delivered) + bar(x0 + w + gap, b.upd, DCOL.upd) + bar(x0 + 2 * (w + gap), b.neu, DCOL.neu); if (i % every === 0 || g !== "day") labs += `<text x="${L + i * bw + bw / 2}" y="${H - 8}" text-anchor="middle" class="ax${b.k === today() ? " now" : ""}">${esc(b.lab)}</text>`; hits += `<rect class="hit" x="${L + i * bw}" y="${T}" width="${bw}" height="${ph}" fill="transparent" data-tip="${esc(JSON.stringify([b.full, b.delivered, b.upd, b.neu]))}"/>`; });
+    const lg = (c, t, n) => `<span class="lg"><i style="background:${c}"></i><span>${t}</span><b data-i18n>${n}</b></span>`;
+    return `<div class="panel" style="margin-top:16px"><h3><i class="ti ti-chart-bar"></i><span>Deliveries and requests</span><span style="margin-left:auto;display:flex;gap:6px;letter-spacing:0;text-transform:none">${[["day", "This month, by day"], ["week", "By week"], ["month", "By month"]].map(x => `<button class="step${g === x[0] ? " on" : ""}" data-act="dgran" data-g="${x[0]}">${x[1]}</button>`).join("")}</span></h3>
+      <div class="lgs">${lg(DCOL.delivered, "Deliveries done", tot("delivered"))}${lg(DCOL.upd, "Update requests", tot("upd"))}${lg(DCOL.neu, "New client requests", tot("neu"))}</div>
+      <div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Deliveries done, update requests and new client requests per period">${grid}${bars}${labs}${hits}</svg><div class="dtip" id="dtip"></div></div></div>`;
+  }
+  function vDash() {
+    const D = dashState(), td = today(), start = { all: "", week: weekStart(), month: td.slice(0, 8) + "01", d30: ymdIn(Date.now() - 30 * 864e5, MYZ), d90: ymdIn(Date.now() - 90 * 864e5, MYZ) }[D.period] || "";
+    const dk = iso => iso ? ymdIn(+new Date(iso), MYZ) : "";
+    const all = S.items.requests, team = [...new Set(S.members.filter(m => m.team === "clicklab").map(m => m.name))];
+    const rs = all.filter(r => (!start || dk(r.created_at) >= start) && (!D.client || r.client_id === D.client) && (!D.type || (D.type === "client") === (r.type === "client")) && (!D.grp || grpOf(r) === D.grp) && (!D.who || asg(r).includes(D.who)));
+    const served = from => new Set(all.filter(r => r.status === "done" && r.client_id && r.client_id !== "all" && dk(r.done_at) >= from).map(r => r.client_id)).size;
+    const doneM = all.filter(r => r.status === "done" && dk(r.done_at) >= td.slice(0, 8) + "01").length, open = all.filter(r => r.status !== "done"), prod = open.filter(r => grpOf(r) === "prod").length, wait = open.filter(r => grpOf(r) === "wait");
+    const avg = l => l.length ? l.reduce((a, b) => a + b, 0) / l.length : null;
+    const kpi = (v, l, sub) => `<div class="kpi"><span>${l}</span><b data-i18n>${v}</b>${sub ? `<small>${sub}</small>` : ""}</div>`;
+    const col = DCOLS.find(c => c[0] === D.sort) || DCOLS[4];
+    const rows = rs.slice().sort((a, b) => { const x = col[2](a), y = col[2](b); return (x < y ? -1 : x > y ? 1 : 0) * D.dir; });
+    const shown = DCOLS.filter(c => D.cols.includes(c[0]));
+    const by = {}; rs.forEach(r => { (by[r.client_id || ""] = by[r.client_id || ""] || []).push(r); });
+    const cl = Object.keys(by).map(id => { const l = by[id], c = get("clients", id), p = c ? prog(c.deliverables) : null, op = l.filter(r => r.status !== "done"); return { id, name: clientName(id), brand: c ? c.brand : "", l, c, p, done: l.filter(r => r.status === "done").length, prod: l.filter(r => grpOf(r) === "prod").length, wait: l.filter(r => grpOf(r) === "wait").length, avg: avg(l.filter(r => r.status === "done").map(waitMs).filter(v => v != null)), old: op.length ? Math.max(...op.map(waitMs)) : null }; }).sort((a, b) => (b.prod + b.wait) - (a.prod + a.wait) || a.name.localeCompare(b.name));
+    const sel = (k, opts) => `<select class="sel" style="width:auto;min-width:130px" data-dash="${k}">${opts.map(o => opt(o[0], o[1], D[k])).join("")}</select>`;
+    return `<div class="top"><h1>Dashboard</h1>
+      ${sel("period", [["all", "All time"], ["week", "This week"], ["month", "This month"], ["d30", "Last 30 days"], ["d90", "Last 90 days"]])}
+      <select class="sel" style="width:auto;min-width:160px" data-dash="client">${opt("", "All clients", D.client)}${clientOpts(D.client)}</select>
+      ${sel("type", [["", "All types"], ["client", "New clients"], ["update", "Updates"]])}
+      ${sel("grp", [["", "All statuses"], ["done", "Done"], ["prod", "In production"], ["wait", "Waiting"]])}
+      ${sel("who", [["", "Everyone"], ...team.map(n => [n, n])])}</div>
+      <div class="kpis">${kpi(served(td), "Clients served today")}${kpi(served(weekStart()), "Clients served this week")}${kpi(served(td.slice(0, 8) + "01"), "Clients served this month")}${kpi(doneM, "Deliveries this month")}${kpi(prod, "In production")}${kpi(wait.length, "Waiting", wait.length ? "<span>Average wait</span> " + esc(durTxt(avg(wait.map(waitMs)))) : "")}</div>
+      <div class="panel"><h3><i class="ti ti-users"></i><span>By client</span><span class="q" data-i18n style="margin-left:auto;letter-spacing:0">${cl.length}</span></h3>
+        <div class="tbw"><table class="tb"><thead><tr><th>Client</th><th>Requests</th><th>Done</th><th>In production</th><th>Waiting</th><th>Average delivery time</th><th>Oldest open request</th><th>Deliveries</th></tr></thead><tbody>
+        ${cl.map(c => `<tr class="go" data-act="dopen" data-id="${esc(c.id)}"><td><i class="ti ti-chevron-${D.open === c.id ? "down" : "right"}"></i> <b class="cl">${esc(c.name)}</b>${c.brand ? ` <span class="sub" style="display:inline;margin:0">· ${esc(c.brand)}</span>` : ""}</td><td>${c.l.length}</td><td><span class="pill g">${c.done}</span></td><td><span class="pill ${c.prod ? "o" : ""}">${c.prod}</span></td><td><span class="pill ${c.wait ? "a" : ""}">${c.wait}</span></td><td>${esc(durTxt(c.avg))}</td><td>${c.old == null ? "—" : `<span class="pill ${c.old > 2 * 864e5 ? "r" : ""}">${esc(durTxt(c.old))}</span>`}</td><td>${c.p ? `<span style="display:inline-flex;align-items:center;gap:8px"><span class="bar" style="width:70px;margin:0"><b style="width:${c.p.pct}%"></b></span>${c.p.d} / ${c.p.n}</span>` : "—"}</td></tr>` +
+          (D.open === c.id ? `<tr class="ex"><td colspan="8"><div class="exg"><div><span class="lab">Requests</span>${c.l.slice().sort((a, b) => (b.created_at || "").localeCompare(a.created_at || "")).map(r => `<div class="hist go" data-act="open" data-id="${r.id}"><time>${esc(fDate(r.created_at))}</time><span><b>${esc(r.title || typeOf(r).label)}</b></span><span class="pill ${GRP[grpOf(r)][1]}" style="margin-left:auto">${esc(STATUS.find(x => x.id === r.status).label)}</span><span style="width:64px;text-align:right">${esc(durTxt(waitMs(r)))}</span></div>`).join("")}</div>
+            <div>${c.c ? `<span class="lab">Done</span>${c.c.deliverables.filter(x => x.done).map(x => `<div class="hist"><i class="ti ti-check" style="color:var(--verde)"></i><span class="cl" style="font-weight:400">${esc(x.label)}</span>${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener" style="margin-left:auto"><i class="ti ti-external-link"></i></a>` : ""}</div>`).join("") || `<div class="hist">—</div>`}<span class="lab" style="margin-top:12px">Missing</span>${c.c.deliverables.filter(x => !x.done).map(x => `<div class="hist"><i class="ti ti-circle-dashed" style="color:var(--ambar)"></i><span class="cl" style="font-weight:400">${esc(x.label)}</span></div>`).join("") || `<div class="hist">—</div>`}<button class="btn sm" style="margin-top:10px" data-act="client" data-id="${c.c.id}" data-go="1"><i class="ti ti-arrow-up-right"></i><span>Open client</span></button>` : ""}</div></div></td></tr>` : "")).join("") || `<tr><td colspan="8"><div class="empty">No requests match these filters</div></td></tr>`}
+        </tbody></table></div></div>
+      <div class="panel" style="margin-top:16px"><h3><i class="ti ti-table"></i><span>Requests</span><span class="q" data-i18n style="margin-left:auto;letter-spacing:0">${rows.length}</span></h3>
+        <div class="colpick"><span class="lab" style="margin:0">Columns</span>${DCOLS.map(c => `<button class="step${D.cols.includes(c[0]) ? " on" : ""}" data-act="dcol" data-c="${c[0]}">${c[1]}</button>`).join("")}</div>
+        <div class="tbw"><table class="tb"><thead><tr>${shown.map(c => `<th class="go" data-act="dsort" data-c="${c[0]}"><span>${c[1]}</span>${D.sort === c[0] ? ` <i class="ti ti-arrow-${D.dir > 0 ? "up" : "down"}"></i>` : ""}</th>`).join("")}</tr></thead><tbody>
+        ${rows.map(r => `<tr class="go" data-act="open" data-id="${r.id}">${shown.map(c => `<td>${c[3](r)}</td>`).join("")}</tr>`).join("") || `<tr><td colspan="${shown.length || 1}"><div class="empty">No requests match these filters</div></td></tr>`}
+        </tbody></table></div></div>
+      ${chartHTML(all.filter(r => (!D.client || r.client_id === D.client) && (!D.who || asg(r).includes(D.who))))}`;
+  }
+
+  /* ---------- checklist view: one client at a time, every request as a list of steps ---------- */
+  function vList() {
+    const open = S.items.requests.filter(r => r.status !== "done");
+    const ids = [...new Set(open.map(r => r.client_id || ""))];
+    const info = ids.map(id => { const l = open.filter(r => (r.client_id || "") === id).sort(byRank), st = l.reduce((a, r) => { const p = prog(r.checklist); a.d += p.d; a.n += p.n; return a; }, { d: 0, n: 0 }); return { id, name: clientName(id), brand: (get("clients", id) || {}).brand || "", l, st, rank: Math.min(...l.map(r => r.rank == null ? 1e9 : r.rank)), old: Math.min(...l.map(r => +new Date(r.created_at || Date.now()))) }; }).sort((a, b) => a.rank - b.rank || a.old - b.old);
+    if (S.listClient == null || (!info.some(c => c.id === S.listClient) && !S.items.requests.some(r => (r.client_id || "") === S.listClient))) S.listClient = info.length ? info[0].id : "";
+    const cur = S.listClient, mine = S.items.requests.filter(r => (r.client_id || "") === cur), todo = mine.filter(r => r.status !== "done").sort(byRank), done = mine.filter(r => r.status === "done").sort((a, b) => (b.done_at || "").localeCompare(a.done_at || "")), c = get("clients", cur);
+    const sec = (r, i) => { const p = prog(r.checklist), t = typeOf(r); return `<div class="panel lsec"><div class="lh"><span class="rk">${i + 1}</span><div style="flex:1;min-width:0"><div class="cl">${esc(r.title || t.label)}</div><div class="sub" style="margin:2px 0 0">${esc(r.requester ? r.requester + " · " : "")}${esc(fDate(r.created_at))}${evUTC(r) ? " · webinar " + esc(fDay(evUTC(r), r.event_tz || "America/Chicago")) : ""}</div></div>
+        <span class="pill ${GRP[grpOf(r)][1]}">${esc(STATUS.find(x => x.id === r.status).label)}</span><span class="pill">${p.d} / ${p.n}</span>
+        ${asg(r).map(n => `<span class="av" title="${esc(n)}">${esc(initials(n))}</span>`).join("")}
+        ${r.slack_url ? `<a class="x" href="${esc(r.slack_url)}" target="_blank" rel="noopener" title="Open in Slack"><i class="ti ti-brand-slack"></i></a>` : ""}
+        <button class="btn sm" data-act="open" data-id="${r.id}"><i class="ti ti-arrow-up-right"></i><span>Open request</span></button></div>
+        ${r.source_text ? `<div class="q" style="margin:10px 0 4px"><i class="ti ti-brand-slack"></i><span><b>${esc(r.requester || "Slack")}:</b> ${esc(r.source_text.length > 220 ? r.source_text.slice(0, 220) + "…" : r.source_text)}</span></div>` : ""}
+        <div class="bar" style="margin:10px 0 8px"><b style="width:${p.pct}%"></b></div>
+        ${listHTML("requests", r.id, "checklist", "Add a step")}</div>`; };
+    return `<div class="top"><h1>Checklist</h1><button class="btn pri" data-act="new" data-client="${c ? c.id : ""}"><i class="ti ti-plus"></i>Add request</button></div>
+      <div class="lgrid"><div class="panel lside"><h3><i class="ti ti-users"></i><span>Clients with open work</span></h3>
+        ${info.map(x => `<button class="lcl${x.id === cur ? " on" : ""}" data-act="lpick" data-id="${esc(x.id)}"><span style="flex:1;min-width:0"><b class="cl">${esc(x.name)}</b><small class="sub">${esc(x.brand)}</small><span class="bar" style="margin-top:6px"><b style="width:${x.st.n ? Math.round(x.st.d / x.st.n * 100) : 0}%"></b></span></span><span class="pill o">${x.l.length}</span></button>`).join("") || `<div class="empty">No open work. All done.</div>`}</div>
+      <div><div class="lhead"><div><div class="ttl">${esc(clientName(cur))}</div><div class="sub">${esc(c ? c.brand || "" : "")}</div></div>${c ? `<button class="btn sm" data-act="client" data-id="${c.id}" data-go="1"><i class="ti ti-arrow-up-right"></i><span>Open client</span></button>` : ""}</div>
+        ${todo.map(sec).join("") || `<div class="panel"><div class="empty">Nothing open for this client</div></div>`}
+        ${done.length ? `<div class="panel" style="margin-top:14px"><h3><i class="ti ti-circle-check"></i><span>Done</span><span class="q" data-i18n style="margin-left:auto;letter-spacing:0">${done.length}</span></h3>${done.map(r => `<div class="hist go" data-act="open" data-id="${r.id}"><i class="ti ti-check" style="color:var(--verde)"></i><span><b>${esc(r.title || typeOf(r).label)}</b></span><span style="margin-left:auto">${esc(fDate(r.done_at))}</span></div>`).join("")}</div>` : ""}
+      </div></div>`;
+  }
   function vHistory() {
     const l = S.items.activity.filter(a => !S.hfilter || a.client_id === S.hfilter).sort((a, b) => b.at.localeCompare(a.at)).slice(0, 300);
     return `<div class="top"><h1>History</h1><select class="sel" style="width:220px" data-ui="hfilter">${opt("", "All clients", S.hfilter)}${clientOpts(S.hfilter)}</select></div>
@@ -335,7 +443,7 @@
 
   /* ---------- render ---------- */
   function renderMain() {
-    const v = { board: vBoard, clients: vClients, calendar: vCalendar, history: vHistory }[S.view]();
+    const v = { board: vBoard, clients: vClients, calendar: vCalendar, history: vHistory, dash: vDash, list: vList }[S.view]();
     $("#main").innerHTML = v;
     const n = S.items.requests.filter(r => r.status === "new").length;
     document.querySelectorAll(".nav").forEach(b => b.classList.toggle("on", b.dataset.v === S.view));
@@ -354,7 +462,7 @@
     if (!$("#main")) {
       $("#app").innerHTML = `<div class="shell"><aside class="side">
         <div class="brand"><img src="assets/vox-simbolo.svg" alt="Vox Digital"><div><b>VOX</b><span>Desk</span></div></div>
-        ${[["board", "ti-layout-kanban", "Requests"], ["clients", "ti-users", "Clients"], ["calendar", "ti-calendar", "Calendar"], ["history", "ti-history", "History"]].map(n => `<button class="nav" data-act="view" data-v="${n[0]}"><i class="ti ${n[1]}"></i><span>${n[2]}</span>${n[0] === "board" ? '<b class="n" id="nnew"></b>' : ""}</button>`).join("")}
+        ${[["board", "ti-layout-kanban", "Requests"], ["clients", "ti-users", "Clients"], ["list", "ti-list-check", "Checklist"], ["dash", "ti-chart-bar", "Dashboard"], ["calendar", "ti-calendar", "Calendar"], ["history", "ti-history", "History"]].map(n => `<button class="nav" data-act="view" data-v="${n[0]}"><i class="ti ${n[1]}"></i><span>${n[2]}</span>${n[0] === "board" ? '<b class="n" id="nnew"></b>' : ""}</button>`).join("")}
         <button class="btn sm" data-act="lang" style="margin:0 6px 0;align-self:flex-start" title="Trocar o idioma da interface · Switch the interface language"><i class="ti ti-language"></i><span data-i18n>${window.DESK_I18N && window.DESK_I18N.get() === "pt" ? "Português · EN" : "English · PT"}</span></button>
         <div id="online" style="margin:auto 6px 10px"></div>
         <div class="note" id="live" style="margin:10px 6px 0;display:${LIVE ? "block" : "none"}"><span class="dot" style="display:inline-block;background:${S.live ? "var(--verde)" : "var(--cinza)"}"></span> <span>${S.live ? "Live" : "Connecting"}</span></div>
@@ -448,7 +556,12 @@
     open(d) { S.open = d.id; renderOver(); },
     close() { S.open = null; renderOver(); },
     closemodal() { S.modal = null; renderOver(); },
-    client(d) { S.client = d.id; renderMain(); },
+    client(d) { S.client = d.id; if (d.go) S.view = "clients"; renderMain(); },
+    lpick(d) { S.listClient = d.id; renderMain(); window.scrollTo(0, 0); },
+    dopen(d) { const D = dashState(); D.open = D.open === d.id ? null : d.id; renderMain(); },
+    dgran(d) { dashState().gran = d.g; renderMain(); },
+    dsort(d) { const D = dashState(); if (D.sort === d.c) D.dir = -D.dir; else { D.sort = d.c; D.dir = 1; } renderMain(); },
+    dcol(d) { const D = dashState(); D.cols = D.cols.includes(d.c) ? D.cols.filter(x => x !== d.c) : DCOLS.map(c => c[0]).filter(x => x === d.c || D.cols.includes(x)); try { localStorage.setItem("voxdesk-dcols", JSON.stringify(D.cols)); } catch (e) {} renderMain(); },
     clients() { S.client = null; renderMain(); },
     cal(d) { if (d.d === "0") S.cal = null; else { let m = S.cal.m + +d.d, y = S.cal.y; if (m < 0) { m = 11; y--; } if (m > 11) { m = 0; y++; } S.cal = { y, m }; } renderMain(); },
     new(d) { const c = d.client && get("clients", d.client); S.modal = { type: "launch", client_id: d.client || "", title: "", event_date: "", event_time: "", event_tz: (c && c.tz) || "America/Chicago", due_date: "", link: "", details: "", newname: "", newbrand: "" }; renderOver(); },
@@ -525,6 +638,7 @@
   document.addEventListener("change", e => {
     const t = e.target, d = t.dataset;
     if (d.ui) { S[d.ui] = t.value; return renderMain(); }
+    if (d.dash) { dashState()[d.dash] = t.value; return renderMain(); }
     if (d.f) {
       const o = get(d.k, d.id); if (!o || o[d.f] === t.value) return;
       const old = o[d.f]; o[d.f] = t.value; save(d.k, o);
@@ -537,6 +651,14 @@
       renderMain(); if (d.f === "type" || d.f === "waiting_on") renderOver(); void old; return;
     }
     if (d.li) { const o = get(d.k, d.id), it = (o[d.fld] || []).find(x => x.id === d.it); if (it && it[d.li] !== t.value.trim()) { const was = it[d.li] || ""; it[d.li] = t.value.trim(); save(d.k, o); log("edited the " + (d.li === "url" ? "link" : "name") + ' of "' + it.label + '"', d.k === "requests" ? o.id : null, d.k === "requests" ? o.client_id : o.id, was, it[d.li]); if (d.li === "url") render(); else renderMain(); } }
+  });
+  document.addEventListener("mousemove", e => {
+    const h = e.target.closest && e.target.closest(".hit[data-tip]"), tip = $("#dtip"); if (!tip) return;
+    if (!h) { tip.style.display = "none"; return; }
+    const v = JSON.parse(h.dataset.tip), box = tip.parentElement.getBoundingClientRect(), pt = window.DESK_I18N && window.DESK_I18N.get() === "pt";
+    tip.innerHTML = `<b>${esc(v[0])}</b>` + [[DCOL.delivered, pt ? "Entregas feitas" : "Deliveries done", v[1]], [DCOL.upd, pt ? "Pedidos de atualização" : "Update requests", v[2]], [DCOL.neu, pt ? "Pedidos de cliente novo" : "New client requests", v[3]]].map(x => `<div><i style="background:${x[0]}"></i><span>${x[1]}</span><b>${x[2]}</b></div>`).join("");
+    tip.style.display = "block"; const x = e.clientX - box.left, w = tip.offsetWidth;
+    tip.style.left = Math.max(0, Math.min(box.width - w, x + (x + w + 20 > box.width ? -w - 12 : 12))) + "px"; tip.style.top = Math.max(0, e.clientY - box.top - 20) + "px";
   });
   let drag = null;
   document.addEventListener("dragstart", e => { const c = e.target.closest && e.target.closest(".card[draggable]"); if (c) { drag = c.dataset.id; e.dataTransfer.effectAllowed = "move"; } });
