@@ -271,8 +271,11 @@
       <button class="x" data-act="lidel" data-k="${kind}" data-id="${id}" data-fld="links" data-it="${it.id}" aria-label="Remove"><i class="ti ti-x"></i></button></div>`).join("") +
       `<div class="add"><input class="inp" placeholder="Paste a link (Drive, page, Zoom, doc)" data-add="${kind}|${id}|links"><button class="btn sm" data-act="liadd" data-k="${kind}" data-id="${id}" data-fld="links"><i class="ti ti-plus"></i>Add</button></div>`;
   }
-  /* Column order: manual priority (rank) first, then due date, then newest. */
-  const byRank = (a, b) => ((a.rank == null ? 1e9 : a.rank) - (b.rank == null ? 1e9 : b.rank)) || ((a.due_date || "9") < (b.due_date || "9") ? -1 : (a.due_date || "9") > (b.due_date || "9") ? 1 : (b.created_at || "").localeCompare(a.created_at || ""));
+  /* When the request was made: the latest Slack message for this card, or the creation time. */
+  const reqAt = r => r.requested_at || r.created_at || "";
+  const reqLine = r => reqAt(r) ? `<div class="mv rq" title="Date and time of the latest request, in your local time"><i class="ti ti-clock"></i><span>Requested</span><small>${esc(fStamp(reqAt(r)))}</small></div>` : "";
+  /* Column order: a new request (no manual priority yet) goes first, newest first. Cards moved by hand keep their order below. */
+  const byRank = (a, b) => ((a.rank == null ? -1 : a.rank) - (b.rank == null ? -1 : b.rank)) || reqAt(b).localeCompare(reqAt(a));
   const inCol = (r, st, sub) => r.status === st && (!sub || (sub === "client") === (r.type === "client"));
   function cardHTML(r, pos) {
     const mv = movers(r);
@@ -281,6 +284,7 @@
       <div style="display:flex;gap:8px;align-items:flex-start">${typeof pos === "number" && r.status !== "done" ? `<span class="rk" title="Priority ${pos + 1}">${pos + 1}</span>` : ""}<div style="flex:1;min-width:0"><div class="cl">${esc(clientName(r.client_id))}</div><div class="sub">${esc(r.title || t.label)}</div></div>${valBtn("requests", r.id)}<button class="chk${r.status === "done" ? " on" : ""}" data-act="quick" data-id="${r.id}" title="${r.status === "done" ? "Reopen" : "Mark as done"}" aria-label="Mark as done">${r.status === "done" ? '<i class="ti ti-check"></i>' : ""}</button></div>
       ${whenHTML(r)}
       ${r.source_text ? `<div class="q"><i class="ti ti-brand-slack"></i><span><b>${esc(r.requester || "Slack")}:</b> ${esc(r.source_text.length > 150 ? r.source_text.slice(0, 150) + "…" : r.source_text)}</span></div>` : ""}
+      ${reqLine(r)}
       ${r.type === "client" && r.status === "new" ? startBox(get("clients", r.client_id)) : ""}
       ${p.n ? `<div class="bar"><b style="width:${p.pct}%"></b></div>` : ""}
       <div class="meta"><span class="pill o"><i class="ti ${t.icon}"></i>${esc(t.label)}</span>
@@ -547,7 +551,7 @@
       <input class="bare ttl" value="${esc(r.title || "")}" placeholder="Short title" data-f="title" ${A}>
       <div class="steps">${STATUS.map(s => `<button class="step${r.status === s.id ? " on" : ""}" data-act="status" data-id="${r.id}" data-s="${s.id}">${s.label}</button>`).join("")}</div>
       ${r.status === "tested" ? `<div class="note" style="color:var(--verde)"><i class="ti ti-rocket"></i> Pages and automations are updated and tested. Ads can launch.</div>` : ""}
-      ${r.source_text ? `<div class="sec cm" style="border-color:rgba(255,109,41,.35)"><div class="h"><i class="ti ti-brand-slack" style="color:var(--laranja);font-size:16px"></i><b>${esc(r.requester || "Slack")}</b>${esc(fStamp(r.created_at))}${r.slack_url ? `<a href="${esc(r.slack_url)}" target="_blank" rel="noopener" style="margin-left:auto">Open in Slack</a>` : ""}</div>${mentions(r.source_text)}</div>` : ""}
+      ${r.source_text ? `<div class="sec cm" style="border-color:rgba(255,109,41,.35)"><div class="h"><i class="ti ti-brand-slack" style="color:var(--laranja);font-size:16px"></i><b>${esc(r.requester || "Slack")}</b>${esc(fStamp(reqAt(r)))}${r.slack_url ? `<a href="${esc(r.slack_url)}" target="_blank" rel="noopener" style="margin-left:auto">Open in Slack</a>` : ""}</div>${mentions(r.source_text)}</div>` : ""}
       ${r.validation ? `<div class="sec">${valReport(r)}</div>` : ""}
       <div class="sec fg">
         <div><span class="lab" style="display:flex;align-items:center;gap:8px">Client ${get("clients", r.client_id) && get("clients", r.client_id).ghl ? `<a href="${esc(get("clients", r.client_id).ghl)}" target="_blank" rel="noopener" style="margin-left:auto;letter-spacing:0;text-transform:none" data-i18n><i class="ti ti-external-link"></i> GHL</a>` : ""}</span><select class="sel" data-f="client_id" ${A}>${opt("", "No client", r.client_id)}${clientOpts(r.client_id, true)}</select></div>
