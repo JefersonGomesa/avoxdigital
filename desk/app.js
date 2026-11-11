@@ -181,7 +181,7 @@
       ${it.url ? `<a class="x" href="${esc(it.url)}" target="_blank" rel="noopener" aria-label="Open link"><i class="ti ti-external-link"></i></a>` : ""}
       ${it.done && it.by ? `<span class="who">${esc(first(it.by))}</span>` : ""}
       <button class="x" data-act="lidel" data-k="${kind}" data-id="${id}" data-fld="${field}" data-it="${it.id}" aria-label="Remove"><i class="ti ti-x"></i></button></div>`).join("") +
-      `<div class="add"><input class="inp" placeholder="${esc(ph)}" data-add="${kind}|${id}|${field}"><button class="btn sm" data-act="liadd" data-k="${kind}" data-id="${id}" data-fld="${field}"><i class="ti ti-plus"></i>Add</button></div>`;
+      `<div class="add"><input class="inp" placeholder="${esc(ph)}" data-add="${kind}|${id}|${field}"><button class="btn sm" data-act="liadd" data-k="${kind}" data-id="${id}" data-fld="${field}"><i class="ti ti-plus"></i>Add</button>${l.length ? `<button class="btn sm${l.every(x => x.done) ? "" : " pri"}" data-act="allchk" data-k="${kind}" data-id="${id}" data-fld="${field}"><i class="ti ti-${l.every(x => x.done) ? "square" : "checks"}"></i><span>${l.every(x => x.done) ? "Uncheck all" : "Check all"}</span></button>` : ""}</div>`;
   }
   function linksHTML(kind, id) {
     const o = get(kind, id), l = o.links || [];
@@ -645,6 +645,14 @@
     tgl(d) { const o = get(d.k, d.id), it = o[d.fld].find(x => x.id === d.it); it.done = !it.done; it.by = it.done ? S.me.name : ""; it.at = it.done ? now() : ""; save(d.k, o); log((d.fld === "requirements" ? (it.done ? "received from Pineda" : "marked as missing") : (it.done ? "checked" : "unchecked")) + ' "' + it.label + '"', d.k === "requests" ? o.id : null, d.k === "requests" ? o.client_id : o.id);
       if (d.k === "requests" && d.fld === "checklist" && o.checklist.length) { if (o.checklist.every(x => x.done)) { if (o.status !== "done") { setStatus(o, "done"); toast("All steps checked. Moved to Done."); } } else if (o.status === "done") setStatus(o, "doing"); }
       render(); },
+    allchk(d) {
+      const o = get(d.k, d.id), l = o[d.fld] || []; if (!l.length) return;
+      const on = !l.every(x => x.done), n = l.filter(x => x.done !== on).length;
+      l.forEach(it => { if (it.done !== on) { it.done = on; it.by = on ? S.me.name : ""; it.at = on ? now() : ""; } });
+      save(d.k, o); log((on ? "checked all " : "unchecked all ") + n + (d.fld === "requirements" ? " items from Pineda" : d.fld === "deliverables" ? " deliveries" : " steps"), d.k === "requests" ? o.id : null, d.k === "requests" ? o.client_id : o.id);
+      if (d.k === "requests" && d.fld === "checklist") { if (on) { if (o.status !== "done") { setStatus(o, "done"); toast("All steps checked. Moved to Done."); } } else if (o.status === "done") setStatus(o, "doing"); }
+      render();
+    },
     quick(d) { const r = get("requests", d.id); setStatus(r, r.status === "done" ? "doing" : "done"); render(); },
     lidel(d) { const o = get(d.k, d.id), it = o[d.fld].find(x => x.id === d.it); o[d.fld] = o[d.fld].filter(x => x.id !== d.it); save(d.k, o); if (it) log('removed "' + it.label + '"', d.k === "requests" ? o.id : null, d.k === "requests" ? o.client_id : o.id, it.label + (it.url ? "\n" + it.url : ""), ""); render(); },
     liadd(d) {

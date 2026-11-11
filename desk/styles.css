@@ -298,3 +298,5 @@ a.pill:hover{background:rgba(255,109,41,.25);color:var(--brasa)}
 
 .pnote{margin-bottom:0}
 .reqp .li .lu{width:92px}
+
+.add{flex-wrap:wrap}.add .inp{flex:1;min-width:160px;width:auto}
