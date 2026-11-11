@@ -867,7 +867,7 @@
             const o = Object.assign({}, row.data, { id: row.id }), l = S.items[row.kind], i = l.findIndex(x => x.id === o.id);
             if (i < 0) l.push(o); else l[i] = o;
             if (row.kind !== "activity") U.shadow.set(row.kind + ":" + o.id, JSON.stringify(o));
-            const who = (S.members.find(m => m.email === row.updated_by) || {}).name || (row.updated_by === "slack-sync" ? "Slack" : "");
+            const who = (S.members.find(m => m.email === row.updated_by) || {}).name || (/^slack-/.test(row.updated_by || "") ? "Slack" : row.updated_by === "desk-validate" ? "Validator" : "");
             if (row.kind === "requests" && who) toast(i < 0 ? who + ": new request · " + (o.title || "") : who + " updated · " + (o.title || ""));
             if (row.kind === "comments" && who) { if (o.request_id === "team" || String(o.request_id).startsWith("dm:")) { if (isMyRoom(o.request_id)) { if (!S.chat || S.room !== o.request_id) toast((o.request_id === "team" ? "" : "\u2709 ") + o.author + ": " + (o.body.length > 70 ? o.body.slice(0, 70) + "…" : o.body)); renderChat(); paintPresence(); } } else { const r = get("requests", o.request_id); toast(o.author + " commented" + (r ? " · " + (r.title || "") : "")); } }
           }
