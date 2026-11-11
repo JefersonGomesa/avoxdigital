@@ -194,6 +194,14 @@
   const newReqs = () => REQS.map(l => ({ id: uid(), label: l, done: false, url: "", by: "", at: "" }));
   const missing = c => c && Array.isArray(c.requirements) ? c.requirements.filter(x => !x.done) : [];
   const building = () => { const ids = new Set(S.items.requests.filter(r => r.type === "client" && r.status !== "done").map(r => r.client_id)); return S.items.clients.filter(c => ids.has(c.id) && missing(c).length).sort((a, b) => a.name.localeCompare(b.name)); };
+  const START = ["GHL access (sub-account)", "Copy · Webinar landing page", "Copy · Book a Call (VSL) page", "Brand assets or client website (logo, colours, photos)"];
+  function startBox(c) {
+    if (!c || !Array.isArray(c.requirements)) return "";
+    const m = missing(c), block = m.filter(x => START.includes(x.label)), rest = m.filter(x => !START.includes(x.label));
+    return `<div class="stb ${block.length ? "no" : "yes"}"><div class="sth"><i class="ti ti-${block.length ? "lock" : "player-play"}"></i><b>${block.length ? "Cannot start yet" : "Ready to start"}</b></div>
+      ${block.length ? `<span class="lab">Needed to start</span><ul>${block.map(x => `<li class="cl">${esc(x.label)}</li>`).join("")}</ul>` : ""}
+      ${rest.length ? `<span class="lab">Needed before launch</span><ul class="soft">${rest.map(x => `<li class="cl">${esc(x.label)}</li>`).join("")}</ul>` : ""}</div>`;
+  }
   const missPill = c => { const m = missing(c); return m.length ? `<span class="pill r" title="${esc(m.map(x => x.label).join("\n"))}"><i class="ti ti-alert-triangle"></i><span>Missing from Pineda</span><b data-i18n>${m.length}</b></span>` : ""; };
   function missBanner() {
     const l = building(); if (!l.length) return "";
@@ -250,6 +258,7 @@
       <div style="display:flex;gap:8px;align-items:flex-start">${typeof pos === "number" && r.status !== "done" ? `<span class="rk" title="Priority ${pos + 1}">${pos + 1}</span>` : ""}<div style="flex:1;min-width:0"><div class="cl">${esc(clientName(r.client_id))}</div><div class="sub">${esc(r.title || t.label)}</div></div>${valBtn("requests", r.id)}<button class="chk${r.status === "done" ? " on" : ""}" data-act="quick" data-id="${r.id}" title="${r.status === "done" ? "Reopen" : "Mark as done"}" aria-label="Mark as done">${r.status === "done" ? '<i class="ti ti-check"></i>' : ""}</button></div>
       ${whenHTML(r)}
       ${r.source_text ? `<div class="q"><i class="ti ti-brand-slack"></i><span><b>${esc(r.requester || "Slack")}:</b> ${esc(r.source_text.length > 150 ? r.source_text.slice(0, 150) + "…" : r.source_text)}</span></div>` : ""}
+      ${r.type === "client" && r.status === "new" ? startBox(get("clients", r.client_id)) : ""}
       ${p.n ? `<div class="bar"><b style="width:${p.pct}%"></b></div>` : ""}
       <div class="meta"><span class="pill o"><i class="ti ${t.icon}"></i>${esc(t.label)}</span>
       ${r.status === "info" && r.waiting_on ? `<span class="pill a">Waiting on ${esc(r.waiting_on)}</span>` : ""}
@@ -265,7 +274,7 @@
 
   /* ---------- views ---------- */
   function vBoard() {
-    const rs = S.items.requests.filter(r => (!S.filter || r.client_id === S.filter) && (!S.who || asg(r).includes(S.who)));
+    const rs = S.items.requests.filter(r => (!S.filter || r.client_id === S.filter) && (!S.who || asg(r).includes(S.who) || !asg(r).length));
     const team = [...new Set(S.members.filter(m => m.team === "clicklab").map(m => m.name))];
     const cut = Date.now() - 7 * 864e5;
     return `<div class="top"><h1>Requests</h1>
@@ -275,7 +284,7 @@
       ${missBanner()}
       <div class="board">${[{ id: "new", sub: "client", label: "New clients", color: "#FF6D29", empty: "No new client to build" }, { id: "new", sub: "update", label: "Updates", color: "#8AB8FF", empty: "No new update" }, ...STATUS.slice(1)].map(s => {
         let l = rs.filter(r => r.status === s.id && (!s.sub || (s.sub === "client") === (r.type === "client")));
-        if (s.id === "done") l = l.filter(r => !r.done_at || +new Date(r.done_at) > cut);
+        if (s.id === "done") l = l.filter(r => r.type === "client" || !r.done_at || +new Date(r.done_at) > cut);
         l.sort(s.id === "done" ? (a, b) => (b.done_at || "").localeCompare(a.done_at || "") : byRank);
         return `<div class="col" data-drop="${s.id}" data-sub="${s.sub || ""}"><div class="colh"><span class="dot" style="background:${s.color}"></span>${s.label}<span class="q">${l.length}</span></div>
         ${l.map(cardHTML).join("") || `<div class="empty">${s.empty || (s.id === "done" ? "Done in the last 7 days shows here" : "Drag a card here")}</div>`}</div>`;

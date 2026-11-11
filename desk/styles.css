@@ -328,3 +328,13 @@ a.pill:hover{background:rgba(255,109,41,.25);color:var(--brasa)}
 .vck i{font-size:16px;margin-top:1px;flex:none}
 .vck b{font-weight:500;display:block}.vck small{color:var(--cinza);display:block;word-break:break-word;font-size:12px}
 .vck.fail small{color:#ffb3b3}
+
+.stb{margin-top:9px;border-radius:10px;padding:8px 10px;font-size:12px;border:1px solid var(--borda)}
+.stb.no{background:rgba(255,122,122,.07);border-color:rgba(255,122,122,.4)}
+.stb.yes{background:rgba(95,211,154,.08);border-color:rgba(95,211,154,.4)}
+.sth{display:flex;align-items:center;gap:6px;margin-bottom:4px}
+.stb.no .sth{color:var(--vermelho)}.stb.yes .sth{color:var(--verde)}
+.sth b{font-weight:500}
+.stb .lab{margin:6px 0 2px;font-size:10px}
+.stb ul{margin:0;padding-left:15px;line-height:1.5;color:var(--branco)}
+.stb ul.soft{color:var(--cinza)}
