@@ -357,3 +357,6 @@ a.btn{text-decoration:none;color:var(--branco)}
 .btn.delb{border-color:rgba(255,122,122,.5);color:var(--vermelho);opacity:.6}
 .btn.delb.ready{opacity:1;background:var(--vermelho);border-color:var(--vermelho);color:var(--grafite);font-weight:600}
 #delword{letter-spacing:.12em;font-weight:600}
+
+.vck.miss b{color:#ffb3b3}.vck.miss small{color:#ffb3b3}
+.pbx .vck{padding:4px 0}.pbx .vck>span{flex:1;min-width:0}.pbx .vck a{color:var(--cinza);flex:none}.pbx .vck a:hover{color:var(--laranja)}

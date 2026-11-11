@@ -216,9 +216,16 @@
   function valReport(o, open) {
     const v = o && o.validation; if (!v) return "";
     const by = {}; v.checks.forEach(c => (by[c.page] = by[c.page] || []).push(c));
-    const ic = { ok: ["circle-check", "var(--verde)"], warn: ["alert-triangle", "var(--ambar)"], fail: ["circle-x", "var(--vermelho)"] };
-    return `<details class="panel vrep ${v.verdict}" ${open || v.verdict !== "approved" ? "open" : ""}><summary><i class="ti ti-shield-${v.verdict === "approved" ? "check" : "x"}"></i><b>${v.verdict === "approved" ? "Validation: approved" : "Validation: not approved"}</b><span class="pill ${v.fails ? "r" : "g"}" data-i18n>${v.fails} ✕</span><span class="pill ${v.warns ? "a" : ""}" data-i18n>${v.warns} !</span><small data-i18n>${esc(v.by)} · ${esc(fStamp(v.at))}</small><i class="ti ti-chevron-down" style="margin-left:auto"></i></summary>
-      ${Object.keys(by).map(pg => `<div class="vpg"><div class="vph cl">${esc(pg)}</div>${by[pg].map(c => `<div class="vck ${c.level}"><i class="ti ti-${ic[c.level][0]}" style="color:${ic[c.level][1]}"></i><span><b>${esc(c.name)}</b><small class="cl">${mentions(c.detail || "")}</small></span></div>`).join("")}</div>`).join("")}</details>`;
+    const ic = { ok: ["circle-check", "var(--verde)"], warn: ["alert-triangle", "var(--ambar)"], fail: ["circle-x", "var(--vermelho)"], miss: ["circle-x", "var(--vermelho)"] }, pm = v.checks.filter(c => c.level === "miss").length;
+    return `<details class="panel vrep ${v.verdict}" ${open || v.verdict !== "approved" ? "open" : ""}><summary><i class="ti ti-shield-${v.verdict === "approved" ? "check" : "x"}"></i><b>${v.verdict === "approved" ? "Validation: approved" : "Validation: not approved"}</b><span class="pill ${v.fails ? "r" : "g"}" data-i18n>${v.fails} ✕</span><span class="pill ${v.warns - pm ? "a" : ""}" data-i18n>${v.warns - pm} !</span>${pm ? `<span class="pill r"><span>Missing from Pineda</span><b data-i18n>${pm}</b></span>` : ""}<small data-i18n>${esc(v.by)} · ${esc(fStamp(v.at))}</small><i class="ti ti-chevron-down" style="margin-left:auto"></i></summary>
+      ${Object.keys(by).map(pg => `<div class="vpg"><div class="vph cl">${esc(pg)}</div>${by[pg].map(c => `<div class="vck ${c.level}"><i class="ti ti-${(ic[c.level] || ic.warn)[0]}" style="color:${(ic[c.level] || ic.warn)[1]}"></i><span><b>${esc(c.name)}</b><small class="cl">${mentions(c.detail || "")}</small></span></div>`).join("")}</div>`).join("")}</details>`;
+  }
+  /* What Pineda sent and what is missing, inside the request card. Missing items first, in red. */
+  function pinedaBox(c) {
+    if (!c || !Array.isArray(c.requirements) || !c.requirements.length) return "";
+    const m = missing(c), n = c.requirements.length;
+    return `<div class="sec panel reqp pbx${m.length ? " bad" : ""}"><h3><i class="ti ti-${m.length ? "alert-triangle" : "circle-check"}"></i><span>Needed from Pineda to launch</span><span class="pill ${m.length ? "r" : "g"}" data-i18n style="margin-left:auto;letter-spacing:0;text-transform:none">${n - m.length} / ${n}</span></h3>
+      ${[...m, ...c.requirements.filter(x => x.done)].map(x => `<div class="vck ${x.done ? "ok" : "miss"}"><i class="ti ti-${x.done ? "circle-check" : "circle-x"}" style="color:var(--${x.done ? "verde" : "vermelho"})"></i><span><b class="cl">${esc(x.label)}</b>${x.done ? "" : `<small>Not received yet</small>`}</span>${x.url ? `<a href="${esc(x.url)}" target="_blank" rel="noopener" title="${esc(x.url)}"><i class="ti ti-external-link"></i></a>` : ""}</div>`).join("")}</div>`;
   }
   /* ---------- GHL link + help ---------- */
   const ghlBtn = (c, always) => c && c.ghl ? `<a class="btn sm ghl" href="${esc(c.ghl)}" target="_blank" rel="noopener" title="Open the client's GoHighLevel account"><i class="ti ti-external-link"></i><span data-i18n>GHL</span></a>` : c && always ? `<span class="pill" title="Paste the GHL account link in Details">No GHL link</span>` : "";
@@ -553,6 +560,7 @@
       ${r.status === "tested" ? `<div class="note" style="color:var(--verde)"><i class="ti ti-rocket"></i> Pages and automations are updated and tested. Ads can launch.</div>` : ""}
       ${r.source_text ? `<div class="sec cm" style="border-color:rgba(255,109,41,.35)"><div class="h"><i class="ti ti-brand-slack" style="color:var(--laranja);font-size:16px"></i><b>${esc(r.requester || "Slack")}</b>${esc(fStamp(reqAt(r)))}${r.slack_url ? `<a href="${esc(r.slack_url)}" target="_blank" rel="noopener" style="margin-left:auto">Open in Slack</a>` : ""}</div>${mentions(r.source_text)}</div>` : ""}
       ${r.validation ? `<div class="sec">${valReport(r)}</div>` : ""}
+      ${(c => c && (r.type === "client" || missing(c).length) ? pinedaBox(c) : "")(get("clients", r.client_id))}
       <div class="sec fg">
         <div><span class="lab" style="display:flex;align-items:center;gap:8px">Client ${get("clients", r.client_id) && get("clients", r.client_id).ghl ? `<a href="${esc(get("clients", r.client_id).ghl)}" target="_blank" rel="noopener" style="margin-left:auto;letter-spacing:0;text-transform:none" data-i18n><i class="ti ti-external-link"></i> GHL</a>` : ""}</span><select class="sel" data-f="client_id" ${A}>${opt("", "No client", r.client_id)}${clientOpts(r.client_id, true)}</select></div>
         <div><span class="lab">Type</span><select class="sel" data-f="type" ${A}>${TYPES.map(t => opt(t.id, t.label, r.type)).join("")}</select></div>
