@@ -201,6 +201,17 @@
     return `<div class="missb"><div class="mbh"><i class="ti ti-alert-triangle"></i><b>${mine ? "Waiting on you to launch" : "Waiting on Pineda to launch"}</b><span class="pill r" data-i18n>${tot}</span><button class="btn sm ghost" data-act="mbtog" style="margin-left:auto"><i class="ti ti-chevron-${S.mbOpen ? "up" : "down"}"></i><span>${S.mbOpen ? "Hide" : "Show items"}</span></button></div>
       <div class="mbc">${l.map(c => `<button class="mbi" data-act="client" data-id="${c.id}" data-go="1"><b class="cl">${esc(c.name)}</b><small class="sub">${esc(c.brand || "")}</small><span class="pill r" data-i18n>${missing(c).length}</span>${S.mbOpen ? `<ul>${missing(c).map(x => `<li class="cl">${esc(x.label)}</li>`).join("")}</ul>` : ""}</button>`).join("")}</div></div>`;
   }
+  /* ---------- validator (level 1): the desk-validate function opens the pages and checks them ---------- */
+  const VB = new Set();
+  const valBtn = (k, id, text) => `<button class="vbtn${text ? " wide" : ""}${VB.has(id) ? " busy" : ""}" data-act="validate" data-k="${k}" data-id="${id}" title="Validate: open the pages and check date, form, links and leftovers" aria-label="Validate"><i class="ti ti-${VB.has(id) ? "loader-2" : "shield-check"}"></i>${text ? `<span>${VB.has(id) ? "Checking…" : "Validate"}</span>` : ""}</button>`;
+  const valPill = o => { const v = o && o.validation; return !v ? "" : v.verdict === "approved" ? `<span class="pill g" title="Validated by ${esc(v.by)} · ${esc(fStamp(v.at))}"><i class="ti ti-shield-check"></i><span>Approved</span>${v.warns ? `<b data-i18n>${v.warns}!</b>` : ""}</span>` : `<span class="pill r" title="Validated by ${esc(v.by)} · ${esc(fStamp(v.at))}"><i class="ti ti-shield-x"></i><span>Not approved</span><b data-i18n>${v.fails}</b></span>`; };
+  function valReport(o, open) {
+    const v = o && o.validation; if (!v) return "";
+    const by = {}; v.checks.forEach(c => (by[c.page] = by[c.page] || []).push(c));
+    const ic = { ok: ["circle-check", "var(--verde)"], warn: ["alert-triangle", "var(--ambar)"], fail: ["circle-x", "var(--vermelho)"] };
+    return `<details class="panel vrep ${v.verdict}" ${open || v.verdict !== "approved" ? "open" : ""}><summary><i class="ti ti-shield-${v.verdict === "approved" ? "check" : "x"}"></i><b>${v.verdict === "approved" ? "Validation: approved" : "Validation: not approved"}</b><span class="pill ${v.fails ? "r" : "g"}" data-i18n>${v.fails} ✕</span><span class="pill ${v.warns ? "a" : ""}" data-i18n>${v.warns} !</span><small data-i18n>${esc(v.by)} · ${esc(fStamp(v.at))}</small><i class="ti ti-chevron-down" style="margin-left:auto"></i></summary>
+      ${Object.keys(by).map(pg => `<div class="vpg"><div class="vph cl">${esc(pg)}</div>${by[pg].map(c => `<div class="vck ${c.level}"><i class="ti ti-${ic[c.level][0]}" style="color:${ic[c.level][1]}"></i><span><b>${esc(c.name)}</b><small class="cl">${mentions(c.detail || "")}</small></span></div>`).join("")}</div>`).join("")}</details>`;
+  }
   const typeOf = r => TYPES.find(t => t.id === r.type) || TYPES[1];
   const prog = l => { const n = (l || []).length, d = (l || []).filter(x => x.done).length; return { n, d, pct: n ? Math.round(d / n * 100) : 0 }; };
   const opt = (v, l, cur) => `<option value="${esc(v)}"${v === cur ? " selected" : ""}>${esc(l)}</option>`;
@@ -236,7 +247,7 @@
     const mv = movers(r);
     const p = prog(r.checklist), t = typeOf(r), late = r.due_date && r.due_date < today() && r.status !== "done" && r.status !== "tested";
     return `<div class="card" draggable="true" data-act="open" data-id="${r.id}">
-      <div style="display:flex;gap:8px;align-items:flex-start">${typeof pos === "number" && r.status !== "done" ? `<span class="rk" title="Priority ${pos + 1}">${pos + 1}</span>` : ""}<div style="flex:1;min-width:0"><div class="cl">${esc(clientName(r.client_id))}</div><div class="sub">${esc(r.title || t.label)}</div></div><button class="chk${r.status === "done" ? " on" : ""}" data-act="quick" data-id="${r.id}" title="${r.status === "done" ? "Reopen" : "Mark as done"}" aria-label="Mark as done">${r.status === "done" ? '<i class="ti ti-check"></i>' : ""}</button></div>
+      <div style="display:flex;gap:8px;align-items:flex-start">${typeof pos === "number" && r.status !== "done" ? `<span class="rk" title="Priority ${pos + 1}">${pos + 1}</span>` : ""}<div style="flex:1;min-width:0"><div class="cl">${esc(clientName(r.client_id))}</div><div class="sub">${esc(r.title || t.label)}</div></div>${valBtn("requests", r.id)}<button class="chk${r.status === "done" ? " on" : ""}" data-act="quick" data-id="${r.id}" title="${r.status === "done" ? "Reopen" : "Mark as done"}" aria-label="Mark as done">${r.status === "done" ? '<i class="ti ti-check"></i>' : ""}</button></div>
       ${whenHTML(r)}
       ${r.source_text ? `<div class="q"><i class="ti ti-brand-slack"></i><span><b>${esc(r.requester || "Slack")}:</b> ${esc(r.source_text.length > 150 ? r.source_text.slice(0, 150) + "…" : r.source_text)}</span></div>` : ""}
       ${p.n ? `<div class="bar"><b style="width:${p.pct}%"></b></div>` : ""}
@@ -244,6 +255,7 @@
       ${r.status === "info" && r.waiting_on ? `<span class="pill a">Waiting on ${esc(r.waiting_on)}</span>` : ""}
       ${r.status === "tested" ? `<span class="pill g"><i class="ti ti-rocket"></i>Cleared to launch</span>` : ""}
       ${r.type === "client" && r.status !== "done" ? missPill(get("clients", r.client_id)) : ""}
+      ${valPill(r)}
       ${r.due_date ? `<span class="pill${late ? " r" : ""}">Due ${esc(fDue(r.due_date))}</span>` : ""}
       ${p.n ? `<span>${p.d}/${p.n}</span>` : ""}
       ${r.slack_url ? `<a class="pill" href="${esc(r.slack_url)}" target="_blank" rel="noopener" style="text-decoration:none" title="Open the message in Slack"><i class="ti ti-brand-slack"></i>Slack</a>` : r.src === "slack" ? `<i class="ti ti-brand-slack" title="From Slack"></i>` : ""}
@@ -278,7 +290,7 @@
         return `<div class="card" data-act="client" data-id="${c.id}"><div class="cl">${esc(c.name)}</div><div class="sub">${esc(c.brand || "")}</div>
           ${nx ? whenHTML(nx) : `<div class="when"><i class="ti ti-calendar-off" style="color:var(--cinza)"></i><div style="color:var(--cinza)">No webinar date set</div></div>`}
           <div class="bar"><b style="width:${p.pct}%"></b></div>
-          <div class="meta"><span>${p.d} of ${p.n} delivered</span>${missPill(c)}${open ? `<span class="pill o">${open} open</span>` : ""}${c.am ? `<span class="av" style="margin-left:auto" title="${esc(c.am)}">${esc(initials(c.am))}</span>` : ""}</div></div>`;
+          <div class="meta"><span>${p.d} of ${p.n} delivered</span>${missPill(c)}${valPill(c)}${open ? `<span class="pill o">${open} open</span>` : ""}${c.am ? `<span class="av" style="margin-left:auto" title="${esc(c.am)}">${esc(initials(c.am))}</span>` : ""}</div></div>`;
       }).join("")}</div>`;
   }
   function vClient(c) {
@@ -286,7 +298,8 @@
     const p = prog(c.deliverables);
     const F = (f, ph, cls) => `<input class="${cls || "inp"}" value="${esc(c[f] || "")}" placeholder="${ph}" data-f="${f}" data-k="clients" data-id="${c.id}">`;
     return `<div class="top"><button class="btn ghost" data-act="clients"><i class="ti ti-arrow-left"></i>Clients</button><h1>${esc(c.name)}</h1>
-      <button class="btn" data-act="new" data-client="${c.id}"><i class="ti ti-plus"></i>New request</button><button class="btn ghost" data-act="delclient" data-id="${c.id}"><i class="ti ti-trash"></i></button></div>
+      ${valPill(c)}${valBtn("clients", c.id, true)}<button class="btn" data-act="new" data-client="${c.id}"><i class="ti ti-plus"></i>New request</button><button class="btn ghost" data-act="delclient" data-id="${c.id}"><i class="ti ti-trash"></i></button></div>
+      ${c.validation ? `<div style="margin-bottom:16px">${valReport(c)}</div>` : ""}
       <div class="two"><div>
         <div class="panel reqp${missing(c).length ? " bad" : ""}" style="margin-bottom:16px"><h3><i class="ti ti-${missing(c).length ? "alert-triangle" : "circle-check"}"></i><span>Needed from Pineda to launch</span><span class="pill ${missing(c).length ? "r" : "g"}" data-i18n style="margin-left:auto;letter-spacing:0;text-transform:none">${(c.requirements || []).filter(x => x.done).length} / ${(c.requirements || []).length}</span></h3>
           <div class="note" style="margin:0 0 8px">Check an item when Pineda sends it. Paste the link beside it.</div>
@@ -420,14 +433,17 @@
         <span class="pill ${GRP[grpOf(r)][1]}">${esc(STATUS.find(x => x.id === r.status).label)}</span><span class="pill">${p.d} / ${p.n}</span>
         ${asg(r).map(n => `<span class="av" title="${esc(n)}">${esc(initials(n))}</span>`).join("")}
         ${r.slack_url ? `<a class="x" href="${esc(r.slack_url)}" target="_blank" rel="noopener" title="Open in Slack"><i class="ti ti-brand-slack"></i></a>` : ""}
+        ${valPill(r)}${valBtn("requests", r.id, true)}
         <button class="btn sm" data-act="open" data-id="${r.id}"><i class="ti ti-arrow-up-right"></i><span>Open request</span></button></div>
+        ${r.validation ? `<div style="margin-top:10px">${valReport(r)}</div>` : ""}
         ${r.source_text ? `<div class="q" style="margin:10px 0 4px"><i class="ti ti-brand-slack"></i><span><b>${esc(r.requester || "Slack")}:</b> ${esc(r.source_text.length > 220 ? r.source_text.slice(0, 220) + "…" : r.source_text)}</span></div>` : ""}
         <div class="bar" style="margin:10px 0 8px"><b style="width:${p.pct}%"></b></div>
         ${listHTML("requests", r.id, "checklist", "Add a step")}</div>`; };
     return `<div class="top"><h1>Checklist</h1><button class="btn pri" data-act="new" data-client="${c ? c.id : ""}"><i class="ti ti-plus"></i>Add request</button></div>
       <div class="lgrid"><div class="panel lside"><h3><i class="ti ti-users"></i><span>Clients with open work</span></h3>
         ${info.map(x => `<button class="lcl${x.id === cur ? " on" : ""}" data-act="lpick" data-id="${esc(x.id)}"><span style="flex:1;min-width:0"><b class="cl">${esc(x.name)}</b><small class="sub">${esc(x.brand)}</small><span class="bar" style="margin-top:6px"><b style="width:${x.st.n ? Math.round(x.st.d / x.st.n * 100) : 0}%"></b></span></span><span class="pill o">${x.l.length}</span></button>`).join("") || `<div class="empty">No open work. All done.</div>`}</div>
-      <div><div class="lhead"><div><div class="ttl">${esc(clientName(cur))}</div><div class="sub">${esc(c ? c.brand || "" : "")}</div></div>${c ? `<button class="btn sm" data-act="client" data-id="${c.id}" data-go="1"><i class="ti ti-arrow-up-right"></i><span>Open client</span></button>` : ""}</div>
+      <div><div class="lhead"><div><div class="ttl">${esc(clientName(cur))}</div><div class="sub">${esc(c ? c.brand || "" : "")}</div></div>${c ? `<span style="display:flex;gap:8px;align-items:center">${valPill(c)}${valBtn("clients", c.id, true)}<button class="btn sm" data-act="client" data-id="${c.id}" data-go="1"><i class="ti ti-arrow-up-right"></i><span>Open client</span></button></span>` : ""}</div>
+        ${c && c.validation ? `<div style="margin-bottom:14px">${valReport(c)}</div>` : ""}
         ${c && missing(c).length ? `<div class="panel reqp bad lsec"><h3><i class="ti ti-alert-triangle"></i><span>Needed from Pineda to launch</span><span class="pill r" data-i18n style="margin-left:auto;letter-spacing:0;text-transform:none">${missing(c).length}</span></h3>${listHTML("clients", c.id, "requirements", "Add something Pineda must send")}</div>` : ""}
         ${todo.map(sec).join("") || `<div class="panel"><div class="empty">Nothing open for this client</div></div>`}
         ${done.length ? `<div class="panel" style="margin-top:14px"><h3><i class="ti ti-circle-check"></i><span>Done</span><span class="q" data-i18n style="margin-left:auto;letter-spacing:0">${done.length}</span></h3>${done.map(r => `<div class="hist go" data-act="open" data-id="${r.id}"><i class="ti ti-check" style="color:var(--verde)"></i><span><b>${esc(r.title || typeOf(r).label)}</b></span><span style="margin-left:auto">${esc(fDate(r.done_at))}</span></div>`).join("")}</div>` : ""}
@@ -493,12 +509,13 @@
     const A = `data-k="requests" data-id="${r.id}"`;
     return `<div class="veil" data-act="close"><div class="drawer" data-stop>
       <div class="dh"><span class="pill o"><i class="ti ${typeOf(r).icon}"></i>${esc(typeOf(r).label)}</span><span class="sp"></span>
-        <button class="btn ghost sm" data-act="delreq" data-id="${r.id}"><i class="ti ti-trash"></i>Delete</button><button class="btn ghost sm" data-act="close"><i class="ti ti-x"></i></button></div>
+        ${valBtn("requests", r.id, true)}<button class="btn ghost sm" data-act="delreq" data-id="${r.id}"><i class="ti ti-trash"></i>Delete</button><button class="btn ghost sm" data-act="close"><i class="ti ti-x"></i></button></div>
       <div id="pbar"></div>
       <input class="bare ttl" value="${esc(r.title || "")}" placeholder="Short title" data-f="title" ${A}>
       <div class="steps">${STATUS.map(s => `<button class="step${r.status === s.id ? " on" : ""}" data-act="status" data-id="${r.id}" data-s="${s.id}">${s.label}</button>`).join("")}</div>
       ${r.status === "tested" ? `<div class="note" style="color:var(--verde)"><i class="ti ti-rocket"></i> Pages and automations are updated and tested. Ads can launch.</div>` : ""}
       ${r.source_text ? `<div class="sec cm" style="border-color:rgba(255,109,41,.35)"><div class="h"><i class="ti ti-brand-slack" style="color:var(--laranja);font-size:16px"></i><b>${esc(r.requester || "Slack")}</b>${esc(fStamp(r.created_at))}${r.slack_url ? `<a href="${esc(r.slack_url)}" target="_blank" rel="noopener" style="margin-left:auto">Open in Slack</a>` : ""}</div>${mentions(r.source_text)}</div>` : ""}
+      ${r.validation ? `<div class="sec">${valReport(r)}</div>` : ""}
       <div class="sec fg">
         <div><span class="lab">Client</span><select class="sel" data-f="client_id" ${A}>${opt("", "No client", r.client_id)}${clientOpts(r.client_id, true)}</select></div>
         <div><span class="lab">Type</span><select class="sel" data-f="type" ${A}>${TYPES.map(t => opt(t.id, t.label, r.type)).join("")}</select></div>
@@ -703,6 +720,17 @@
       render();
     },
     undo() { undoLast(); },
+    async validate(d) {
+      if (VB.has(d.id)) return;
+      if (!LIVE) return toast("The validator works on the published panel only.");
+      VB.add(d.id); render();
+      const { data, error } = await sb.functions.invoke("desk-validate", { body: d.k === "clients" ? { client_id: d.id } : { request_id: d.id } });
+      VB.delete(d.id);
+      if (error || !data || !data.item) { render(); return toast("The validator could not run. Try again."); }
+      const l = S.items[data.kind], i = l.findIndex(x => x.id === data.item.id); if (i >= 0) l[i] = data.item; U.shadow.set(data.kind + ":" + data.item.id, JSON.stringify(data.item));
+      render();
+      toast(data.verdict === "approved" ? "Validation: approved" + (data.warns ? " · " + data.warns + " warning(s)" : "") : "Validation: not approved · " + data.fails + " issue(s)" + (data.moved ? ". Moved back to In progress." : ""));
+    },
     quick(d) { const r = get("requests", d.id); setStatus(r, r.status === "done" ? "doing" : "done"); render(); },
     lidel(d) { const o = get(d.k, d.id), it = o[d.fld].find(x => x.id === d.it); o[d.fld] = o[d.fld].filter(x => x.id !== d.it); save(d.k, o); if (it) log('removed "' + it.label + '"', d.k === "requests" ? o.id : null, d.k === "requests" ? o.client_id : o.id, it.label + (it.url ? "\n" + it.url : ""), ""); render(); },
     liadd(d) {
