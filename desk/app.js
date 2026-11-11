@@ -91,7 +91,39 @@
     async remove(kind, id) { const { error } = await sb.from("desk_items").delete().eq("id", id); if (error) toast("Could not delete."); },
   };
   const store = LIVE ? remote : local;
-  const save = (kind, o) => store.save(kind, o);
+  /* ---------- undo: every change made in this browser session can be reverted, newest first ---------- */
+  const U = { stack: [], cur: null, shadow: new Map(), busy: false };
+  const snapAll = () => { U.shadow.clear(); KINDS.forEach(k => S.items[k].forEach(o => U.shadow.set(k + ":" + o.id, JSON.stringify(o)))); };
+  function track(key, fn) {
+    if (U.busy) return;
+    if (!U.cur) { const g = U.cur = { items: [], label: "", ref: null, client: null }; setTimeout(() => { if (g.items.length) { U.stack.push(g); if (U.stack.length > 60) U.stack.shift(); } if (U.cur === g) U.cur = null; paintUndo(); }, 0); }
+    if (!U.cur.items.some(x => x.key === key)) U.cur.items.push({ key, fn });
+  }
+  function trackItem(kind, id) {
+    if (kind === "activity") return;
+    const key = kind + ":" + id, prev = U.shadow.has(key) ? U.shadow.get(key) : null;
+    track(key, () => {
+      if (prev == null) { S.items[kind] = S.items[kind].filter(x => x.id !== id); U.shadow.delete(key); store.remove(kind, id); }
+      else { const o = JSON.parse(prev), l = S.items[kind], i = l.findIndex(x => x.id === id); if (i < 0) l.push(o); else l[i] = o; U.shadow.set(key, prev); store.save(kind, o); }
+    });
+  }
+  const save = (kind, o) => { trackItem(kind, o.id); if (kind !== "activity") U.shadow.set(kind + ":" + o.id, JSON.stringify(o)); return store.save(kind, o); };
+  const removeItem = (kind, id) => { trackItem(kind, id); U.shadow.delete(kind + ":" + id); return store.remove(kind, id); };
+  function paintUndo() {
+    let b = $("#undo"); if (!S.me) { if (b) b.remove(); return; }
+    if (!b) { b = document.createElement("button"); b.id = "undo"; b.className = "undo"; b.dataset.act = "undo"; document.body.appendChild(b); }
+    const g = U.stack[U.stack.length - 1], pt = window.DESK_I18N && window.DESK_I18N.get() === "pt";
+    b.style.display = g ? "flex" : "none";
+    if (g) { b.title = (pt ? "Desfazer a última alteração" : "Undo the last change") + " (Ctrl/Cmd + Z)"; b.innerHTML = `<i class="ti ti-arrow-back-up"></i><span>${pt ? "Desfazer" : "Undo"}</span><small>${esc(g.label || (pt ? "última alteração" : "last change"))}</small>${U.stack.length > 1 ? `<b>${U.stack.length}</b>` : ""}`; }
+  }
+  function undoLast() {
+    const g = U.stack.pop(); if (!g) return;
+    U.busy = true; try { g.items.slice().reverse().forEach(e => e.fn()); } finally { U.busy = false; }
+    if (!g.priv) log("undid: " + (g.label || "last change"), g.ref && get("requests", g.ref) ? g.ref : null, g.client);
+    if (S.open && !get("requests", S.open)) S.open = null;
+    if (S.client && !get("clients", S.client)) S.client = null;
+    render(); paintUndo(); toast((window.DESK_I18N && window.DESK_I18N.get() === "pt" ? "Desfeito: " : "Undone: ") + (g.label || ""));
+  }
   const get = (kind, id) => S.items[kind].find(x => x.id === id);
   const clientName = id => { const c = get("clients", id); return c ? c.name : id === "all" ? "All clients" : "No client"; };
   const first = n => String(n || "").split(" ")[0];
@@ -101,6 +133,7 @@
     const a = { id: uid(), ref, client_id: client_id || null, actor: S.me.name, text, at: now() };
     if (from !== undefined || to !== undefined) { a.from = String(from == null ? "" : from); a.to = String(to == null ? "" : to); }
     S.items.activity.push(a); save("activity", a);
+    if (U.cur && !U.busy && !U.cur.label) { U.cur.label = text; U.cur.ref = ref || null; U.cur.client = client_id || null; }
     const hb = $("#hbox"); if (hb && S.open && ref === S.open) hb.innerHTML = histList(S.items.activity.filter(x => x.ref === ref));
     const cb = $("#chbox"); if (cb && S.client && client_id === S.client) cb.innerHTML = histList(S.items.activity.filter(x => x.client_id === S.client));
   }
@@ -407,11 +440,23 @@
       P.notes = data.filter(r => r.kind === "note").map(r => Object.assign({}, r.data, { id: r.id, at: r.created_at })).reverse();
       P.ai = data.filter(r => r.kind === "ai").map(r => ({ role: r.data.role, text: r.data.text, at: r.created_at })).slice(-60);
     } else { let d = null; try { d = JSON.parse(localStorage.getItem(privKey())); } catch (e) {} P.notes = (d && d.notes) || []; P.ai = (d && d.ai) || []; }
+    NS.clear(); P.notes.forEach(n => NS.set(n.id, JSON.stringify(n)));
     P.loaded = true; if (S.view === "notes") { renderMain(); aiScroll(); }
   }
   const privFlush = () => { if (!LIVE) try { localStorage.setItem(privKey(), JSON.stringify({ notes: P.notes, ai: P.ai })); } catch (e) {} };
   const aiScroll = () => { const l = $("#ailist"); if (l) l.scrollTop = l.scrollHeight; };
-  async function saveNote(n) {
+  const NS = new Map();
+  function trackNote(id) {
+    const prev = NS.has(id) ? NS.get(id) : null;
+    track("pnote:" + id, () => {
+      if (prev == null) { P.notes = P.notes.filter(x => x.id !== id); NS.delete(id); if (LIVE) sb.from("desk_private").delete().eq("id", id).then(() => {}); else privFlush(); }
+      else { const o = JSON.parse(prev), i = P.notes.findIndex(x => x.id === id); if (i < 0) P.notes.unshift(o); else P.notes[i] = o; saveNoteRaw(o); }
+    });
+    if (U.cur) { U.cur.priv = true; if (!U.cur.label) U.cur.label = "note"; }
+  }
+  async function saveNote(n) { trackNote(n.id); return saveNoteRaw(n); }
+  async function saveNoteRaw(n) {
+    NS.set(n.id, JSON.stringify(n));
     if (!LIVE) return privFlush();
     const data = { title: n.title || "", body: n.body || "", client: n.client || "", done: !!n.done };
     const { error } = await sb.from("desk_private").upsert({ id: n.id, owner: S.me.email.toLowerCase(), kind: "note", data, updated_at: now() });
@@ -612,7 +657,7 @@
     client(d) { S.client = d.id; if (d.go) S.view = "clients"; renderMain(); },
     nnew() { const n = { id: uid(), title: "", body: "", client: "", done: false, at: now() }; P.notes.unshift(n); saveNote(n); renderMain(); const i = $('[data-nf="title"][data-id="' + n.id + '"]'); if (i) i.focus(); },
     ntgl(d) { const n = P.notes.find(x => x.id === d.id); if (!n) return; n.done = !n.done; saveNote(n); renderMain(); },
-    async ndel(d) { const n = P.notes.find(x => x.id === d.id); if (!n || !confirm("Delete this note? This cannot be undone.")) return; P.notes = P.notes.filter(x => x.id !== d.id); if (LIVE) { const { error } = await sb.from("desk_private").delete().eq("id", d.id); if (error) toast("Could not delete."); } else privFlush(); renderMain(); },
+    async ndel(d) { const n = P.notes.find(x => x.id === d.id); if (!n || !confirm("Delete this note?")) return; trackNote(n.id); NS.delete(n.id); P.notes = P.notes.filter(x => x.id !== d.id); if (LIVE) { const { error } = await sb.from("desk_private").delete().eq("id", d.id); if (error) toast("Could not delete."); } else privFlush(); renderMain(); },
     lpick(d) { S.listClient = d.id; renderMain(); window.scrollTo(0, 0); },
     dopen(d) { const D = dashState(); D.open = D.open === d.id ? null : d.id; renderMain(); },
     dgran(d) { dashState().gran = d.g; renderMain(); },
@@ -639,8 +684,8 @@
       S.modal = null; S.view = "board"; S.open = r.id; render(); toast("Request sent");
     },
     newclient() { const c = { id: uid(), name: "New client", brand: "", am: "", tz: "America/Chicago", notes: "", links: [], deliverables: DELIVERABLES.map(l => ({ id: uid(), label: l, done: false, url: "" })), requirements: newReqs() }; S.items.clients.push(c); save("clients", c); log("added the client", c.id, c.id); S.client = c.id; renderMain(); },
-    delclient(d) { const c = get("clients", d.id); if (!confirm('Delete the client "' + c.name + '"? Requests stay in the history.')) return; S.items.clients = S.items.clients.filter(x => x.id !== d.id); store.remove("clients", d.id); log('deleted the client "' + c.name + '"', null, null); S.client = null; renderMain(); },
-    delreq(d) { const r = get("requests", d.id); if (!confirm("Delete this request? This cannot be undone.")) return; S.items.requests = S.items.requests.filter(x => x.id !== d.id); store.remove("requests", d.id); log('deleted the request "' + (r.title || "") + '"', null, r.client_id); S.open = null; render(); },
+    delclient(d) { const c = get("clients", d.id); if (!confirm('Delete the client "' + c.name + '"? Requests stay in the history.')) return; S.items.clients = S.items.clients.filter(x => x.id !== d.id); removeItem("clients", d.id); log('deleted the client "' + c.name + '"', null, null); S.client = null; renderMain(); },
+    delreq(d) { const r = get("requests", d.id); if (!confirm("Delete this request?")) return; S.items.requests = S.items.requests.filter(x => x.id !== d.id); removeItem("requests", d.id); log('deleted the request "' + (r.title || "") + '"', null, r.client_id); S.open = null; render(); },
     status(d) { setStatus(get("requests", d.id), d.s); render(); },
     tgl(d) { const o = get(d.k, d.id), it = o[d.fld].find(x => x.id === d.it); it.done = !it.done; it.by = it.done ? S.me.name : ""; it.at = it.done ? now() : ""; save(d.k, o); log((d.fld === "requirements" ? (it.done ? "received from Pineda" : "marked as missing") : (it.done ? "checked" : "unchecked")) + ' "' + it.label + '"', d.k === "requests" ? o.id : null, d.k === "requests" ? o.client_id : o.id);
       if (d.k === "requests" && d.fld === "checklist" && o.checklist.length) { if (o.checklist.every(x => x.done)) { if (o.status !== "done") { setStatus(o, "done"); toast("All steps checked. Moved to Done."); } } else if (o.status === "done") setStatus(o, "doing"); }
@@ -653,6 +698,7 @@
       if (d.k === "requests" && d.fld === "checklist") { if (on) { if (o.status !== "done") { setStatus(o, "done"); toast("All steps checked. Moved to Done."); } } else if (o.status === "done") setStatus(o, "doing"); }
       render();
     },
+    undo() { undoLast(); },
     quick(d) { const r = get("requests", d.id); setStatus(r, r.status === "done" ? "doing" : "done"); render(); },
     lidel(d) { const o = get(d.k, d.id), it = o[d.fld].find(x => x.id === d.it); o[d.fld] = o[d.fld].filter(x => x.id !== d.it); save(d.k, o); if (it) log('removed "' + it.label + '"', d.k === "requests" ? o.id : null, d.k === "requests" ? o.client_id : o.id, it.label + (it.url ? "\n" + it.url : ""), ""); render(); },
     liadd(d) {
@@ -679,7 +725,7 @@
       const { error } = await sb.auth.signInWithOtp({ email: e, options: { emailRedirectTo: location.origin + location.pathname } });
       loginScreen(error ? "Could not send the link. Try again in a minute." : "", error ? null : e);
     },
-    async logout() { if (LIVE) await sb.auth.signOut(); localStorage.removeItem("voxdesk-me"); P.loaded = false; P.notes = []; P.ai = []; S.me = null; $("#app").innerHTML = ""; loginScreen(); },
+    async logout() { if (LIVE) await sb.auth.signOut(); localStorage.removeItem("voxdesk-me"); U.stack = []; P.loaded = false; P.notes = []; P.ai = []; S.me = null; $("#app").innerHTML = ""; loginScreen(); },
   };
 
   document.addEventListener("click", e => {
@@ -691,6 +737,7 @@
   document.addEventListener("keydown", e => {
     if (e.key === "Escape") { if (S.modal) A.closemodal(); else if (S.open) A.close(); else if (S.chat) A.chat(); }
     if (e.key === "Enter" && e.target.dataset.add) { const [k, id, fld] = e.target.dataset.add.split("|"); A.liadd({ k, id, fld }); }
+    if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === "z" && !/INPUT|TEXTAREA|SELECT/.test(e.target.tagName) && U.stack.length) { e.preventDefault(); undoLast(); }
     if (e.key === "Enter" && e.target.id === "lemail") A.login();
     if (e.key === "Enter" && !e.shiftKey && e.target.id === "chatinput") { e.preventDefault(); A.chatsend(); }
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && e.target.id === "cbox" && S.open) A.comment({ id: S.open });
@@ -767,17 +814,18 @@
         S.me = S.members.find(m => m.email.toLowerCase() === email && m.can_login !== false);
         if (!S.me) { await sb.auth.signOut(); return loginScreen("This email has no access yet. Ask Jeferson to add you."); }
         if (location.hash.includes("access_token")) history.replaceState(null, "", location.pathname);
-        const reload = async () => { try { const n = await remote.load(); S.items = n.items; S.members = n.members; S.dirty = true; flush(); } catch (e) {} };
+        const reload = async () => { try { const n = await remote.load(); S.items = n.items; S.members = n.members; snapAll(); S.dirty = true; flush(); } catch (e) {} };
         const typingIn = sel => { const a = document.activeElement; return !!(a && /INPUT|TEXTAREA|SELECT/.test(a.tagName) && a.closest(sel)); };
         const flush = () => { if (!S.dirty) return; if (typingIn("#main") || typingIn(".drawer,.modal")) return; S.dirty = false; if (S.open && !get("requests", S.open)) S.open = null; renderMain(); renderOver(); };
         document.addEventListener("focusout", () => setTimeout(flush, 150));
         const setLive = on => { S.live = on; const e = $("#live"); if (e) { e.querySelector(".dot").style.background = on ? "var(--verde)" : "var(--cinza)"; e.lastElementChild.textContent = on ? "Live" : "Connecting"; e.lastElementChild.removeAttribute("data-i18n"); if (I18) I18.apply(e); } };
         sb.channel("desk-items").on("postgres_changes", { event: "*", schema: "public", table: "desk_items" }, p => {
-          if (p.eventType === "DELETE") { const id = p.old && p.old.id; if (!id) return reload(); KINDS.forEach(k => { S.items[k] = S.items[k].filter(x => x.id !== id); }); }
+          if (p.eventType === "DELETE") { const id = p.old && p.old.id; if (!id) return reload(); KINDS.forEach(k => { U.shadow.delete(k + ":" + id); S.items[k] = S.items[k].filter(x => x.id !== id); }); }
           else {
             const row = p.new; if (!row || !S.items[row.kind]) return; if (row.updated_by === S.me.email) return;
             const o = Object.assign({}, row.data, { id: row.id }), l = S.items[row.kind], i = l.findIndex(x => x.id === o.id);
             if (i < 0) l.push(o); else l[i] = o;
+            if (row.kind !== "activity") U.shadow.set(row.kind + ":" + o.id, JSON.stringify(o));
             const who = (S.members.find(m => m.email === row.updated_by) || {}).name || (row.updated_by === "slack-sync" ? "Slack" : "");
             if (row.kind === "requests" && who) toast(i < 0 ? who + ": new request · " + (o.title || "") : who + " updated · " + (o.title || ""));
             if (row.kind === "comments" && who) { if (o.request_id === "team" || String(o.request_id).startsWith("dm:")) { if (isMyRoom(o.request_id)) { if (!S.chat || S.room !== o.request_id) toast((o.request_id === "team" ? "" : "\u2709 ") + o.author + ": " + (o.body.length > 70 ? o.body.slice(0, 70) + "…" : o.body)); renderChat(); paintPresence(); } } else { const r = get("requests", o.request_id); toast(o.author + " commented" + (r ? " · " + (r.title || "") : "")); } }
@@ -789,11 +837,12 @@
         setInterval(() => { if (!S.live) reload(); }, 60000);
       } else {
         const d = await local.load(); S.items = d.items; S.members = d.members;
-        S.me = { name: "Slack", email: "" }; mergeImport(); S.me = null;
+        S.me = { name: "Slack", email: "" }; U.busy = true; mergeImport(); U.busy = false; S.me = null;
         try { S.me = JSON.parse(localStorage.getItem("voxdesk-me")); } catch (e) {}
         if (!S.me) return loginScreen();
       }
-      render();
+      snapAll(); U.stack = []; U.cur = null;
+      render(); paintUndo();
     } catch (err) { console.error(err); if (LIVE && sb) { try { await sb.auth.signOut(); } catch (e) {} } loginScreen(LIVE ? "This email has no access yet. Ask Jeferson to add you." : "Could not load. Reload the page."); }
   }
   const I18 = window.DESK_I18N;

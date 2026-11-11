@@ -300,3 +300,11 @@ a.pill:hover{background:rgba(255,109,41,.25);color:var(--brasa)}
 .reqp .li .lu{width:92px}
 
 .add{flex-wrap:wrap}.add .inp{flex:1;min-width:160px;width:auto}
+
+.undo{position:fixed;left:240px;bottom:22px;z-index:30;display:none;align-items:center;gap:8px;background:#2a2327;border:1px solid var(--laranja);color:var(--branco);border-radius:999px;padding:10px 16px;cursor:pointer;box-shadow:0 12px 34px rgba(0,0,0,.5);max-width:min(460px,calc(100vw - 260px))}
+.undo:hover{background:#35292c}
+.undo i{font-size:19px;color:var(--laranja)}
+.undo span{font-weight:600}
+.undo small{color:var(--cinza);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.undo b{background:var(--laranja);color:var(--grafite);border-radius:10px;padding:0 7px;font-size:11.5px;font-weight:600}
+@media(max-width:900px){.undo{left:14px;bottom:22px;max-width:calc(100vw - 170px)}}
