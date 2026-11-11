@@ -378,6 +378,43 @@
         ${done.length ? `<div class="panel" style="margin-top:14px"><h3><i class="ti ti-circle-check"></i><span>Done</span><span class="q" data-i18n style="margin-left:auto;letter-spacing:0">${done.length}</span></h3>${done.map(r => `<div class="hist go" data-act="open" data-id="${r.id}"><i class="ti ti-check" style="color:var(--verde)"></i><span><b>${esc(r.title || typeOf(r).label)}</b></span><span style="margin-left:auto">${esc(fDate(r.done_at))}</span></div>`).join("")}</div>` : ""}
       </div></div>`;
   }
+
+  /* ---------- private notes + AI assistant (each person sees only their own rows) ---------- */
+  const P = { notes: [], ai: [], loaded: false, busy: false };
+  const privKey = () => "voxdesk-priv:" + (S.me.email || S.me.name);
+  async function loadPriv() {
+    if (LIVE) {
+      const { data, error } = await sb.from("desk_private").select("id,kind,data,created_at").order("created_at");
+      if (error) { toast("Could not load your notes."); return; }
+      P.notes = data.filter(r => r.kind === "note").map(r => Object.assign({}, r.data, { id: r.id, at: r.created_at })).reverse();
+      P.ai = data.filter(r => r.kind === "ai").map(r => ({ role: r.data.role, text: r.data.text, at: r.created_at })).slice(-60);
+    } else { let d = null; try { d = JSON.parse(localStorage.getItem(privKey())); } catch (e) {} P.notes = (d && d.notes) || []; P.ai = (d && d.ai) || []; }
+    P.loaded = true; if (S.view === "notes") { renderMain(); aiScroll(); }
+  }
+  const privFlush = () => { if (!LIVE) try { localStorage.setItem(privKey(), JSON.stringify({ notes: P.notes, ai: P.ai })); } catch (e) {} };
+  const aiScroll = () => { const l = $("#ailist"); if (l) l.scrollTop = l.scrollHeight; };
+  async function saveNote(n) {
+    if (!LIVE) return privFlush();
+    const data = { title: n.title || "", body: n.body || "", client: n.client || "", done: !!n.done };
+    const { error } = await sb.from("desk_private").upsert({ id: n.id, owner: S.me.email.toLowerCase(), kind: "note", data, updated_at: now() });
+    if (error) toast("Could not save the note.");
+  }
+  function vNotes() {
+    if (!P.loaded) { setTimeout(loadPriv, 0); return `<div class="top"><h1>Notes</h1></div><div class="empty">Loading…</div>`; }
+    const cl = [...new Set(S.items.clients.map(c => c.name))].sort();
+    const open = P.notes.filter(n => !n.done), done = P.notes.filter(n => n.done);
+    const card = n => `<div class="panel pnote${n.done ? " dn" : ""}"><div class="lh"><button class="chk${n.done ? " on" : ""}" data-act="ntgl" data-id="${n.id}" aria-label="Mark as done">${n.done ? '<i class="ti ti-check"></i>' : ""}</button>
+        <input class="bare" style="font-weight:500;font-size:15px" value="${esc(n.title || "")}" placeholder="Title" data-nf="title" data-id="${n.id}">
+        <select class="sel" style="width:auto;max-width:170px;padding:5px 8px;font-size:12px" data-nf="client" data-id="${n.id}">${opt("", "No client", n.client || "")}${cl.map(c => opt(c, c, n.client)).join("")}${n.client && !cl.includes(n.client) ? opt(n.client, n.client, n.client) : ""}</select>
+        <button class="x" data-act="ndel" data-id="${n.id}" aria-label="Delete"><i class="ti ti-trash"></i></button></div>
+        <textarea class="bare nb" data-nf="body" data-id="${n.id}" placeholder="Write here" rows="${Math.min(14, Math.max(2, String(n.body || "").split("\n").length + 1))}">${esc(n.body || "")}</textarea></div>`;
+    return `<div class="top"><h1>Notes</h1><span class="pill"><i class="ti ti-lock"></i><span>Private. Only you see this page.</span></span><button class="btn pri" data-act="nnew"><i class="ti ti-plus"></i>New note</button></div>
+      <div class="ngrid"><div>${open.map(card).join("") || `<div class="panel"><div class="empty">No notes yet. Write to the assistant on the right, in Portuguese or in English.</div></div>`}
+        ${done.length ? `<div class="colh" style="margin:18px 4px 10px"><span class="dot" style="background:#BABABA"></span>Done<span class="q">${done.length}</span></div>${done.map(card).join("")}` : ""}</div>
+      <div class="panel aipanel"><h3><i class="ti ti-sparkles"></i><span>Notes assistant</span></h3>
+        <div class="chatlist" id="ailist">${P.ai.map(m => `<div class="msg${m.role === "user" ? " mine" : ""}">${m.role === "user" ? "" : `<span class="av"><i class="ti ti-sparkles" style="font-size:12px"></i></span>`}<div><div class="mb">${mentions(m.text || "")}</div></div></div>`).join("") || `<div class="empty">Tell me what to remember, what you left for later, or what you finished. I write everything in English and update your notes and the board.</div>`}${P.busy ? `<div class="msg"><span class="av"><i class="ti ti-sparkles" style="font-size:12px"></i></span><div><div class="mb" style="color:var(--cinza)">Writing…</div></div></div>` : ""}</div>
+        <div class="chatin" style="padding:10px 0 0"><textarea class="txt" id="aiinput" rows="2" placeholder="Write in Portuguese or in English" ${P.busy ? "disabled" : ""}></textarea><button class="btn pri sm" data-act="aisend" ${P.busy ? "disabled" : ""}>Send</button></div></div></div>`;
+  }
   function vHistory() {
     const l = S.items.activity.filter(a => !S.hfilter || a.client_id === S.hfilter).sort((a, b) => b.at.localeCompare(a.at)).slice(0, 300);
     return `<div class="top"><h1>History</h1><select class="sel" style="width:220px" data-ui="hfilter">${opt("", "All clients", S.hfilter)}${clientOpts(S.hfilter)}</select></div>
@@ -443,7 +480,7 @@
 
   /* ---------- render ---------- */
   function renderMain() {
-    const v = { board: vBoard, clients: vClients, calendar: vCalendar, history: vHistory, dash: vDash, list: vList }[S.view]();
+    const v = { board: vBoard, clients: vClients, calendar: vCalendar, history: vHistory, dash: vDash, list: vList, notes: vNotes }[S.view]();
     $("#main").innerHTML = v;
     const n = S.items.requests.filter(r => r.status === "new").length;
     document.querySelectorAll(".nav").forEach(b => b.classList.toggle("on", b.dataset.v === S.view));
@@ -462,7 +499,7 @@
     if (!$("#main")) {
       $("#app").innerHTML = `<div class="shell"><aside class="side">
         <div class="brand"><img src="assets/vox-simbolo.svg" alt="Vox Digital"><div><b>VOX</b><span>Desk</span></div></div>
-        ${[["board", "ti-layout-kanban", "Requests"], ["clients", "ti-users", "Clients"], ["list", "ti-list-check", "Checklist"], ["dash", "ti-chart-bar", "Dashboard"], ["calendar", "ti-calendar", "Calendar"], ["history", "ti-history", "History"]].map(n => `<button class="nav" data-act="view" data-v="${n[0]}"><i class="ti ${n[1]}"></i><span>${n[2]}</span>${n[0] === "board" ? '<b class="n" id="nnew"></b>' : ""}</button>`).join("")}
+        ${[["board", "ti-layout-kanban", "Requests"], ["clients", "ti-users", "Clients"], ["list", "ti-list-check", "Checklist"], ["dash", "ti-chart-bar", "Dashboard"], ["notes", "ti-notebook", "Notes"], ["calendar", "ti-calendar", "Calendar"], ["history", "ti-history", "History"]].map(n => `<button class="nav" data-act="view" data-v="${n[0]}"><i class="ti ${n[1]}"></i><span>${n[2]}</span>${n[0] === "board" ? '<b class="n" id="nnew"></b>' : ""}</button>`).join("")}
         <button class="btn sm" data-act="lang" style="margin:0 6px 0;align-self:flex-start" title="Trocar o idioma da interface · Switch the interface language"><i class="ti ti-language"></i><span data-i18n>${window.DESK_I18N && window.DESK_I18N.get() === "pt" ? "Português · EN" : "English · PT"}</span></button>
         <div id="online" style="margin:auto 6px 10px"></div>
         <div class="note" id="live" style="margin:10px 6px 0;display:${LIVE ? "block" : "none"}"><span class="dot" style="display:inline-block;background:${S.live ? "var(--verde)" : "var(--cinza)"}"></span> <span>${S.live ? "Live" : "Connecting"}</span></div>
@@ -557,6 +594,22 @@
     close() { S.open = null; renderOver(); },
     closemodal() { S.modal = null; renderOver(); },
     client(d) { S.client = d.id; if (d.go) S.view = "clients"; renderMain(); },
+    nnew() { const n = { id: uid(), title: "", body: "", client: "", done: false, at: now() }; P.notes.unshift(n); saveNote(n); renderMain(); const i = $('[data-nf="title"][data-id="' + n.id + '"]'); if (i) i.focus(); },
+    ntgl(d) { const n = P.notes.find(x => x.id === d.id); if (!n) return; n.done = !n.done; saveNote(n); renderMain(); },
+    async ndel(d) { const n = P.notes.find(x => x.id === d.id); if (!n || !confirm("Delete this note? This cannot be undone.")) return; P.notes = P.notes.filter(x => x.id !== d.id); if (LIVE) { const { error } = await sb.from("desk_private").delete().eq("id", d.id); if (error) toast("Could not delete."); } else privFlush(); renderMain(); },
+    async aisend() {
+      const b = $("#aiinput"), v = b ? b.value.trim() : ""; if (!v || P.busy) return b && b.focus();
+      P.ai.push({ role: "user", text: v, at: now() }); P.busy = true; renderMain(); aiScroll();
+      let reply = "";
+      if (!LIVE) reply = "The assistant works on the published panel only. This is the demo copy.";
+      else {
+        const { data, error } = await sb.functions.invoke("desk-ai", { body: { message: v } });
+        if (error) { let code = ""; try { code = (await error.context.json()).error; } catch (e) {} reply = code === "no_key" || code === "bad_key" ? "The assistant is not connected yet. The Anthropic API key is missing or wrong in Supabase (Edge Functions, Secrets, ANTHROPIC_API_KEY)." : code === "rate_limit" ? "Too many requests right now. Try again in a minute." : "The assistant could not answer. Try again."; P.ai.push({ role: "assistant", text: reply, at: now() }); }
+        else { await loadPriv(); if (data && data.changedBoard) { try { const n = await remote.load(); S.items = n.items; S.members = n.members; } catch (e) {} } }
+      }
+      if (!LIVE) { P.ai.push({ role: "assistant", text: reply, at: now() }); privFlush(); }
+      P.busy = false; renderMain(); aiScroll(); const i = $("#aiinput"); if (i) i.focus();
+    },
     lpick(d) { S.listClient = d.id; renderMain(); window.scrollTo(0, 0); },
     dopen(d) { const D = dashState(); D.open = D.open === d.id ? null : d.id; renderMain(); },
     dgran(d) { dashState().gran = d.g; renderMain(); },
@@ -615,7 +668,7 @@
       const { error } = await sb.auth.signInWithOtp({ email: e, options: { emailRedirectTo: location.origin + location.pathname } });
       loginScreen(error ? "Could not send the link. Try again in a minute." : "", error ? null : e);
     },
-    async logout() { if (LIVE) await sb.auth.signOut(); localStorage.removeItem("voxdesk-me"); S.me = null; $("#app").innerHTML = ""; loginScreen(); },
+    async logout() { if (LIVE) await sb.auth.signOut(); localStorage.removeItem("voxdesk-me"); P.loaded = false; P.notes = []; P.ai = []; S.me = null; $("#app").innerHTML = ""; loginScreen(); },
   };
 
   document.addEventListener("click", e => {
@@ -629,6 +682,7 @@
     if (e.key === "Enter" && e.target.dataset.add) { const [k, id, fld] = e.target.dataset.add.split("|"); A.liadd({ k, id, fld }); }
     if (e.key === "Enter" && e.target.id === "lemail") A.login();
     if (e.key === "Enter" && !e.shiftKey && e.target.id === "chatinput") { e.preventDefault(); A.chatsend(); }
+    if (e.key === "Enter" && !e.shiftKey && e.target.id === "aiinput") { e.preventDefault(); A.aisend(); }
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && e.target.id === "cbox" && S.open) A.comment({ id: S.open });
   });
   document.addEventListener("input", e => {
@@ -638,6 +692,7 @@
   document.addEventListener("change", e => {
     const t = e.target, d = t.dataset;
     if (d.ui) { S[d.ui] = t.value; return renderMain(); }
+    if (d.nf) { const n = P.notes.find(x => x.id === d.id); if (n && n[d.nf] !== t.value) { n[d.nf] = t.value; saveNote(n); } return; }
     if (d.dash) { dashState()[d.dash] = t.value; return renderMain(); }
     if (d.f) {
       const o = get(d.k, d.id); if (!o || o[d.f] === t.value) return;

@@ -272,3 +272,12 @@ a.pill:hover{background:rgba(255,109,41,.25);color:var(--brasa)}
 .lsec .li{padding:5px 0}
 .lsec .chk{width:24px;height:24px}
 @media(max-width:900px){.lgrid{grid-template-columns:1fr}.lside{position:static;max-height:none}}
+
+.ngrid{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(320px,1fr);gap:18px;align-items:start}
+.pnote{margin-bottom:12px;padding:14px}
+.pnote.dn{opacity:.6}.pnote.dn input[data-nf=title]{text-decoration:line-through}
+.pnote .nb{display:block;margin-top:8px;resize:vertical;line-height:1.55;min-height:52px;font-family:inherit}
+.aipanel{position:sticky;top:20px;display:flex;flex-direction:column;height:calc(100vh - 200px);min-height:420px}
+.aipanel .chatlist{padding:4px 2px}
+.aipanel .msg{max-width:92%}
+@media(max-width:900px){.ngrid{grid-template-columns:1fr}.aipanel{position:static;height:520px}}

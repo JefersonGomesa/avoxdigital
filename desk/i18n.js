@@ -30,6 +30,9 @@
     "Requested on": "Pedido em", "Done on": "Concluído em", "Waiting time": "Tempo de espera", "Webinar date": "Data do webinar", "Steps": "Passos", "No requests match these filters": "Nenhum pedido com esses filtros",
     "Deliveries and requests": "Entregas e pedidos", "This month, by day": "Este mês, por dia", "By week": "Por semana", "By month": "Por mês", "Deliveries done": "Entregas feitas", "Update requests": "Pedidos de atualização", "New client requests": "Pedidos de cliente novo",
     "Clients with open work": "Clientes com trabalho aberto", "No open work. All done.": "Nenhum trabalho aberto. Tudo concluído.", "Nothing open for this client": "Nada aberto para este cliente", "Open request": "Abrir pedido",
+    "Private. Only you see this page.": "Privado. Só você vê esta página.", "New note": "Nova nota", "Title": "Título", "Write here": "Escreva aqui", "Notes assistant": "Assistente de notas", "Writing…": "Escrevendo…", "Loading…": "Carregando…", "Write in Portuguese or in English": "Escreva em português ou em inglês",
+    "No notes yet. Write to the assistant on the right, in Portuguese or in English.": "Nenhuma nota ainda. Escreva para o assistente à direita, em português ou em inglês.",
+    "Tell me what to remember, what you left for later, or what you finished. I write everything in English and update your notes and the board.": "Diga o que eu devo lembrar, o que ficou para depois ou o que você terminou. Eu escrevo tudo em inglês e atualizo as suas notas e o quadro.",
     "Everyone": "Todos", "New clients": "Clientes novos", "Updates": "Atualizações", "No new client to build": "Nenhum cliente novo para construir", "No new update": "Nenhuma atualização nova", "Team": "Equipe", "Private message": "Mensagem privada", "No messages yet. Only you two see this chat.": "Nenhuma mensagem ainda. Só vocês dois veem esta conversa.", "Write to the team": "Escreva para a equipe", "Send": "Enviar", "No messages yet. Say hi to the team.": "Nenhuma mensagem ainda. Escreva para a equipe.", "Moved by": "Movido por", "Live": "Ao vivo", "Connecting": "Conectando", "Before": "Antes", "After": "Depois", "(empty)": "(vazio)",
     "One checklist line per client is added.": "A lista recebe uma linha por cliente.",
   };
@@ -55,7 +58,7 @@
     while ((n = w.nextNode())) nodes.push(n);
     nodes.forEach(node => {
       const p = node.parentElement; if (!p || /^(TEXTAREA|SCRIPT|STYLE)$/.test(p.tagName)) return;
-      if (p.classList.contains("cm") || p.matches(".diff p") || p.closest(".cl,.sub,.at,.q,.mb,.mh,[data-i18n]")) return;
+      if (p.classList.contains("cm") || p.matches(".diff p") || p.closest(".cl,.sub,.at,.q,.mb:not(.sys),.mh,[data-i18n]")) return;
       const raw = node.nodeValue, s = raw.trim(); if (!s) return;
       const pt = conv(s, !!p.closest(".hist")); if (!pt) return;
       if (lang === "pt") { node.nodeValue = raw.replace(s, pt); p.setAttribute("data-i18n", ""); }
