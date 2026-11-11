@@ -203,11 +203,14 @@
       ${rest.length ? `<span class="lab">Needed before launch</span><ul class="soft">${rest.map(x => `<li class="cl">${esc(x.label)}</li>`).join("")}</ul>` : ""}</div>`;
   }
   const missPill = c => { const m = missing(c); return m.length ? `<span class="pill r" title="${esc(m.map(x => x.label).join("\n"))}"><i class="ti ti-alert-triangle"></i><span>Missing from Pineda</span><b data-i18n>${m.length}</b></span>` : ""; };
+  /* News for a client: the open cards that got something from Slack and nobody marked as seen yet. */
+  const newsOf = c => S.items.requests.filter(r => r.client_id === c.id && r.status !== "done" && r.news).sort((a, b) => String(b.news.at).localeCompare(String(a.news.at)));
   function missBanner() {
-    const l = building(); if (!l.length) return "";
+    const hot = S.items.clients.filter(c => S.items.requests.some(r => r.client_id === c.id && r.type === "client" && r.status !== "done") && newsOf(c).length);
+    const l = [...new Set([...building(), ...hot])].sort((a, b) => (newsOf(b).length ? 1 : 0) - (newsOf(a).length ? 1 : 0) || a.name.localeCompare(b.name)); if (!l.length) return "";
     const mine = S.me.team === "pineda", tot = l.reduce((a, c) => a + missing(c).length, 0);
     return `<div class="missb"><div class="mbh"><i class="ti ti-alert-triangle"></i><b>${mine ? "Waiting on you to launch" : "Waiting on Pineda to launch"}</b><span class="pill r" data-i18n>${tot}</span><button class="btn sm ghost" data-act="mbtog" style="margin-left:auto"><i class="ti ti-chevron-${S.mbOpen ? "up" : "down"}"></i><span>${S.mbOpen ? "Hide" : "Show items"}</span></button></div>
-      <div class="mbc">${l.map(c => `<button class="mbi" data-act="client" data-id="${c.id}" data-go="1"><b class="cl">${esc(c.name)}</b><small class="sub">${esc(c.brand || "")}</small><span class="pill r" data-i18n>${missing(c).length}</span>${S.mbOpen ? `<ul>${missing(c).map(x => `<li class="cl">${esc(x.label)}</li>`).join("")}</ul>` : ""}</button>`).join("")}</div></div>`;
+      <div class="mbc">${l.map(c => { const nw = newsOf(c), m = missing(c); return `<button class="mbi${nw.length ? " y" : ""}" data-act="${nw.length ? "open" : "client"}" data-id="${nw.length ? nw[0].id : c.id}" data-go="1" title="${esc(nw.length ? nw[0].news.text || "" : m.map(x => x.label).join("\n"))}">${nw.length ? `<span class="stc y" style="margin:0 6px 0 0"><i></i></span>` : ""}<b class="cl">${esc(c.name)}</b><small class="sub">${esc(c.brand || "")}</small>${m.length ? `<span class="pill ${nw.length ? "a" : "r"}" data-i18n>${m.length}</span>` : `<span class="pill g"><i class="ti ti-check"></i><span>All received</span></span>`}${nw.length ? `<div class="mbn cl"><i class="ti ti-bell-ringing"></i> ${esc((nw[0].news.text || "").slice(0, 90))} · <span data-i18n>${esc(fStamp(nw[0].news.at))}</span></div>` : ""}${S.mbOpen && m.length ? `<ul>${m.map(x => `<li class="cl">${esc(x.label)}</li>`).join("")}</ul>` : ""}</button>`; }).join("")}</div></div>`;
   }
   /* ---------- validator (level 1): the desk-validate function opens the pages and checks them ---------- */
   const VB = new Set();
@@ -284,11 +287,25 @@
   /* Column order: a new request (no manual priority yet) goes first, newest first. Cards moved by hand keep their order below. */
   const byRank = (a, b) => ((a.rank == null ? -1 : a.rank) - (b.rank == null ? -1 : b.rank)) || reqAt(b).localeCompare(reqAt(a));
   const inCol = (r, st, sub) => r.status === st && (!sub || (sub === "client") === (r.type === "client"));
+  /* One colour for each card. Yellow = something arrived from Slack and nobody marked it as seen yet. */
+  function stateOf(r) {
+    if (r.status === "done") return ["g", "Done"];
+    if (r.news) return ["y", "New from Slack"];
+    if (r.status === "tested") return ["g", "Updated & tested"];
+    if (r.type === "client" && missing(get("clients", r.client_id)).length) return ["r", "Missing material"];
+    if (r.status === "info" || r.waiting_on) return ["b", "On hold"];
+    if (r.status === "doing") return ["o", "In progress"];
+    return ["w", "Not started"];
+  }
+  const stChip = r => { const s = stateOf(r); return `<span class="stc ${s[0]}"><i></i><span>${s[1]}</span></span>`; };
+  const newsHTML = (r, full) => r.news ? `<div class="nw${full ? " sec" : ""}"><i class="ti ti-bell-ringing"></i><span><b>${esc(r.news.by || "Slack")}</b><small data-i18n>${esc(fStamp(r.news.at))}</small><span class="cl">${esc(full || (r.news.text || "").length <= 120 ? r.news.text || "" : r.news.text.slice(0, 120) + "…")}</span></span>${full ? `<button class="btn sm" data-act="seen" data-id="${r.id}"><i class="ti ti-check"></i><span>Mark as seen</span></button>` : ""}</div>` : "";
   function cardHTML(r, pos) {
     const mv = movers(r);
     const p = prog(r.checklist), t = typeOf(r), late = r.due_date && r.due_date < today() && r.status !== "done" && r.status !== "tested";
-    return `<div class="card" draggable="true" data-act="open" data-id="${r.id}">
+    return `<div class="card st-${stateOf(r)[0]}" draggable="true" data-act="open" data-id="${r.id}">
+      ${stChip(r)}
       <div style="display:flex;gap:8px;align-items:flex-start">${typeof pos === "number" && r.status !== "done" ? `<span class="rk" title="Priority ${pos + 1}">${pos + 1}</span>` : ""}<div style="flex:1;min-width:0"><div class="cl">${esc(clientName(r.client_id))}</div><div class="sub">${esc(r.title || t.label)}</div></div>${valBtn("requests", r.id)}<button class="chk${r.status === "done" ? " on" : ""}" data-act="quick" data-id="${r.id}" title="${r.status === "done" ? "Reopen" : "Mark as done"}" aria-label="Mark as done">${r.status === "done" ? '<i class="ti ti-check"></i>' : ""}</button></div>
+      ${newsHTML(r)}
       ${whenHTML(r)}
       ${r.source_text ? `<div class="q"><i class="ti ti-brand-slack"></i><span><b>${esc(r.requester || "Slack")}:</b> ${esc(r.source_text.length > 150 ? r.source_text.slice(0, 150) + "…" : r.source_text)}</span></div>` : ""}
       ${reqLine(r)}
@@ -557,8 +574,11 @@
       <div id="pbar"></div>
       <input class="bare ttl" value="${esc(r.title || "")}" placeholder="Short title" data-f="title" ${A}>
       <div class="steps">${STATUS.map(s => `<button class="step${r.status === s.id ? " on" : ""}" data-act="status" data-id="${r.id}" data-s="${s.id}">${s.label}</button>`).join("")}</div>
+      <div style="margin-top:10px">${stChip(r)}</div>
+      ${newsHTML(r, true)}
       ${r.status === "tested" ? `<div class="note" style="color:var(--verde)"><i class="ti ti-rocket"></i> Pages and automations are updated and tested. Ads can launch.</div>` : ""}
       ${r.source_text ? `<div class="sec cm" style="border-color:rgba(255,109,41,.35)"><div class="h"><i class="ti ti-brand-slack" style="color:var(--laranja);font-size:16px"></i><b>${esc(r.requester || "Slack")}</b>${esc(fStamp(reqAt(r)))}${r.slack_url ? `<a href="${esc(r.slack_url)}" target="_blank" rel="noopener" style="margin-left:auto">Open in Slack</a>` : ""}</div>${mentions(r.source_text)}</div>` : ""}
+      ${(r.updates || []).map(u => `<div class="sec cm" style="border-color:rgba(255,200,97,.4)"><div class="h"><i class="ti ti-brand-slack" style="color:var(--ambar);font-size:16px"></i><b>${esc(u.by || "Slack")}</b>${esc(fStamp(u.at))}<span class="pill a" style="margin-left:8px">Added in Slack</span>${u.url ? `<a href="${esc(u.url)}" target="_blank" rel="noopener" style="margin-left:auto">Open in Slack</a>` : ""}</div>${mentions(u.text || "")}</div>`).join("")}
       ${r.validation ? `<div class="sec">${valReport(r)}</div>` : ""}
       ${(c => c && (r.type === "client" || missing(c).length) ? pinedaBox(c) : "")(get("clients", r.client_id))}
       <div class="sec fg">
@@ -798,6 +818,7 @@
       else o[d.fld].push({ id: uid(), label: v, done: false, url: "" });
       save(d.k, o); log((d.fld === "links" ? "added the link " : "added ") + '"' + v + '"', d.k === "requests" ? o.id : null, d.k === "requests" ? o.client_id : o.id, "", v); render(); const n = $(`[data-add="${d.k}|${d.id}|${d.fld}"]`); if (n) n.focus();
     },
+    seen(d) { const r = get("requests", d.id); if (!r || !r.news) return; delete r.news; save("requests", r); log("marked the Slack news as seen", r.id, r.client_id); render(); },
     asg(d) { const r = get("requests", d.id), was = asg(r), l = was.includes(d.n) ? was.filter(x => x !== d.n) : [...was, d.n]; r.assignees = l; r.assignee = l[0] || ""; save("requests", r); log(l.length ? "assigned to " + l.join(" and ") : "assigned to nobody", r.id, r.client_id, was.join(", "), l.join(", ")); render(); },
     chat() { S.chat = !S.chat; renderChat(); paintPresence(); if (S.chat) { const l = $("#chatlist"); l.scrollTop = l.scrollHeight; $("#chatinput").focus(); } },
     room(d) { S.room = d.r; S.chat = true; renderChat(); paintPresence(); const l = $("#chatlist"); l.scrollTop = l.scrollHeight; $("#chatinput").focus(); },
