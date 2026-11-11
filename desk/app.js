@@ -230,6 +230,19 @@
       ${keys.map(k => `<div class="hsec"><h4>${esc(L[k][0])}</h4><ul>${L[k][1].map(x => `<li>${x}</li>`).join("")}</ul></div>`).join("")}
       ${S.help === "all" ? "" : `<button class="btn sm" data-act="help" data-h="all" style="margin-top:6px"><i class="ti ti-book"></i>${esc(L.all)}</button>`}</div></div>`;
   }
+  function confirmHTML() {
+    const q = S.confirm; if (!q) return "";
+    const o = get(q.k, q.id); if (!o) return "";
+    const pt = window.DESK_I18N && window.DESK_I18N.get() === "pt", isC = q.k === "clients";
+    const name = isC ? o.name + (o.brand ? " · " + o.brand : "") : clientName(o.client_id) + " · " + (o.title || typeOf(o).label);
+    return `<div class="veil mid" data-act="delcancel" style="z-index:40"><div class="modal delm" data-stop data-i18n><div class="dh"><i class="ti ti-alert-triangle" style="font-size:22px;color:var(--vermelho)"></i><span class="ttl">${pt ? (isC ? "Apagar este cliente?" : "Apagar este pedido?") : (isC ? "Delete this client?" : "Delete this request?")}</span></div>
+      <p class="delname">${esc(name)}</p>
+      <p class="note" style="margin:0 0 12px">${pt ? (isC ? "O cliente sai do painel. Os pedidos dele continuam no histórico." : "O pedido sai do quadro, do checklist e do calendário. O histórico continua.") : (isC ? "The client leaves the board. Its requests stay in the history." : "The request leaves the board, the checklist and the calendar. The history stays.")}</p>
+      <span class="lab">${pt ? "Para confirmar, escreva DELETE" : "To confirm, type DELETE"}</span>
+      <input class="inp" id="delword" autocomplete="off" autocapitalize="characters" spellcheck="false" placeholder="DELETE">
+      <div class="err" id="delerr"></div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><button class="btn" data-act="delcancel">${pt ? "Cancelar" : "Cancel"}</button><button class="btn delb" id="delbtn" data-act="delgo"><i class="ti ti-trash"></i>${pt ? "Apagar" : "Delete"}</button></div></div></div>`;
+  }
   const typeOf = r => TYPES.find(t => t.id === r.type) || TYPES[1];
   const prog = l => { const n = (l || []).length, d = (l || []).filter(x => x.done).length; return { n, d, pct: n ? Math.round(d / n * 100) : 0 }; };
   const opt = (v, l, cur) => `<option value="${esc(v)}"${v === cur ? " selected" : ""}>${esc(l)}</option>`;
@@ -593,7 +606,7 @@
   function renderOver() {
     const r = S.open && get("requests", S.open);
     const sc = $(".drawer") ? $(".drawer").scrollTop : 0;
-    $("#over").innerHTML = (r ? drawerHTML(r) : "") + (S.modal ? newHTML() : "") + helpHTML();
+    $("#over").innerHTML = (r ? drawerHTML(r) : "") + (S.modal ? newHTML() : "") + helpHTML() + confirmHTML();
     if ($(".drawer")) $(".drawer").scrollTop = sc;
     onRender();
   }
@@ -727,8 +740,17 @@
       S.modal = null; S.view = "board"; S.open = r.id; render(); toast("Request sent");
     },
     newclient() { const c = { id: uid(), name: "New client", brand: "", am: "", tz: "America/Chicago", notes: "", links: [], deliverables: DELIVERABLES.map(l => ({ id: uid(), label: l, done: false, url: "" })), requirements: newReqs() }; S.items.clients.push(c); save("clients", c); log("added the client", c.id, c.id); S.client = c.id; renderMain(); },
-    delclient(d) { const c = get("clients", d.id); if (!confirm('Delete the client "' + c.name + '"? Requests stay in the history.')) return; S.items.clients = S.items.clients.filter(x => x.id !== d.id); removeItem("clients", d.id); log('deleted the client "' + c.name + '"', null, null); S.client = null; renderMain(); },
-    delreq(d) { const r = get("requests", d.id); if (!confirm("Delete this request?")) return; S.items.requests = S.items.requests.filter(x => x.id !== d.id); removeItem("requests", d.id); log('deleted the request "' + (r.title || "") + '"', null, r.client_id); S.open = null; render(); },
+    delclient(d) { S.confirm = { k: "clients", id: d.id }; renderOver(); const i = $("#delword"); if (i) i.focus(); },
+    delreq(d) { S.confirm = { k: "requests", id: d.id }; renderOver(); const i = $("#delword"); if (i) i.focus(); },
+    delcancel() { S.confirm = null; renderOver(); },
+    delgo() {
+      const q = S.confirm, i = $("#delword"); if (!q) return;
+      if (!i || i.value !== "DELETE") { const e = $("#delerr"); if (e) e.textContent = (window.DESK_I18N && window.DESK_I18N.get() === "pt") ? "Escreva DELETE em maiúsculas para confirmar." : "Type DELETE in capital letters to confirm."; return i && i.focus(); }
+      S.confirm = null;
+      if (q.k === "clients") { const c = get("clients", q.id); if (c) { S.items.clients = S.items.clients.filter(x => x.id !== q.id); removeItem("clients", q.id); log('deleted the client "' + c.name + '"', null, null); S.client = null; } }
+      else { const r = get("requests", q.id); if (r) { S.items.requests = S.items.requests.filter(x => x.id !== q.id); removeItem("requests", q.id); log('deleted the request "' + (r.title || "") + '"', null, r.client_id); S.open = null; } }
+      render(); toast((window.DESK_I18N && window.DESK_I18N.get() === "pt") ? "Apagado. Use Cmd + Z para desfazer." : "Deleted. Press Cmd + Z to undo.");
+    },
     status(d) { setStatus(get("requests", d.id), d.s); render(); },
     tgl(d) { const o = get(d.k, d.id), it = o[d.fld].find(x => x.id === d.it); it.done = !it.done; it.by = it.done ? S.me.name : ""; it.at = it.done ? now() : ""; save(d.k, o); log((d.fld === "requirements" ? (it.done ? "received from Pineda" : "marked as missing") : (it.done ? "checked" : "unchecked")) + ' "' + it.label + '"', d.k === "requests" ? o.id : null, d.k === "requests" ? o.client_id : o.id);
       if (d.k === "requests" && d.fld === "checklist" && o.checklist.length) { if (o.checklist.every(x => x.done)) { if (o.status !== "done") { setStatus(o, "done"); toast("All steps checked. Moved to Done."); } } else if (o.status === "done") setStatus(o, "doing"); }
@@ -786,12 +808,13 @@
 
   document.addEventListener("click", e => {
     const el = e.target.closest("[data-act]"); if (!el) return;
-    if ((el.dataset.act === "close" || el.dataset.act === "closemodal" || el.dataset.act === "helpclose") && el.classList.contains("veil") && e.target !== el) return;
+    if ((el.dataset.act === "close" || el.dataset.act === "closemodal" || el.dataset.act === "helpclose" || el.dataset.act === "delcancel") && el.classList.contains("veil") && e.target !== el) return;
     if (e.target.closest("a")) return;
     A[el.dataset.act] && A[el.dataset.act](el.dataset, e);
   });
   document.addEventListener("keydown", e => {
-    if (e.key === "Escape") { if (S.help) A.helpclose(); else if (S.modal) A.closemodal(); else if (S.open) A.close(); else if (S.chat) A.chat(); }
+    if (e.key === "Enter" && e.target.id === "delword") { e.preventDefault(); return A.delgo(); }
+    if (e.key === "Escape") { if (S.confirm) A.delcancel(); else if (S.help) A.helpclose(); else if (S.modal) A.closemodal(); else if (S.open) A.close(); else if (S.chat) A.chat(); }
     if (e.key === "Enter" && e.target.dataset.add) { const [k, id, fld] = e.target.dataset.add.split("|"); A.liadd({ k, id, fld }); }
     if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === "z" && !/INPUT|TEXTAREA|SELECT/.test(e.target.tagName) && U.stack.length) { e.preventDefault(); undoLast(); }
     if (e.key === "Enter" && e.target.id === "lemail") A.login();
@@ -800,6 +823,7 @@
   });
   document.addEventListener("input", e => {
     const t = e.target;
+    if (t.id === "delword") { const b = $("#delbtn"), e2 = $("#delerr"); if (b) b.classList.toggle("ready", t.value === "DELETE"); if (e2) e2.textContent = ""; return; }
     if (t.dataset.n && S.modal) { S.modal[t.dataset.n] = t.value; if (/^event_/.test(t.dataset.n) && $("#ntz")) $("#ntz").innerHTML = tzHTML(S.modal); if (t.dataset.n === "client_id") { const c = get("clients", t.value); if (c && c.tz) S.modal.event_tz = c.tz; renderOver(); } }
   });
   document.addEventListener("change", e => {

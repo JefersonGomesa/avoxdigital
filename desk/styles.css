@@ -350,3 +350,9 @@ a.pill:hover{background:rgba(255,109,41,.25);color:var(--brasa)}
 a.btn{text-decoration:none;color:var(--branco)}
 .btn.ghl{border-color:rgba(138,184,255,.6);color:var(--azul)}
 .btn.ghl:hover{background:rgba(138,184,255,.14)}
+
+.delm{width:min(460px,100%);border-color:rgba(255,122,122,.5)}
+.delname{margin:10px 0 6px;font-weight:500;font-size:15px;color:var(--branco);word-break:break-word}
+.btn.delb{border-color:rgba(255,122,122,.5);color:var(--vermelho);opacity:.6}
+.btn.delb.ready{opacity:1;background:var(--vermelho);border-color:var(--vermelho);color:var(--grafite);font-weight:600}
+#delword{letter-spacing:.12em;font-weight:600}
