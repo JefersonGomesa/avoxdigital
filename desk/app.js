@@ -113,8 +113,12 @@
     let b = $("#undo"); if (!S.me) { if (b) b.remove(); return; }
     if (!b) { b = document.createElement("button"); b.id = "undo"; b.className = "undo"; b.dataset.act = "undo"; document.body.appendChild(b); }
     const g = U.stack[U.stack.length - 1], pt = window.DESK_I18N && window.DESK_I18N.get() === "pt";
-    b.style.display = g ? "flex" : "none";
-    if (g) { b.title = (pt ? "Desfazer a última alteração" : "Undo the last change") + " (Ctrl/Cmd + Z)"; b.innerHTML = `<i class="ti ti-arrow-back-up"></i><span>${pt ? "Desfazer" : "Undo"}</span><small>${esc(g.label || (pt ? "última alteração" : "last change"))}</small>${U.stack.length > 1 ? `<b>${U.stack.length}</b>` : ""}`; }
+    clearTimeout(U.hide);
+    if (!g) { b.style.display = "none"; return; }
+    b.style.display = "flex"; b.title = (pt ? "Desfazer: " : "Undo: ") + (g.label || (pt ? "última alteração" : "last change")) + " (Cmd/Ctrl + Z)";
+    b.setAttribute("aria-label", pt ? "Desfazer" : "Undo");
+    b.innerHTML = '<i class="ti ti-arrow-back-up"></i>';
+    U.hide = setTimeout(() => { b.style.display = "none"; }, 6000);
   }
   function undoLast() {
     const g = U.stack.pop(); if (!g) return;
