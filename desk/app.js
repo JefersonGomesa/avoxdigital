@@ -476,6 +476,29 @@
       <div class="lgs">${lg(DCOL.delivered, "Deliveries done", tot("delivered"))}${lg(DCOL.upd, "Update requests", tot("upd"))}${lg(DCOL.neu, "New client requests", tot("neu"))}</div>
       <div class="chart"><svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Deliveries done, update requests and new client requests per period">${grid}${bars}${labs}${hits}</svg><div class="dtip" id="dtip"></div></div></div>`;
   }
+  /* Access and invites: only the owner sees this panel. The data comes from the desk_access_status function. */
+  const OWNER = "jeferson@clicklabpro.com", isOwner = () => !!(S.me && (S.me.email || "").toLowerCase() === OWNER);
+  const AC = { rows: null, busy: false, sending: new Set(), err: "" };
+  async function loadAccess() {
+    if (!LIVE || !isOwner() || AC.busy) return; AC.busy = true;
+    const { data, error } = await sb.rpc("desk_access_status"); AC.busy = false;
+    AC.err = error ? "Could not load the access list." : ""; if (!error) AC.rows = data || [];
+    if (S.view === "dash") renderMain();
+  }
+  function accessHTML() {
+    if (!isOwner()) return "";
+    if (!LIVE) return `<div class="panel" style="margin-bottom:16px"><h3><i class="ti ti-mail-forward"></i><span>Access and invites</span></h3><div class="note" style="margin:0">This panel works on the published panel only.</div></div>`;
+    if (!AC.rows) { loadAccess(); return `<div class="panel" style="margin-bottom:16px"><h3><i class="ti ti-mail-forward"></i><span>Access and invites</span></h3><div class="note" style="margin:0">${AC.err || "Loading…"}</div></div>`; }
+    const st = (at, yes, no) => at ? `<span class="pill g"><i class="ti ti-check"></i><span>${yes}</span></span><small data-i18n>${esc(fStamp(at))}</small>` : `<span class="pill">${no}</span>`;
+    const stage = r => r.first_seen ? ["g", "Registered"] : r.clicked_at ? ["g", "Clicked the link"] : r.sent_at ? ["a", "Invite sent · no click yet"] : ["r", "Not invited"];
+    return `<div class="panel" style="margin-bottom:16px"><h3><i class="ti ti-mail-forward"></i><span>Access and invites</span><span class="pill" style="margin-left:8px;letter-spacing:0;text-transform:none"><i class="ti ti-lock"></i><span>Only you see this</span></span><button class="btn sm ghost" data-act="acload" style="margin-left:auto"><i class="ti ti-refresh"></i><span>Refresh</span></button></h3>
+      <div class="tbw"><table class="tb acc"><thead><tr><th>Person</th><th>Status</th><th>Invite sent</th><th>Clicked the link</th><th>Entered the platform</th><th>Last visit</th><th></th></tr></thead><tbody>
+      ${AC.rows.map(r => { const g = stage(r); return `<tr><td><b class="cl">${esc(r.name)}</b><div class="sub" style="margin:0">${esc(r.email)}</div></td><td><span class="stc ${g[0]}"><i></i><span>${g[1]}</span></span></td>
+        <td>${st(r.sent_at, "Sent", "Not sent")}${r.sends > 1 ? ` <small data-i18n>×${r.sends}</small>` : ""}</td><td>${st(r.clicked_at, "Clicked", "No click")}</td><td>${st(r.first_seen, "Entered", "Not yet")}</td><td>${r.last_seen ? `<small data-i18n>${esc(fStamp(r.last_seen))}</small>` : "—"}</td>
+        <td>${r.email.toLowerCase() === OWNER ? "" : `<button class="btn sm${r.first_seen ? " ghost" : " pri"}" data-act="invite" data-e="${esc(r.email)}"${AC.sending.has(r.email) ? " disabled" : ""}><i class="ti ti-send"></i><span>${AC.sending.has(r.email) ? "Sending…" : r.sent_at ? "Send again" : "Send invite"}</span></button>`}</td></tr>`; }).join("")}
+      </tbody></table></div>
+      <div class="note" style="margin:10px 0 0">The invite is an email with a sign-in link. "Invite sent" means the platform sent the email. The platform cannot see if the email arrived in the inbox.</div></div>`;
+  }
   function vDash() {
     const D = dashState(), td = today(), start = { all: "", week: weekStart(), month: td.slice(0, 8) + "01", d30: ymdIn(Date.now() - 30 * 864e5, MYZ), d90: ymdIn(Date.now() - 90 * 864e5, MYZ) }[D.period] || "";
     const dk = iso => iso ? ymdIn(+new Date(iso), MYZ) : "";
@@ -497,6 +520,7 @@
       ${sel("type", [["", "All types"], ["client", "New clients"], ["update", "Updates"]])}
       ${sel("grp", [["", "All statuses"], ["done", "Done"], ["prod", "In production"], ["wait", "Waiting"]])}
       ${sel("who", [["", "Everyone"], ...team.map(n => [n, n])])}</div>
+      ${accessHTML()}
       <div class="kpis">${kpi(served(td), "Clients served today")}${kpi(served(weekStart()), "Clients served this week")}${kpi(served(td.slice(0, 8) + "01"), "Clients served this month")}${kpi(doneM, "Deliveries this month")}${kpi(prod, "In production")}${kpi(wait.length, "Waiting", wait.length ? "<span>Average wait</span> " + esc(durTxt(avg(wait.map(waitMs)))) : "")}</div>
       <div class="panel"><h3><i class="ti ti-users"></i><span>By client</span><span class="q" data-i18n style="margin-left:auto;letter-spacing:0">${cl.length}</span></h3>
         <div class="tbw"><table class="tb"><thead><tr><th>Client</th><th>Requests</th><th>Done</th><th>In production</th><th>Waiting</th><th>Average delivery time</th><th>Oldest open request</th><th>Deliveries</th><th>Missing from Pineda</th></tr></thead><tbody>
@@ -854,6 +878,16 @@
       else o[d.fld].push({ id: uid(), label: v, done: false, url: "" });
       save(d.k, o); log((d.fld === "links" ? "added the link " : "added ") + '"' + v + '"', d.k === "requests" ? o.id : null, d.k === "requests" ? o.client_id : o.id, "", v); render(); const n = $(`[data-add="${d.k}|${d.id}|${d.fld}"]`); if (n) n.focus();
     },
+    acload() { AC.rows = null; renderMain(); },
+    async invite(d) {
+      if (!LIVE || !isOwner() || AC.sending.has(d.e)) return;
+      AC.sending.add(d.e); renderMain();
+      const { error } = await sb.auth.signInWithOtp({ email: d.e, options: { emailRedirectTo: location.origin + location.pathname } });
+      AC.sending.delete(d.e);
+      if (error) { renderMain(); return toast("Could not send the invite. Wait 1 minute and try again."); }
+      await sb.rpc("desk_invite_log", { p_email: d.e });
+      toast("Invite sent to " + d.e); AC.rows = null; renderMain();
+    },
     colm() { S.colm = true; renderOver(); const i = $("#colname"); if (i) i.focus(); },
     colclose() { S.colm = false; renderOver(); },
     coladd() {
@@ -991,6 +1025,7 @@
         S.me = S.members.find(m => m.email.toLowerCase() === email && m.can_login !== false);
         if (!S.me) { await sb.auth.signOut(); return loginScreen("This email has no access yet. Ask Jeferson to add you."); }
         if (location.hash.includes("access_token")) history.replaceState(null, "", location.pathname);
+        sb.rpc("desk_touch").then(() => {}, () => {});
         const reload = async () => { try { const n = await remote.load(); S.items = n.items; S.members = n.members; snapAll(); S.dirty = true; flush(); } catch (e) {} };
         const typingIn = sel => { const a = document.activeElement; return !!(a && /INPUT|TEXTAREA|SELECT/.test(a.tagName) && a.closest(sel)); };
         const flush = () => { if (!S.dirty) return; if (typingIn("#main") || typingIn(".drawer,.modal")) return; S.dirty = false; if (S.open && !get("requests", S.open)) S.open = null; renderMain(); renderOver(); };
