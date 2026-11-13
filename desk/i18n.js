@@ -1,6 +1,10 @@
 /* Vox Desk — interface language. Translates platform labels only. Never translates what people typed. */
 (function () {
   const PT = {
+    "Columns": "Colunas", "Board columns": "Colunas do quadro", "Add column": "Adicionar coluna", "New column": "Coluna nova", "Column name": "Nome da coluna", "No owner": "Sem dono", "Owner": "Dono", "No extra column yet": "Nenhuma coluna extra ainda", "Column": "Coluna", "By status": "Pelo status", "Enter the column name.": "Escreva o nome da coluna.",
+    "Add your own columns to the Requests board. Each column can have an owner. A card that enters the column is assigned to the owner.": "Adicione colunas suas ao quadro de Pedidos. Cada coluna pode ter um dono. O cartão que entra na coluna fica com o dono como responsável.",
+    "GHL time zone": "Fuso do GHL", "GHL time zone not set": "Fuso do GHL não definido", "In GHL": "No GHL", "Not set": "Não definido",
+    "Requested executions": "Execuções pedidas", "Steps": "Passos", "Moved to Done.": "Movido para Concluído.", "Mark as done": "Marcar como feito", "Reopen": "Reabrir",
     "Requests": "Pedidos", "Clients": "Clientes", "Calendar": "Calendário", "History": "Histórico", "Sign out": "Sair",
     "Add request": "Adicionar pedido", "New request": "Novo pedido", "All clients": "Todos os clientes", "No client": "Sem cliente", "Add client": "Adicionar cliente",
     "New": "Novo", "Needs info": "Falta informação", "In progress": "Em andamento", "Updated & tested": "Atualizado e testado", "Done": "Concluído",

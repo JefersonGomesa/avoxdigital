@@ -25,7 +25,9 @@
   const MYZ = Intl.DateTimeFormat().resolvedOptions().timeZone || "America/Sao_Paulo";
   const BR = /Sao_Paulo|Fortaleza|Recife|Bahia|Belem|Maceio|Araguaina/.test(MYZ);
   const MYLABEL = BR ? "Brasília" : "Your time";
-  const zAbbr = z => (ZONES.find(x => x[0] === z) || [0, "?"])[1];
+  const GZONES = [...ZONES, ["America/Phoenix", "AZ", "Arizona"], ["America/Anchorage", "AKT", "Alaska"], ["Pacific/Honolulu", "HT", "Hawaii"], ["America/Sao_Paulo", "BRT", "Brasília"]];
+  const zAbbr = z => (GZONES.find(x => x[0] === z) || [0, "?"])[1];
+  const zName = z => (GZONES.find(x => x[0] === z) || [0, "", "?"])[2];
 
   /* ---------- time ---------- */
   function tzOff(tz, t) {
@@ -50,25 +52,29 @@
     const z = r.event_tz || "America/Chicago";
     const t = r.event_time ? " · " + fTime(u, z) + " " + zAbbr(z) : "";
     const mine = r.event_time ? `<small>${esc(fDay(u, MYZ))} · ${esc(fTime(u, MYZ, BR))} ${MYLABEL}</small>` : "";
-    return `<div class="when"><i class="ti ti-broadcast"></i><div>${esc(fDay(u, z))}${esc(t)}${mine}</div></div>`;
+    const c = get("clients", r.client_id), gz = c && c.ghl_tz;
+    const ghl = gz && r.event_time && gz !== z ? `<small class="gz" title="The same moment in the time zone of the client's GHL account">GHL: ${esc(fDay(u, gz))} · ${esc(fTime(u, gz))} ${esc(zAbbr(gz))}</small>` : "";
+    return `<div class="when"><i class="ti ti-broadcast"></i><div>${esc(fDay(u, z))}${esc(t)}${mine}${ghl}</div></div>`;
   }
   function tzHTML(r) {
-    const u = evUTC(r);
-    if (u == null) return `<div class="note">Pick a date to see the time in every zone.</div>`;
+    const u = evUTC(r), gc = get("clients", r.client_id), gz = gc && gc.ghl_tz;
+    const gn = gz ? `<div class="note gzn"><i class="ti ti-world"></i> <span>GHL time zone</span>: <b data-i18n>${esc(zName(gz))} (${esc(zAbbr(gz))})</b>${u != null && r.event_time ? ` · <span>In GHL</span>: <b data-i18n>${esc(fDay(u, gz))} · ${esc(fTime(u, gz))}</b>` : ""}</div>` : "";
+    if (u == null) return `<div class="note">Pick a date to see the time in every zone.</div>` + gn;
     const cells = ZONES.filter(z => z[1] !== "MT" || r.event_tz === z[0]).slice(0, 3).map(z => [z[2], z[0], false]);
     if (!cells.some(c => c[1] === MYZ)) cells.push([MYLABEL, MYZ, BR]);
-    return `<div class="tz">${cells.map(c => `<div class="${c[1] === MYZ ? "mine" : ""}"><span>${esc(c[0])}</span><b>${r.event_time ? esc(fTime(u, c[1], c[2])) : "—"}</b><small>${esc(fDay(u, c[1]))}</small></div>`).join("")}</div>`;
+    return `<div class="tz">${cells.map(c => `<div class="${c[1] === MYZ ? "mine" : ""}"><span>${esc(c[0])}</span><b>${r.event_time ? esc(fTime(u, c[1], c[2])) : "—"}</b><small>${esc(fDay(u, c[1]))}</small></div>`).join("")}</div>` + gn;
   }
 
   /* ---------- state + storage ---------- */
-  const S = { items: { clients: [], requests: [], comments: [], activity: [] }, members: [], me: null, view: "board", open: null, client: null, modal: null, filter: "", cal: null, hfilter: "", live: false, dirty: false };
-  const KINDS = ["clients", "requests", "comments", "activity"];
+  const S = { items: { clients: [], requests: [], comments: [], activity: [], columns: [] }, members: [], me: null, view: "board", open: null, client: null, modal: null, filter: "", cal: null, hfilter: "", live: false, dirty: false };
+  const KINDS = ["clients", "requests", "comments", "activity", "columns"];
   let sb = null;
 
   const local = {
     async load() {
       let d = null; try { d = JSON.parse(localStorage.getItem("voxdesk-v2")); } catch (e) {}
       if (!d) { d = seed(); localStorage.setItem("voxdesk-v2", JSON.stringify(d)); }
+      d.items.columns = d.items.columns || [];
       return d;
     },
     flush() { try { localStorage.setItem("voxdesk-v2", JSON.stringify({ items: S.items, members: S.members })); } catch (e) {} },
@@ -80,7 +86,7 @@
       if (m.error) throw m.error;
       const it = await sb.from("desk_items").select("id,kind,data");
       if (it.error) throw it.error;
-      const items = { clients: [], requests: [], comments: [], activity: [] };
+      const items = { clients: [], requests: [], comments: [], activity: [], columns: [] };
       it.data.forEach(r => items[r.kind] && items[r.kind].push(Object.assign({}, r.data, { id: r.id })));
       return { items, members: m.data };
     },
@@ -155,7 +161,7 @@
   function hid(str) { let h1 = 0x811c9dc5, h2 = 0x1b873593; for (let i = 0; i < str.length; i++) { const c = str.charCodeAt(i); h1 = Math.imul(h1 ^ c, 16777619) >>> 0; h2 = Math.imul(h2 + c, 2246822519) >>> 0; h2 ^= h2 >>> 13; } const x = (h1.toString(16).padStart(8, "0") + (h2 >>> 0).toString(16).padStart(8, "0") + h1.toString(16).padStart(8, "0")); return "51ac0000-0000-4000-8" + x.slice(0, 3) + "-" + x.slice(3, 15); }
   function seed() {
     const M = [["jeferson@clicklabpro.com", "Jeferson", "clicklab"], ["alex@realcolordesign.com", "Alex", "clicklab"], ["katarina@pineda.co", "Kat", "pineda"], ["athalia@leadkitchen.com", "Athalia", "pineda"], ["jess.gonzalez@pineda.co", "Jess", "pineda"], ["neeco.hernandez@pineda.co", "Neeco", "pineda"], ["javier.chavez@ryanpineda.com", "Javi", "pineda"]].map(m => ({ email: m[0], name: m[1], team: m[2] }));
-    return { members: M, items: { clients: [], requests: [], comments: [], activity: [] } };
+    return { members: M, items: { clients: [], requests: [], comments: [], activity: [], columns: [] } };
   }
   /* Adds Slack items that this workspace has not seen yet. Never overwrites an edited item. */
   function mergeImport() {
@@ -232,6 +238,9 @@
   }
   /* ---------- GHL link + help ---------- */
   const ghlBtn = (c, always) => c && c.ghl ? `<a class="btn sm ghl" href="${esc(c.ghl)}" target="_blank" rel="noopener" title="Open the client's GoHighLevel account"><i class="ti ti-external-link"></i><span data-i18n>GHL</span></a>` : c && always ? `<span class="pill" title="Paste the GHL account link in Details">No GHL link</span>` : "";
+  /* The time zone set inside the client's GHL account. Shown wherever the client shows. */
+  const gzPill = (c, warn) => c && c.ghl_tz ? `<span class="pill tzp" title="Time zone set in this client's GHL account: ${esc(zName(c.ghl_tz))}"><i class="ti ti-world"></i><span data-i18n>GHL ${esc(zAbbr(c.ghl_tz))}</span></span>` : c && warn ? `<span class="pill a" title="Open the client and set the time zone of the GHL account"><i class="ti ti-world-off"></i><span>GHL time zone not set</span></span>` : "";
+  const gzOpts = cur => opt("", "Not set", cur || "") + GZONES.map(z => opt(z[0], z[2] + " (" + z[1] + ")", cur)).join("");
   const HELPKEY = { board: ["board", "card"], clients: ["clients"], list: ["list"], dash: ["dash"], notes: ["notes"], calendar: ["calendar"], history: ["history"] };
   function helpHTML() {
     const H = window.DESK_HELP; if (!H || !S.help) return "";
@@ -286,7 +295,26 @@
   const reqLine = r => reqAt(r) ? `<div class="mv rq" title="Date and time of the latest request, in your local time"><i class="ti ti-clock"></i><span>Requested</span><small>${esc(fStamp(reqAt(r)))}</small></div>` : "";
   /* Column order: a new request (no manual priority yet) goes first, newest first. Cards moved by hand keep their order below. */
   const byRank = (a, b) => ((a.rank == null ? -1 : a.rank) - (b.rank == null ? -1 : b.rank)) || reqAt(b).localeCompare(reqAt(a));
-  const inCol = (r, st, sub) => r.status === st && (!sub || (sub === "client") === (r.type === "client"));
+  /* Extra board columns. A card with "col" shows in that column until it is done. */
+  const cols = () => S.items.columns.slice().sort((a, b) => (a.pos || 0) - (b.pos || 0) || String(a.created_at).localeCompare(String(b.created_at)));
+  const colOf = r => r.col && r.status !== "done" ? get("columns", r.col) || null : null;
+  const inCol = (r, st, sub) => st.slice(0, 4) === "col:" ? (colOf(r) || {}).id === st.slice(4) : !colOf(r) && r.status === st && (!sub || (sub === "client") === (r.type === "client"));
+  function setCol(r, id) {
+    const was = colOf(r), c = id ? get("columns", id) : null; if ((was ? was.id : "") === (c ? c.id : "")) return;
+    if (c) { r.col = c.id; if (r.status === "done") { r.status = "doing"; r.done_at = null; } if (c.owner && !asg(r).includes(c.owner)) { r.assignees = [...asg(r), c.owner]; r.assignee = r.assignees[0]; } } else delete r.col;
+    save("requests", r); log(c ? 'moved to the column "' + c.label + '"' + (c.owner ? " · owner " + c.owner : "") : 'left the column "' + (was ? was.label : "") + '"', r.id, r.client_id, was ? was.label : "", c ? c.label : "");
+  }
+  function colsHTML() {
+    if (!S.colm) return "";
+    const l = cols();
+    return `<div class="veil mid" data-act="colclose"><div class="modal" data-stop>
+      <div class="dh"><i class="ti ti-layout-columns" style="font-size:22px;color:var(--laranja)"></i><span class="ttl">Board columns</span><span class="sp"></span><button class="btn ghost sm" data-act="colclose"><i class="ti ti-x"></i></button></div>
+      <p class="note" style="margin:0 0 14px">Add your own columns to the Requests board. Each column can have an owner. A card that enters the column is assigned to the owner.</p>
+      ${l.map(c => `<div class="colr"><input type="color" value="${esc(c.color || "#C9A8FF")}" data-cf="color" data-id="${c.id}" title="Colour" aria-label="Colour"><input class="inp" value="${esc(c.label)}" data-cf="label" data-id="${c.id}" placeholder="Column name"><select class="sel" data-cf="owner" data-id="${c.id}">${memberOpts(c.owner, "No owner")}</select><span class="pill" data-i18n title="Cards in this column">${S.items.requests.filter(r => (colOf(r) || {}).id === c.id).length}</span><button class="btn ghost sm" data-act="coldel" data-id="${c.id}" aria-label="Delete column"><i class="ti ti-trash"></i></button></div>`).join("") || `<div class="empty" style="margin-bottom:10px">No extra column yet</div>`}
+      <span class="lab" style="margin-top:14px;display:block">New column</span>
+      <div class="colr"><input class="inp" id="colname" placeholder="Column name"><select class="sel" id="colowner">${memberOpts("", "No owner")}</select><button class="btn pri" data-act="coladd"><i class="ti ti-plus"></i>Add column</button></div>
+      <div class="err" id="colerr"></div></div></div>`;
+  }
   /* One colour for each card. Yellow = something arrived from Slack and nobody marked it as seen yet. */
   function stateOf(r) {
     if (r.status === "done") return ["g", "Done"];
@@ -311,7 +339,7 @@
       ${reqLine(r)}
       ${r.type === "client" && r.status === "new" ? startBox(get("clients", r.client_id)) : ""}
       ${p.n ? `<div class="bar"><b style="width:${p.pct}%"></b></div>` : ""}
-      <div class="meta"><span class="pill o"><i class="ti ${t.icon}"></i>${esc(t.label)}</span>
+      <div class="meta"><span class="pill o"><i class="ti ${t.icon}"></i>${esc(t.label)}</span>${gzPill(get("clients", r.client_id))}
       ${r.status === "info" && r.waiting_on ? `<span class="pill a">Waiting on ${esc(r.waiting_on)}</span>` : ""}
       ${r.status === "tested" ? `<span class="pill g"><i class="ti ti-rocket"></i>Cleared to launch</span>` : ""}
       ${r.type === "client" && r.status !== "done" ? missPill(get("clients", r.client_id)) : ""}
@@ -331,13 +359,14 @@
     return `<div class="top"><h1>Requests</h1>
       <select class="sel" style="width:150px" data-ui="who">${opt("", "Everyone", S.who || "")}${team.map(n => opt(n, n, S.who)).join("")}</select>
       <select class="sel" style="width:220px" data-ui="filter">${opt("", "All clients", S.filter)}${clientOpts(S.filter)}</select>
+      <button class="btn" data-act="colm" title="Add, rename or remove board columns and set the owner of each one"><i class="ti ti-layout-columns"></i><span>Columns</span></button>
       <button class="btn pri" data-act="new"><i class="ti ti-plus"></i>Add request</button></div>
       ${missBanner()}
-      <div class="board">${[{ id: "new", sub: "client", label: "New clients", color: "#FF6D29", empty: "No new client to build" }, { id: "new", sub: "update", label: "Updates", color: "#8AB8FF", empty: "No new update" }, ...STATUS.slice(1)].map(s => {
-        let l = rs.filter(r => r.status === s.id && (!s.sub || (s.sub === "client") === (r.type === "client")));
+      <div class="board" style="grid-template-columns:repeat(${6 + cols().length},minmax(215px,1fr))">${[{ id: "new", sub: "client", label: "New clients", color: "#FF6D29", empty: "No new client to build" }, { id: "new", sub: "update", label: "Updates", color: "#8AB8FF", empty: "No new update" }, ...STATUS.slice(1, 3), ...cols().map(c => ({ id: "col:" + c.id, label: c.label, color: c.color || "#C9A8FF", owner: c.owner, custom: true })), ...STATUS.slice(3)].map(s => {
+        let l = rs.filter(r => inCol(r, s.id, s.sub));
         if (s.id === "done") l = l.filter(r => r.type === "client" || !r.done_at || +new Date(r.done_at) > cut);
         l.sort(s.id === "done" ? (a, b) => (b.done_at || "").localeCompare(a.done_at || "") : byRank);
-        return `<div class="col" data-drop="${s.id}" data-sub="${s.sub || ""}"><div class="colh"><span class="dot" style="background:${s.color}"></span>${s.label}<span class="q">${l.length}</span></div>
+        return `<div class="col" data-drop="${s.id}" data-sub="${s.sub || ""}"><div class="colh"><span class="dot" style="background:${esc(s.color)}"></span>${s.custom ? `<span class="cl">${esc(s.label)}</span>` : s.label}${s.owner ? `<span class="av colo" title="Owner: ${esc(s.owner)}">${esc(initials(s.owner))}</span>` : ""}<span class="q">${l.length}</span></div>${s.custom ? `<div class="colow">${s.owner ? `<i class="ti ti-user-check"></i><span>Owner</span> <b class="cl">${esc(s.owner)}</b>` : `<i class="ti ti-user-off"></i><span>No owner</span>`}</div>` : ""}
         ${l.map(cardHTML).join("") || `<div class="empty">${s.empty || (s.id === "done" ? "Done in the last 7 days shows here" : "Drag a card here")}</div>`}</div>`;
       }).join("")}</div>`;
   }
@@ -350,7 +379,7 @@
         return `<div class="card" data-act="client" data-id="${c.id}"><div class="cl">${esc(c.name)}</div><div class="sub">${esc(c.brand || "")}</div>
           ${nx ? whenHTML(nx) : `<div class="when"><i class="ti ti-calendar-off" style="color:var(--cinza)"></i><div style="color:var(--cinza)">No webinar date set</div></div>`}
           <div class="bar"><b style="width:${p.pct}%"></b></div>
-          <div class="meta"><span>${p.d} of ${p.n} delivered</span>${ghlBtn(c)}${missPill(c)}${valPill(c)}${open ? `<span class="pill o">${open} open</span>` : ""}${c.am ? `<span class="av" style="margin-left:auto" title="${esc(c.am)}">${esc(initials(c.am))}</span>` : ""}</div></div>`;
+          <div class="meta"><span>${p.d} of ${p.n} delivered</span>${ghlBtn(c)}${gzPill(c)}${missPill(c)}${valPill(c)}${open ? `<span class="pill o">${open} open</span>` : ""}${c.am ? `<span class="av" style="margin-left:auto" title="${esc(c.am)}">${esc(initials(c.am))}</span>` : ""}</div></div>`;
       }).join("")}</div>`;
   }
   function vClient(c) {
@@ -358,7 +387,7 @@
     const p = prog(c.deliverables);
     const F = (f, ph, cls) => `<input class="${cls || "inp"}" value="${esc(c[f] || "")}" placeholder="${ph}" data-f="${f}" data-k="clients" data-id="${c.id}">`;
     return `<div class="top"><button class="btn ghost" data-act="clients"><i class="ti ti-arrow-left"></i>Clients</button><h1>${esc(c.name)}</h1>
-      ${ghlBtn(c, true)}${valPill(c)}${valBtn("clients", c.id, true)}<button class="btn" data-act="new" data-client="${c.id}"><i class="ti ti-plus"></i>New request</button><button class="btn ghost" data-act="delclient" data-id="${c.id}"><i class="ti ti-trash"></i></button></div>
+      ${ghlBtn(c, true)}<label class="tzb${c.ghl_tz ? "" : " no"}" title="The time zone set inside this client's GHL account. It shows on the cards, the checklist and the request."><i class="ti ti-world"></i><span>GHL time zone</span><select data-f="ghl_tz" data-k="clients" data-id="${c.id}">${gzOpts(c.ghl_tz)}</select></label>${valPill(c)}${valBtn("clients", c.id, true)}<button class="btn" data-act="new" data-client="${c.id}"><i class="ti ti-plus"></i>New request</button><button class="btn ghost" data-act="delclient" data-id="${c.id}"><i class="ti ti-trash"></i></button></div>
       ${c.validation ? `<div style="margin-bottom:16px">${valReport(c)}</div>` : ""}
       <div class="two"><div>
         <div class="panel reqp${missing(c).length ? " bad" : ""}" style="margin-bottom:16px"><h3><i class="ti ti-${missing(c).length ? "alert-triangle" : "circle-check"}"></i><span>Needed from Pineda to launch</span><span class="pill ${missing(c).length ? "r" : "g"}" data-i18n style="margin-left:auto;letter-spacing:0;text-transform:none">${(c.requirements || []).filter(x => x.done).length} / ${(c.requirements || []).length}</span></h3>
@@ -490,24 +519,30 @@
     const info = ids.map(id => { const l = open.filter(r => (r.client_id || "") === id).sort(byRank), st = l.reduce((a, r) => { const p = prog(r.checklist); a.d += p.d; a.n += p.n; return a; }, { d: 0, n: 0 }); return { id, name: clientName(id), brand: (get("clients", id) || {}).brand || "", l, st, rank: Math.min(...l.map(r => r.rank == null ? 1e9 : r.rank)), old: Math.min(...l.map(r => +new Date(r.created_at || Date.now()))) }; }).sort((a, b) => a.rank - b.rank || a.old - b.old);
     if (S.listClient == null || (!info.some(c => c.id === S.listClient) && !S.items.requests.some(r => (r.client_id || "") === S.listClient))) S.listClient = info.length ? info[0].id : "";
     const cur = S.listClient, mine = S.items.requests.filter(r => (r.client_id || "") === cur), todo = mine.filter(r => r.status !== "done").sort(byRank), done = mine.filter(r => r.status === "done").sort((a, b) => (b.done_at || "").localeCompare(a.done_at || "")), c = get("clients", cur);
-    const sec = (r, i) => { const p = prog(r.checklist), t = typeOf(r); return `<div class="panel lsec"><div class="lh"><span class="rk">${i + 1}</span><div style="flex:1;min-width:0"><div class="cl">${esc(r.title || t.label)}</div><div class="sub" style="margin:2px 0 0">${esc(r.requester ? r.requester + " · " : "")}${esc(fDate(r.created_at))}${evUTC(r) ? " · webinar " + esc(fDay(evUTC(r), r.event_tz || "America/Chicago")) : ""}</div></div>
-        <span class="pill ${GRP[grpOf(r)][1]}">${esc(STATUS.find(x => x.id === r.status).label)}</span><span class="pill">${p.d} / ${p.n}</span>
-        ${asg(r).map(n => `<span class="av" title="${esc(n)}">${esc(initials(n))}</span>`).join("")}
-        ${r.slack_url ? `<a class="x" href="${esc(r.slack_url)}" target="_blank" rel="noopener" title="Open in Slack"><i class="ti ti-brand-slack"></i></a>` : ""}
-        ${valPill(r)}${valBtn("requests", r.id, true)}
-        <button class="btn sm" data-act="open" data-id="${r.id}"><i class="ti ti-arrow-up-right"></i><span>Open request</span></button></div>
-        ${r.validation ? `<div style="margin-top:10px">${valReport(r)}</div>` : ""}
-        ${r.source_text ? `<div class="q" style="margin:10px 0 4px"><i class="ti ti-brand-slack"></i><span><b>${esc(r.requester || "Slack")}:</b> ${esc(r.source_text.length > 220 ? r.source_text.slice(0, 220) + "…" : r.source_text)}</span></div>` : ""}
-        <div class="bar" style="margin:10px 0 8px"><b style="width:${p.pct}%"></b></div>
-        ${listHTML("requests", r.id, "checklist", "Add a step")}</div>`; };
+    /* One row for each execution that was requested: the request itself and each message added to it in Slack. */
+    const dem = [], fin = [];
+    mine.forEach(r => {
+      if (r.status !== "done") (r.updates || []).forEach((u, i) => (u.done ? fin : dem).push({ r, u, i, at: u.at, by: u.by, text: u.text, url: u.url, dat: u.done_at }));
+      (r.status === "done" ? fin : dem).push({ r, at: r.created_at || r.requested_at, by: r.requester, text: r.source_text || r.details || "", url: r.slack_url, dat: r.done_at });
+    });
+    dem.sort((a, b) => String(b.at || "").localeCompare(String(a.at || ""))); fin.sort((a, b) => String(b.dat || "").localeCompare(String(a.dat || "")));
+    const row = (x, done) => { const r = x.r, t = typeOf(r), p = prog(r.checklist), isU = !!x.u, open = !isU && !done && S.lsteps && S.lsteps[r.id];
+      return `<div class="panel dm${done ? " done" : ""}${!done && r.news ? " y" : ""}"><button class="chk${done ? " on" : ""}" data-act="dtick" data-id="${r.id}"${isU ? ` data-u="${x.i}"` : ""} title="${done ? "Reopen" : "Mark as done"}" aria-label="${done ? "Reopen" : "Mark as done"}">${done ? '<i class="ti ti-check"></i>' : ""}</button>
+        <div class="dmb"><div class="dmh"><b data-i18n>${esc(x.by || "ClickLab")}</b><small data-i18n>${esc(x.at ? fStamp(x.at) : "")}</small>${isU ? `<span class="pill a">Added in Slack</span>` : `<span class="pill o"><i class="ti ${t.icon}"></i>${esc(t.label)}</span>`}${done ? (x.dat ? `<span class="pill g"><i class="ti ti-check"></i><span data-i18n>${esc(fDate(x.dat))}</span></span>` : "") : stChip(r)}
+          <span style="margin-left:auto;display:inline-flex;gap:6px;align-items:center">${asg(r).map(n => `<span class="av" title="${esc(n)}">${esc(initials(n))}</span>`).join("")}${x.url ? `<a class="x" href="${esc(x.url)}" target="_blank" rel="noopener" title="Open in Slack"><i class="ti ti-brand-slack"></i></a>` : ""}<button class="btn sm ghost" data-act="open" data-id="${r.id}" title="Open request" aria-label="Open request"><i class="ti ti-arrow-up-right"></i></button></span></div>
+          <div class="dmt cl">${esc(r.title || t.label)}${evUTC(r) && !isU ? ` <small>· webinar ${esc(fDay(evUTC(r), r.event_tz || "America/Chicago"))}</small>` : ""}</div>
+          ${x.text ? `<div class="dmx">${mentions(x.text)}</div>` : ""}
+          ${!isU && !done ? `<div class="dmf"><button class="btn sm ghost" data-act="lsteps" data-id="${r.id}"><i class="ti ti-chevron-${open ? "up" : "down"}"></i><span>Steps</span><b data-i18n>${p.d} / ${p.n}</b></button>${valPill(r)}${valBtn("requests", r.id, true)}</div>` : ""}
+          ${open ? `<div class="dms">${r.validation ? valReport(r) : ""}${listHTML("requests", r.id, "checklist", "Add a step")}</div>` : ""}</div></div>`; };
     return `<div class="top"><h1>Checklist</h1><button class="btn pri" data-act="new" data-client="${c ? c.id : ""}"><i class="ti ti-plus"></i>Add request</button></div>
       <div class="lgrid"><div class="panel lside"><h3><i class="ti ti-users"></i><span>Clients with open work</span></h3>
-        ${info.map(x => `<button class="lcl${x.id === cur ? " on" : ""}" data-act="lpick" data-id="${esc(x.id)}"><span style="flex:1;min-width:0"><b class="cl">${esc(x.name)}</b><small class="sub">${esc(x.brand)}</small><span class="bar" style="margin-top:6px"><b style="width:${x.st.n ? Math.round(x.st.d / x.st.n * 100) : 0}%"></b></span></span><span class="pill o">${x.l.length}</span></button>`).join("") || `<div class="empty">No open work. All done.</div>`}</div>
-      <div><div class="lhead"><div><div class="ttl">${esc(clientName(cur))}</div><div class="sub">${esc(c ? c.brand || "" : "")}</div></div>${c ? `<span style="display:flex;gap:8px;align-items:center">${ghlBtn(c)}${valPill(c)}${valBtn("clients", c.id, true)}<button class="btn sm" data-act="client" data-id="${c.id}" data-go="1"><i class="ti ti-arrow-up-right"></i><span>Open client</span></button></span>` : ""}</div>
+        ${info.map(x => `<button class="lcl${x.id === cur ? " on" : ""}" data-act="lpick" data-id="${esc(x.id)}"><span style="flex:1;min-width:0"><b class="cl">${esc(x.name)}</b><small class="sub">${esc(x.brand)}</small><span class="bar" style="margin-top:6px"><b style="width:${x.st.n ? Math.round(x.st.d / x.st.n * 100) : 0}%"></b></span></span><span class="pill o">${x.l.reduce((a, r) => a + 1 + (r.updates || []).filter(u => !u.done).length, 0)}</span></button>`).join("") || `<div class="empty">No open work. All done.</div>`}</div>
+      <div><div class="lhead"><div><div class="ttl">${esc(clientName(cur))}</div><div class="sub">${esc(c ? c.brand || "" : "")}</div></div>${c ? `<span style="display:flex;gap:8px;align-items:center">${ghlBtn(c)}${gzPill(c, true)}${valPill(c)}${valBtn("clients", c.id, true)}<button class="btn sm" data-act="client" data-id="${c.id}" data-go="1"><i class="ti ti-arrow-up-right"></i><span>Open client</span></button></span>` : ""}</div>
         ${c && c.validation ? `<div style="margin-bottom:14px">${valReport(c)}</div>` : ""}
-        ${c && missing(c).length ? `<div class="panel reqp bad lsec"><h3><i class="ti ti-alert-triangle"></i><span>Needed from Pineda to launch</span><span class="pill r" data-i18n style="margin-left:auto;letter-spacing:0;text-transform:none">${missing(c).length}</span></h3>${listHTML("clients", c.id, "requirements", "Add something Pineda must send")}</div>` : ""}
-        ${todo.map(sec).join("") || `<div class="panel"><div class="empty">Nothing open for this client</div></div>`}
-        ${done.length ? `<div class="panel" style="margin-top:14px"><h3><i class="ti ti-circle-check"></i><span>Done</span><span class="q" data-i18n style="margin-left:auto;letter-spacing:0">${done.length}</span></h3>${done.map(r => `<div class="hist go" data-act="open" data-id="${r.id}"><i class="ti ti-check" style="color:var(--verde)"></i><span><b>${esc(r.title || typeOf(r).label)}</b></span><span style="margin-left:auto">${esc(fDate(r.done_at))}</span></div>`).join("")}</div>` : ""}
+        <div class="lab dml"><span>Requested executions</span><span class="pill o" data-i18n>${dem.length}</span></div>
+        ${dem.map(x => row(x, false)).join("") || `<div class="panel"><div class="empty">Nothing open for this client</div></div>`}
+        ${fin.length ? `<div class="lab dml" style="margin-top:18px"><i class="ti ti-circle-check" style="color:var(--verde)"></i><span>Done</span><span class="pill g" data-i18n>${fin.length}</span></div>${fin.slice(0, 40).map(x => row(x, true)).join("")}` : ""}
+        ${c && missing(c).length ? `<div class="panel reqp bad lsec" style="margin-top:18px"><h3><i class="ti ti-alert-triangle"></i><span>Needed from Pineda to launch</span><span class="pill r" data-i18n style="margin-left:auto;letter-spacing:0;text-transform:none">${missing(c).length}</span></h3>${listHTML("clients", c.id, "requirements", "Add something Pineda must send")}</div>` : ""}
       </div></div>`;
   }
 
@@ -582,12 +617,13 @@
       ${r.validation ? `<div class="sec">${valReport(r)}</div>` : ""}
       ${(c => c && (r.type === "client" || missing(c).length) ? pinedaBox(c) : "")(get("clients", r.client_id))}
       <div class="sec fg">
-        <div><span class="lab" style="display:flex;align-items:center;gap:8px">Client ${get("clients", r.client_id) && get("clients", r.client_id).ghl ? `<a href="${esc(get("clients", r.client_id).ghl)}" target="_blank" rel="noopener" style="margin-left:auto;letter-spacing:0;text-transform:none" data-i18n><i class="ti ti-external-link"></i> GHL</a>` : ""}</span><select class="sel" data-f="client_id" ${A}>${opt("", "No client", r.client_id)}${clientOpts(r.client_id, true)}</select></div>
+        <div><span class="lab" style="display:flex;align-items:center;gap:8px">Client ${gzPill(get("clients", r.client_id))}${get("clients", r.client_id) && get("clients", r.client_id).ghl ? `<a href="${esc(get("clients", r.client_id).ghl)}" target="_blank" rel="noopener" style="margin-left:auto;letter-spacing:0;text-transform:none" data-i18n><i class="ti ti-external-link"></i> GHL</a>` : ""}</span><select class="sel" data-f="client_id" ${A}>${opt("", "No client", r.client_id)}${clientOpts(r.client_id, true)}</select></div>
         <div><span class="lab">Type</span><select class="sel" data-f="type" ${A}>${TYPES.map(t => opt(t.id, t.label, r.type)).join("")}</select></div>
         <div><span class="lab">Assigned to</span><div style="display:flex;gap:6px;flex-wrap:wrap">${[...new Set([...S.members.filter(m => m.team === "clicklab").map(m => m.name), ...asg(r)])].map(n => `<button class="step${asg(r).includes(n) ? " on" : ""}" data-act="asg" data-id="${r.id}" data-n="${esc(n)}"><span class="av" style="width:18px;height:18px;font-size:9px">${esc(initials(n))}</span><span data-i18n>${esc(n)}</span></button>`).join("")}</div></div>
         <div><span class="lab">Due date</span><input type="date" class="inp" value="${esc(r.due_date || "")}" data-f="due_date" ${A}></div>
         <div><span class="lab">Requested by</span><select class="sel" data-f="requester" ${A}>${memberOpts(r.requester)}</select></div>
         <div><span class="lab">Waiting on</span><select class="sel" data-f="waiting_on" ${A}>${memberOpts(r.waiting_on, "Nobody")}</select></div>
+        ${cols().length ? `<div><span class="lab">Column</span><select class="sel" data-colsel="${r.id}">${opt("", "By status", (colOf(r) || {}).id || "")}${cols().map(c => opt(c.id, c.label + (c.owner ? " · " + c.owner : ""), (colOf(r) || {}).id || "")).join("")}</select></div>` : ""}
       </div>
       <div class="sec panel"><h3><i class="ti ti-broadcast"></i>Webinar date and time</h3>
         <div style="display:grid;grid-template-columns:1.2fr 1fr 1.2fr;gap:8px">
@@ -638,7 +674,7 @@
   function renderOver() {
     const r = S.open && get("requests", S.open);
     const sc = $(".drawer") ? $(".drawer").scrollTop : 0;
-    $("#over").innerHTML = (r ? drawerHTML(r) : "") + (S.modal ? newHTML() : "") + helpHTML() + confirmHTML();
+    $("#over").innerHTML = (r ? drawerHTML(r) : "") + (S.modal ? newHTML() : "") + colsHTML() + helpHTML() + confirmHTML();
     if ($(".drawer")) $(".drawer").scrollTop = sc;
     onRender();
   }
@@ -818,6 +854,27 @@
       else o[d.fld].push({ id: uid(), label: v, done: false, url: "" });
       save(d.k, o); log((d.fld === "links" ? "added the link " : "added ") + '"' + v + '"', d.k === "requests" ? o.id : null, d.k === "requests" ? o.client_id : o.id, "", v); render(); const n = $(`[data-add="${d.k}|${d.id}|${d.fld}"]`); if (n) n.focus();
     },
+    colm() { S.colm = true; renderOver(); const i = $("#colname"); if (i) i.focus(); },
+    colclose() { S.colm = false; renderOver(); },
+    coladd() {
+      const i = $("#colname"), v = (i.value || "").trim(); if (!v) { $("#colerr").textContent = "Enter the column name."; return i.focus(); }
+      const l = cols(), c = { id: uid(), label: v, owner: $("#colowner").value || "", color: ["#C9A8FF", "#7FE0D8", "#FFB3D1", "#B8E986", "#8AB8FF"][l.length % 5], pos: (l.length ? Math.max(...l.map(x => x.pos || 0)) : 0) + 10, created_at: now() };
+      S.items.columns.push(c); save("columns", c); log('added the board column "' + v + '"' + (c.owner ? " · owner " + c.owner : ""), null, null); render(); const n = $("#colname"); if (n) n.focus();
+    },
+    coldel(d) {
+      const c = get("columns", d.id); if (!c) return;
+      const l = S.items.requests.filter(r => r.col === c.id);
+      if (!confirm((window.DESK_I18N && window.DESK_I18N.get() === "pt") ? 'Apagar a coluna "' + c.label + '"? Os ' + l.length + " cartões voltam para a coluna do status." : 'Delete the column "' + c.label + '"? Its ' + l.length + " cards go back to their status column.")) return;
+      l.forEach(r => { delete r.col; save("requests", r); });
+      S.items.columns = S.items.columns.filter(x => x.id !== c.id); removeItem("columns", c.id); log('deleted the board column "' + c.label + '"', null, null); render();
+    },
+    lsteps(d) { S.lsteps = S.lsteps || {}; S.lsteps[d.id] = !S.lsteps[d.id]; renderMain(); },
+    dtick(d) {
+      const r = get("requests", d.id); if (!r) return;
+      if (d.u != null) { const u = (r.updates || [])[+d.u]; if (!u) return; u.done = !u.done; u.done_by = u.done ? S.me.name : ""; u.done_at = u.done ? now() : ""; save("requests", r); log((u.done ? "completed" : "reopened") + " a request added in Slack", r.id, r.client_id, "", (u.text || "").slice(0, 300)); if (u.done) toast("Moved to Done."); }
+      else { setStatus(r, r.status === "done" ? "doing" : "done"); if (r.status === "done") toast("Moved to Done."); }
+      render();
+    },
     seen(d) { const r = get("requests", d.id); if (!r || !r.news) return; delete r.news; save("requests", r); log("marked the Slack news as seen", r.id, r.client_id); render(); },
     asg(d) { const r = get("requests", d.id), was = asg(r), l = was.includes(d.n) ? was.filter(x => x !== d.n) : [...was, d.n]; r.assignees = l; r.assignee = l[0] || ""; save("requests", r); log(l.length ? "assigned to " + l.join(" and ") : "assigned to nobody", r.id, r.client_id, was.join(", "), l.join(", ")); render(); },
     chat() { S.chat = !S.chat; renderChat(); paintPresence(); if (S.chat) { const l = $("#chatlist"); l.scrollTop = l.scrollHeight; $("#chatinput").focus(); } },
@@ -841,16 +898,17 @@
 
   document.addEventListener("click", e => {
     const el = e.target.closest("[data-act]"); if (!el) return;
-    if ((el.dataset.act === "close" || el.dataset.act === "closemodal" || el.dataset.act === "helpclose" || el.dataset.act === "delcancel") && el.classList.contains("veil") && e.target !== el) return;
+    if ((el.dataset.act === "close" || el.dataset.act === "closemodal" || el.dataset.act === "helpclose" || el.dataset.act === "delcancel" || el.dataset.act === "colclose") && el.classList.contains("veil") && e.target !== el) return;
     if (e.target.closest("a")) return;
     A[el.dataset.act] && A[el.dataset.act](el.dataset, e);
   });
   document.addEventListener("keydown", e => {
     if (e.key === "Enter" && e.target.id === "delword") { e.preventDefault(); return A.delgo(); }
-    if (e.key === "Escape") { if (S.confirm) A.delcancel(); else if (S.help) A.helpclose(); else if (S.modal) A.closemodal(); else if (S.open) A.close(); else if (S.chat) A.chat(); }
+    if (e.key === "Escape") { if (S.confirm) A.delcancel(); else if (S.help) A.helpclose(); else if (S.colm) A.colclose(); else if (S.modal) A.closemodal(); else if (S.open) A.close(); else if (S.chat) A.chat(); }
     if (e.key === "Enter" && e.target.dataset.add) { const [k, id, fld] = e.target.dataset.add.split("|"); A.liadd({ k, id, fld }); }
     if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === "z" && !/INPUT|TEXTAREA|SELECT/.test(e.target.tagName) && U.stack.length) { e.preventDefault(); undoLast(); }
     if (e.key === "Enter" && e.target.id === "lemail") A.login();
+    if (e.key === "Enter" && e.target.id === "colname") A.coladd();
     if (e.key === "Enter" && !e.shiftKey && e.target.id === "chatinput") { e.preventDefault(); A.chatsend(); }
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && e.target.id === "cbox" && S.open) A.comment({ id: S.open });
   });
@@ -862,18 +920,20 @@
   document.addEventListener("change", e => {
     const t = e.target, d = t.dataset;
     if (d.ui) { S[d.ui] = t.value; return renderMain(); }
+    if (d.colsel) { const r = get("requests", d.colsel); if (r) { setCol(r, t.value); render(); } return; }
+    if (d.cf) { const c = get("columns", d.id), v = t.value.trim(); if (c && (c[d.cf] || "") !== v && (d.cf !== "label" || v)) { const was = c[d.cf] || ""; c[d.cf] = v; save("columns", c); if (d.cf !== "color") log("edited the " + (d.cf === "owner" ? "owner" : "name") + ' of the board column "' + c.label + '"', null, null, was, v); render(); } return; }
     if (d.nf) { const n = P.notes.find(x => x.id === d.id); if (n && n[d.nf] !== t.value) { n[d.nf] = t.value; saveNote(n); } return; }
     if (d.dash) { dashState()[d.dash] = t.value; return renderMain(); }
     if (d.f) {
       const o = get(d.k, d.id); if (!o || o[d.f] === t.value) return;
       const old = o[d.f]; o[d.f] = t.value; save(d.k, o);
       const names = { assignee: "assigned to " + (t.value || "nobody"), due_date: "set due date to " + (fDue(t.value) || "none"), event_date: "changed the webinar date", event_time: "changed the webinar time", event_tz: "changed the time zone to " + zAbbr(t.value), client_id: "moved to " + clientName(t.value), waiting_on: t.value ? "is waiting on " + t.value : "cleared waiting on" };
-      const lab = { title: "title", details: "notes", notes: "notes", name: "spokesperson", brand: "brand", am: "account manager", tz: "time zone", slack: "Slack channel", ghl: "GHL account link", type: "type", requester: "requested by" };
+      const lab = { title: "title", details: "notes", notes: "notes", name: "spokesperson", brand: "brand", am: "account manager", tz: "time zone", slack: "Slack channel", ghl: "GHL account link", ghl_tz: "GHL time zone", type: "type", requester: "requested by" };
       const show = v => d.f === "client_id" ? clientName(v) : /tz$/.test(d.f) ? (v ? zAbbr(v) : "") : d.f === "type" ? (TYPES.find(x => x.id === v) || {}).label || v : /_date$/.test(d.f) ? fDue(v) : v;
       log(names[d.f] && d.k === "requests" ? names[d.f] : "edited the " + (lab[d.f] || d.f), d.k === "requests" ? o.id : null, d.k === "requests" ? o.client_id : o.id, show(old), show(t.value));
       if (d.k === "requests" && d.f === "waiting_on" && t.value && o.status !== "info") setStatus(o, "info");
       if (/^event_/.test(d.f) && $("#tzbox")) $("#tzbox").innerHTML = tzHTML(o);
-      renderMain(); if (d.f === "type" || d.f === "waiting_on") renderOver(); void old; return;
+      renderMain(); if (d.f === "type" || d.f === "waiting_on" || d.f === "ghl_tz" || d.f === "client_id") renderOver(); void old; return;
     }
     if (d.li) { const o = get(d.k, d.id), it = (o[d.fld] || []).find(x => x.id === d.it); if (it && it[d.li] !== t.value.trim()) { const was = it[d.li] || ""; it[d.li] = t.value.trim(); save(d.k, o); log("edited the " + (d.li === "url" ? "link" : "name") + ' of "' + it.label + '"', d.k === "requests" ? o.id : null, d.k === "requests" ? o.client_id : o.id, was, it[d.li]); if (d.li === "url") render(); else renderMain(); } }
   });
@@ -902,8 +962,12 @@
     e.preventDefault(); const r = get("requests", drag), st = c.dataset.drop, sub = c.dataset.sub;
     if (r) {
       const sameCol = inCol(r, st, sub), oldPos = sameCol ? S.items.requests.filter(x => inCol(x, st, sub)).sort(byRank).findIndex(x => x.id === r.id) + 1 : 0;
-      if (sub && (sub === "client") !== (r.type === "client")) { const was = typeOf(r).label; r.type = sub === "client" ? "client" : "update"; save("requests", r); log("edited the type", r.id, r.client_id, was, typeOf(r).label); }
-      setStatus(r, st);
+      if (st.slice(0, 4) === "col:") setCol(r, st.slice(4));
+      else {
+        if (r.col) setCol(r, "");
+        if (sub && (sub === "client") !== (r.type === "client")) { const was = typeOf(r).label; r.type = sub === "client" ? "client" : "update"; save("requests", r); log("edited the type", r.id, r.client_id, was, typeOf(r).label); }
+        setStatus(r, st);
+      }
       if (st !== "done") {
         const ids = S.items.requests.filter(x => inCol(x, st, sub) && x.id !== r.id).sort(byRank).map(x => x.id);
         let i = dropRef ? ids.indexOf(dropRef.id) : -1; i = i < 0 ? ids.length : i + (dropRef.before ? 0 : 1);
