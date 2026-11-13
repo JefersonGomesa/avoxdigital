@@ -429,3 +429,12 @@ a.btn{text-decoration:none;color:var(--branco)}
 .side::-webkit-scrollbar-thumb{background:var(--borda2);border-radius:3px}
 .acadd{display:grid;grid-template-columns:1fr 1.4fr 190px auto;gap:8px;align-items:center}
 @media (max-width:900px){.acadd{grid-template-columns:1fr}}
+/* unread chat message: the bubble blinks yellow until the chat is opened */
+@keyframes msgblink{0%,100%{color:var(--ambar);background:rgba(255,200,97,.22);box-shadow:0 0 0 0 rgba(255,200,97,.65)}50%{color:#fff3d1;background:rgba(255,200,97,.05);box-shadow:0 0 0 7px rgba(255,200,97,0)}}
+.x.dm.new{border-radius:50%;animation:msgblink 1s ease-in-out infinite}
+.x.dm.new i{color:inherit}
+#online .on .dm.new b{background:var(--ambar);color:var(--grafite)}
+@keyframes fabblink{0%,100%{background:var(--ambar);box-shadow:0 0 0 0 rgba(255,200,97,.7)}50%{background:var(--laranja);box-shadow:0 0 0 12px rgba(255,200,97,0)}}
+.chatbtn.new{animation:fabblink 1s ease-in-out infinite}
+.rooms .step.new{border-color:var(--ambar);color:var(--ambar)}
+@media (prefers-reduced-motion:reduce){.x.dm.new{animation:none;color:var(--ambar);background:rgba(255,200,97,.22)}.chatbtn.new{animation:none;background:var(--ambar)}}
