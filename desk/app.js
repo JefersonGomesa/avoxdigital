@@ -495,8 +495,11 @@
       <div class="tbw"><table class="tb acc"><thead><tr><th>Person</th><th>Status</th><th>Invite sent</th><th>Clicked the link</th><th>Entered the platform</th><th>Last visit</th><th></th></tr></thead><tbody>
       ${AC.rows.map(r => { const g = stage(r); return `<tr><td><b class="cl">${esc(r.name)}</b><div class="sub" style="margin:0">${esc(r.email)}</div></td><td><span class="stc ${g[0]}"><i></i><span>${g[1]}</span></span></td>
         <td>${st(r.sent_at, "Sent", "Not sent")}${r.sends > 1 ? ` <small data-i18n>×${r.sends}</small>` : ""}</td><td>${st(r.clicked_at, "Clicked", "No click")}</td><td>${st(r.first_seen, "Entered", "Not yet")}</td><td>${r.last_seen ? `<small data-i18n>${esc(fStamp(r.last_seen))}</small>` : "—"}</td>
-        <td>${r.email.toLowerCase() === OWNER ? "" : `<button class="btn sm${r.first_seen ? " ghost" : " pri"}" data-act="invite" data-e="${esc(r.email)}"${AC.sending.has(r.email) ? " disabled" : ""}><i class="ti ti-send"></i><span>${AC.sending.has(r.email) ? "Sending…" : r.sent_at ? "Send again" : "Send invite"}</span></button>`}</td></tr>`; }).join("")}
+        <td>${r.email.toLowerCase() === OWNER ? "" : `<button class="btn sm${r.first_seen ? " ghost" : " pri"}" data-act="invite" data-e="${esc(r.email)}"${AC.sending.has(r.email) ? " disabled" : ""}><i class="ti ti-send"></i><span>${AC.sending.has(r.email) ? "Sending…" : r.sent_at ? "Send again" : "Send invite"}</span></button> <button class="btn sm ghost" data-act="acdel" data-e="${esc(r.email)}" data-n="${esc(r.name)}" title="Remove access" aria-label="Remove access"><i class="ti ti-user-minus"></i></button>`}</td></tr>`; }).join("")}
       </tbody></table></div>
+      <span class="lab" style="display:block;margin-top:14px">Add person</span>
+      <div class="acadd"><input class="inp" id="acname" placeholder="Name" autocomplete="off"><input class="inp" id="acemail" type="email" placeholder="Email" autocomplete="off"><select class="sel" id="acteam">${opt("pineda", "Pineda Partners", "pineda")}${opt("clicklab", "ClickLab", "pineda")}</select><button class="btn pri" data-act="acadd"><i class="ti ti-user-plus"></i><span>Add person</span></button></div>
+      <div class="err" id="acerr"></div>
       <div class="note" style="margin:10px 0 0">The invite is an email with a sign-in link. "Invite sent" means the platform sent the email. The platform cannot see if the email arrived in the inbox.</div></div>`;
   }
   function vDash() {
@@ -879,6 +882,25 @@
       save(d.k, o); log((d.fld === "links" ? "added the link " : "added ") + '"' + v + '"', d.k === "requests" ? o.id : null, d.k === "requests" ? o.client_id : o.id, "", v); render(); const n = $(`[data-add="${d.k}|${d.id}|${d.fld}"]`); if (n) n.focus();
     },
     acload() { AC.rows = null; renderMain(); },
+    async acadd() {
+      if (!LIVE || !isOwner()) return;
+      const n = ($("#acname").value || "").trim(), e = ($("#acemail").value || "").trim().toLowerCase(), t = $("#acteam").value, err = $("#acerr");
+      if (!n) { err.textContent = "Enter the name."; return $("#acname").focus(); }
+      if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)) { err.textContent = "Enter a valid email."; return $("#acemail").focus(); }
+      const { error } = await sb.rpc("desk_member_add", { p_name: n, p_email: e, p_team: t });
+      if (error) { err.textContent = "Could not add the person. Try again."; return; }
+      const m = await sb.from("desk_members").select("*"); if (!m.error) S.members = m.data;
+      log("gave access to " + n + " (" + e + ")", null, null); toast(n + " can sign in now. Send the invite."); AC.rows = null; render();
+    },
+    async acdel(d) {
+      if (!LIVE || !isOwner()) return;
+      const pt = window.DESK_I18N && window.DESK_I18N.get() === "pt";
+      if (!confirm(pt ? "Remover o acesso de " + d.n + " (" + d.e + ")? A pessoa não entra mais no painel." : "Remove the access of " + d.n + " (" + d.e + ")? This person can no longer open the panel.")) return;
+      const { error } = await sb.rpc("desk_member_remove", { p_email: d.e });
+      if (error) return toast("Could not remove the access. Try again.");
+      const m = await sb.from("desk_members").select("*"); if (!m.error) S.members = m.data;
+      log("removed the access of " + d.n + " (" + d.e + ")", null, null); toast("Access removed."); AC.rows = null; render();
+    },
     async invite(d) {
       if (!LIVE || !isOwner() || AC.sending.has(d.e)) return;
       AC.sending.add(d.e); renderMain();
@@ -943,6 +965,7 @@
     if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === "z" && !/INPUT|TEXTAREA|SELECT/.test(e.target.tagName) && U.stack.length) { e.preventDefault(); undoLast(); }
     if (e.key === "Enter" && e.target.id === "lemail") A.login();
     if (e.key === "Enter" && e.target.id === "colname") A.coladd();
+    if (e.key === "Enter" && (e.target.id === "acemail" || e.target.id === "acname")) A.acadd();
     if (e.key === "Enter" && !e.shiftKey && e.target.id === "chatinput") { e.preventDefault(); A.chatsend(); }
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && e.target.id === "cbox" && S.open) A.comment({ id: S.open });
   });

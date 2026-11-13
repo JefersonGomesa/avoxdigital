@@ -427,3 +427,5 @@ a.btn{text-decoration:none;color:var(--branco)}
 .side>*{flex-shrink:0}
 .side::-webkit-scrollbar{width:6px}
 .side::-webkit-scrollbar-thumb{background:var(--borda2);border-radius:3px}
+.acadd{display:grid;grid-template-columns:1fr 1.4fr 190px auto;gap:8px;align-items:center}
+@media (max-width:900px){.acadd{grid-template-columns:1fr}}
