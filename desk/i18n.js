@@ -9,6 +9,7 @@
     "Sent": "Enviado", "Not sent": "Não enviado", "Clicked": "Clicou", "No click": "Sem clique", "Entered": "Entrou", "Not yet": "Ainda não", "Registered": "Cadastrado", "Invite sent · no click yet": "Convite enviado · sem clique", "Not invited": "Sem convite", "Send invite": "Enviar convite", "Send again": "Enviar de novo", "Sending…": "Enviando…", "Loading…": "Carregando…",
     "The invite is an email with a sign-in link. \"Invite sent\" means the platform sent the email. The platform cannot see if the email arrived in the inbox.": "O convite é um e-mail com um link de entrada. \"Convite enviado\" significa que a plataforma enviou o e-mail. A plataforma não consegue ver se o e-mail chegou na caixa de entrada.",
     "Add person": "Adicionar pessoa", "Name": "Nome", "Email": "E-mail", "Enter the name.": "Escreva o nome.", "Enter a valid email.": "Escreva um e-mail válido.", "Could not add the person. Try again.": "Não foi possível adicionar a pessoa. Tente de novo.", "Access removed.": "Acesso removido.",
+    "Access": "Acessos",
     "Requests": "Pedidos", "Clients": "Clientes", "Calendar": "Calendário", "History": "Histórico", "Sign out": "Sair",
     "Add request": "Adicionar pedido", "New request": "Novo pedido", "All clients": "Todos os clientes", "No client": "Sem cliente", "Add client": "Adicionar cliente",
     "New": "Novo", "Needs info": "Falta informação", "In progress": "Em andamento", "Updated & tested": "Atualizado e testado", "Done": "Concluído",

@@ -483,8 +483,9 @@
     if (!LIVE || !isOwner() || AC.busy) return; AC.busy = true;
     const { data, error } = await sb.rpc("desk_access_status"); AC.busy = false;
     AC.err = error ? "Could not load the access list." : ""; if (!error) AC.rows = data || [];
-    if (S.view === "dash") renderMain();
+    if (S.view === "access") renderMain();
   }
+  function vAccess() { return `<div class="top"><h1>Access</h1></div>` + accessHTML(); }
   function accessHTML() {
     if (!isOwner()) return "";
     if (!LIVE) return `<div class="panel" style="margin-bottom:16px"><h3><i class="ti ti-mail-forward"></i><span>Access and invites</span></h3><div class="note" style="margin:0">This panel works on the published panel only.</div></div>`;
@@ -523,7 +524,6 @@
       ${sel("type", [["", "All types"], ["client", "New clients"], ["update", "Updates"]])}
       ${sel("grp", [["", "All statuses"], ["done", "Done"], ["prod", "In production"], ["wait", "Waiting"]])}
       ${sel("who", [["", "Everyone"], ...team.map(n => [n, n])])}</div>
-      ${accessHTML()}
       <div class="kpis">${kpi(served(td), "Clients served today")}${kpi(served(weekStart()), "Clients served this week")}${kpi(served(td.slice(0, 8) + "01"), "Clients served this month")}${kpi(doneM, "Deliveries this month")}${kpi(prod, "In production")}${kpi(wait.length, "Waiting", wait.length ? "<span>Average wait</span> " + esc(durTxt(avg(wait.map(waitMs)))) : "")}</div>
       <div class="panel"><h3><i class="ti ti-users"></i><span>By client</span><span class="q" data-i18n style="margin-left:auto;letter-spacing:0">${cl.length}</span></h3>
         <div class="tbw"><table class="tb"><thead><tr><th>Client</th><th>Requests</th><th>Done</th><th>In production</th><th>Waiting</th><th>Average delivery time</th><th>Oldest open request</th><th>Deliveries</th><th>Missing from Pineda</th></tr></thead><tbody>
@@ -690,7 +690,7 @@
 
   /* ---------- render ---------- */
   function renderMain() {
-    const v = { board: vBoard, clients: vClients, calendar: vCalendar, history: vHistory, dash: vDash, list: vList, notes: vNotes }[S.view]();
+    const v = { board: vBoard, clients: vClients, calendar: vCalendar, history: vHistory, dash: vDash, list: vList, notes: vNotes, access: vAccess }[S.view === "access" && !isOwner() ? "board" : S.view]();
     $("#main").innerHTML = v;
     const h1 = $("#main .top h1"); if (h1 && window.DESK_HELP) h1.insertAdjacentHTML("beforeend", `<button class="ibtn" data-act="help" data-h="${S.view}" title="How this screen works" aria-label="How this screen works"><i class="ti ti-info-circle"></i></button>`);
     const n = S.items.requests.filter(r => r.status === "new").length;
@@ -710,7 +710,7 @@
     if (!$("#main")) {
       $("#app").innerHTML = `<div class="shell"><aside class="side">
         <div class="brand"><img src="assets/vox-simbolo.svg" alt="Vox Digital"><div><b>VOX</b><span>Desk</span></div></div>
-        ${[["board", "ti-layout-kanban", "Requests"], ["clients", "ti-users", "Clients"], ["list", "ti-list-check", "Checklist"], ["dash", "ti-chart-bar", "Dashboard"], ["notes", "ti-notebook", "Notes"], ["calendar", "ti-calendar", "Calendar"], ["history", "ti-history", "History"]].map(n => `<button class="nav" data-act="view" data-v="${n[0]}"><i class="ti ${n[1]}"></i><span>${n[2]}</span>${n[0] === "board" ? '<b class="n" id="nnew"></b>' : ""}</button>`).join("")}
+        ${[["board", "ti-layout-kanban", "Requests"], ["clients", "ti-users", "Clients"], ["list", "ti-list-check", "Checklist"], ["dash", "ti-chart-bar", "Dashboard"], ["notes", "ti-notebook", "Notes"], ["calendar", "ti-calendar", "Calendar"], ["history", "ti-history", "History"], ...(isOwner() ? [["access", "ti-user-shield", "Access"]] : [])].map(n => `<button class="nav" data-act="view" data-v="${n[0]}"><i class="ti ${n[1]}"></i><span>${n[2]}</span>${n[0] === "board" ? '<b class="n" id="nnew"></b>' : ""}</button>`).join("")}
         <button class="btn sm" data-act="lang" style="margin:0 6px 0;align-self:flex-start" title="Trocar o idioma da interface · Switch the interface language"><i class="ti ti-language"></i><span data-i18n>${window.DESK_I18N && window.DESK_I18N.get() === "pt" ? "Português · EN" : "English · PT"}</span></button>
         <button class="btn sm ghost" data-act="help" data-h="all" style="margin:6px 6px 0;align-self:flex-start"><i class="ti ti-help-circle"></i><span>Help</span></button>
         <div id="online" style="margin:auto 6px 10px"></div>
