@@ -239,8 +239,9 @@
   /* ---------- GHL link + help ---------- */
   const ghlBtn = (c, always) => c && c.ghl ? `<a class="btn sm ghl" href="${esc(c.ghl)}" target="_blank" rel="noopener" title="Open the client's GoHighLevel account"><i class="ti ti-external-link"></i><span data-i18n>GHL</span></a>` : c && always ? `<span class="pill" title="Paste the GHL account link in Details">No GHL link</span>` : "";
   /* The time zone set inside the client's GHL account. Shown wherever the client shows. */
-  const gzPill = (c, warn) => c && c.ghl_tz ? `<span class="pill tzp" title="Time zone set in this client's GHL account: ${esc(zName(c.ghl_tz))}"><i class="ti ti-world"></i><span data-i18n>GHL ${esc(zAbbr(c.ghl_tz))}</span></span>` : c && warn ? `<span class="pill a" title="Open the client and set the time zone of the GHL account"><i class="ti ti-world-off"></i><span>GHL time zone not set</span></span>` : "";
-  const gzOpts = cur => opt("", "Not set", cur || "") + GZONES.map(z => opt(z[0], z[2] + " (" + z[1] + ")", cur)).join("");
+  const gAbbr = z => ({ PT: "PST", MT: "MST", CT: "CST", ET: "EST" }[zAbbr(z)] || zAbbr(z));
+  const gzPill = (c, warn) => c && c.ghl_tz ? `<span class="pill tzp" title="${esc(c.ghl_name ? "GHL account: " + c.ghl_name + " · " : "")}Time zone set in this client's GHL account: ${esc(zName(c.ghl_tz))}"><i class="ti ti-world"></i><span data-i18n>GHL ${esc(gAbbr(c.ghl_tz))}</span></span>` : c && warn ? `<span class="pill a" title="Open the client and set the time zone of the GHL account"><i class="ti ti-world-off"></i><span>GHL time zone not set</span></span>` : "";
+  const gzOpts = cur => opt("", "Not set", cur || "") + GZONES.map(z => opt(z[0], gAbbr(z[0]) + " · " + z[2], cur)).join("");
   const HELPKEY = { board: ["board", "card"], clients: ["clients"], list: ["list"], dash: ["dash"], notes: ["notes"], calendar: ["calendar"], history: ["history"] };
   function helpHTML() {
     const H = window.DESK_HELP; if (!H || !S.help) return "";
@@ -378,8 +379,9 @@
         const nx = S.items.requests.filter(r => r.client_id === c.id && evUTC(r) > Date.now()).sort((a, b) => evUTC(a) - evUTC(b))[0];
         return `<div class="card" data-act="client" data-id="${c.id}"><div class="cl">${esc(c.name)}</div><div class="sub">${esc(c.brand || "")}</div>
           ${nx ? whenHTML(nx) : `<div class="when"><i class="ti ti-calendar-off" style="color:var(--cinza)"></i><div style="color:var(--cinza)">No webinar date set</div></div>`}
+          <div class="ghlf" data-noact><label><span>GHL account name</span><input class="inp" value="${esc(c.ghl_name || "")}" placeholder="Name of the account in GHL" data-f="ghl_name" data-k="clients" data-id="${c.id}"></label><label><span>GHL time zone</span><select class="sel${c.ghl_tz ? "" : " no"}" data-f="ghl_tz" data-k="clients" data-id="${c.id}">${gzOpts(c.ghl_tz)}</select></label></div>
           <div class="bar"><b style="width:${p.pct}%"></b></div>
-          <div class="meta"><span>${p.d} of ${p.n} delivered</span>${ghlBtn(c)}${gzPill(c)}${missPill(c)}${valPill(c)}${open ? `<span class="pill o">${open} open</span>` : ""}${c.am ? `<span class="av" style="margin-left:auto" title="${esc(c.am)}">${esc(initials(c.am))}</span>` : ""}</div></div>`;
+          <div class="meta"><span>${p.d} of ${p.n} delivered</span>${ghlBtn(c)}${missPill(c)}${valPill(c)}${open ? `<span class="pill o">${open} open</span>` : ""}${c.am ? `<span class="av" style="margin-left:auto" title="${esc(c.am)}">${esc(initials(c.am))}</span>` : ""}</div></div>`;
       }).join("")}</div>`;
   }
   function vClient(c) {
@@ -401,6 +403,7 @@
           <div><span class="lab">Spokesperson</span>${F("name", "Name")}</div><div><span class="lab">Brand</span>${F("brand", "Brand or program")}</div>
           <div><span class="lab">Account manager</span><select class="sel" data-f="am" data-k="clients" data-id="${c.id}">${memberOpts(c.am)}</select></div>
           <div><span class="lab">Usual time zone</span><select class="sel" data-f="tz" data-k="clients" data-id="${c.id}">${zoneOpts(c.tz, true)}</select></div>
+          <div><span class="lab">GHL account name</span>${F("ghl_name", "Name of the account in GHL")}</div><div><span class="lab">GHL time zone</span><select class="sel" data-f="ghl_tz" data-k="clients" data-id="${c.id}">${gzOpts(c.ghl_tz)}</select></div>
           <div class="w"><span class="lab">GHL account link</span>${F("ghl", "https://app.gohighlevel.com/v2/location/...")}</div>
           <div class="w"><span class="lab">Slack channel</span>${F("slack", "pinedapartners-...")}</div>
           <div class="w"><span class="lab">Notes</span><textarea class="txt" style="min-height:150px" data-f="notes" data-k="clients" data-id="${c.id}" placeholder="Brand colours, rules, anything the team must know">${esc(c.notes || "")}</textarea></div></div></div>
@@ -956,6 +959,7 @@
     const el = e.target.closest("[data-act]"); if (!el) return;
     if ((el.dataset.act === "close" || el.dataset.act === "closemodal" || el.dataset.act === "helpclose" || el.dataset.act === "delcancel" || el.dataset.act === "colclose") && el.classList.contains("veil") && e.target !== el) return;
     if (e.target.closest("a")) return;
+    const na = e.target.closest("[data-noact]"); if (na && el.contains(na)) return;
     A[el.dataset.act] && A[el.dataset.act](el.dataset, e);
   });
   document.addEventListener("keydown", e => {
@@ -985,7 +989,7 @@
       const o = get(d.k, d.id); if (!o || o[d.f] === t.value) return;
       const old = o[d.f]; o[d.f] = t.value; save(d.k, o);
       const names = { assignee: "assigned to " + (t.value || "nobody"), due_date: "set due date to " + (fDue(t.value) || "none"), event_date: "changed the webinar date", event_time: "changed the webinar time", event_tz: "changed the time zone to " + zAbbr(t.value), client_id: "moved to " + clientName(t.value), waiting_on: t.value ? "is waiting on " + t.value : "cleared waiting on" };
-      const lab = { title: "title", details: "notes", notes: "notes", name: "spokesperson", brand: "brand", am: "account manager", tz: "time zone", slack: "Slack channel", ghl: "GHL account link", ghl_tz: "GHL time zone", type: "type", requester: "requested by" };
+      const lab = { title: "title", details: "notes", notes: "notes", name: "spokesperson", brand: "brand", am: "account manager", tz: "time zone", slack: "Slack channel", ghl: "GHL account link", ghl_tz: "GHL time zone", ghl_name: "GHL account name", type: "type", requester: "requested by" };
       const show = v => d.f === "client_id" ? clientName(v) : /tz$/.test(d.f) ? (v ? zAbbr(v) : "") : d.f === "type" ? (TYPES.find(x => x.id === v) || {}).label || v : /_date$/.test(d.f) ? fDue(v) : v;
       log(names[d.f] && d.k === "requests" ? names[d.f] : "edited the " + (lab[d.f] || d.f), d.k === "requests" ? o.id : null, d.k === "requests" ? o.client_id : o.id, show(old), show(t.value));
       if (d.k === "requests" && d.f === "waiting_on" && t.value && o.status !== "info") setStatus(o, "info");

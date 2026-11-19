@@ -438,3 +438,10 @@ a.btn{text-decoration:none;color:var(--branco)}
 .chatbtn.new{animation:fabblink 1s ease-in-out infinite}
 .rooms .step.new{border-color:var(--ambar);color:var(--ambar)}
 @media (prefers-reduced-motion:reduce){.x.dm.new{animation:none;color:var(--ambar);background:rgba(255,200,97,.22)}.chatbtn.new{animation:none;background:var(--ambar)}}
+/* clients list: GHL account name and GHL time zone inside each card */
+.ghlf{display:grid;grid-template-columns:1.25fr 1fr;gap:8px;margin:10px 0 12px;cursor:default}
+.ghlf label{display:block;min-width:0}
+.ghlf span{display:block;font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:var(--cinza);margin-bottom:4px}
+.ghlf .inp,.ghlf .sel{padding:6px 8px;font-size:12.5px}
+.ghlf .sel{color:var(--azul);border-color:rgba(138,184,255,.4)}
+.ghlf .sel.no{color:var(--ambar);border-color:rgba(255,200,97,.45)}
