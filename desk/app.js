@@ -233,6 +233,7 @@
         return `<div class="vpg"><div class="vph"><span class="cl">${esc(pg)}</span>${bad.length ? "" : `<span class="pill g"><i class="ti ti-check"></i><span>All good</span></span>`}</div>${bad.map(c => `<div class="vck ${c.level}"><i class="ti ti-${(ic[c.level] || ic.warn)[0]}" style="color:${(ic[c.level] || ic.warn)[1]}"></i><span><b>${esc(c.name)}</b><small class="cl">${mentions(c.detail || "")}</small></span></div>`).join("")}${ok.length ? `<details class="vok"><summary><i class="ti ti-circle-check"></i><b data-i18n>${ok.length}</b><span>passed</span><i class="ti ti-chevron-down ch"></i></summary>${ok.map(c => `<div class="vokr"><b>${esc(c.name)}</b><small class="cl">${mentions(c.detail || "")}</small></div>`).join("")}</details>` : ""}</div>`; }).join("");
   }
   /* The Validate box: the two pages and the launch date. The person confirms the date before the run. */
+  const VROLES = [["optin", "Webinar opt-in"], ["bac", "Book a Call"], ["homework", "Homework"], ["replay", "Replay"], ["confirm", "Confirmation page"], ["other", "Other page"]];
   function vqHTML() {
     const q = S.vq; if (!q) return "";
     const z = q.tz || "America/Chicago", u = q.date ? evUTC({ event_date: q.date, event_time: q.time, event_tz: z }) : null;
@@ -240,14 +241,16 @@
     return `<div class="veil mid" data-act="vqclose" style="z-index:35"><div class="modal vqm" data-stop>
       <div class="dh"><i class="ti ti-shield-check" style="font-size:22px;color:var(--verde)"></i><span class="ttl">Validate</span><span class="sp"></span><button class="btn ghost sm" data-act="vqclose"><i class="ti ti-x"></i></button></div>
       <div class="sub cl" style="margin:-6px 0 14px">${esc(q.name)}</div>
-      <span class="lab">Webinar opt-in page</span><input class="inp" data-vq="optin" value="${esc(q.optin)}" placeholder="https://" autocomplete="off" spellcheck="false">
-      <span class="lab" style="margin-top:12px;display:block">Book a Call page</span><input class="inp" data-vq="bac" value="${esc(q.bac)}" placeholder="https://" autocomplete="off" spellcheck="false">
-      <div class="vqd"><label class="vqc"><input type="checkbox" data-vq="useDate"${q.useDate ? " checked" : ""}><span>Check the launch date on the opt-in page</span></label>
+      <span class="lab">What is each page?</span>
+      ${q.pages.map((pg, i) => `<div class="vqp"><select class="sel" data-vqp="${i}" data-vk="role" aria-label="What is this page?">${VROLES.map(x => opt(x[0], x[1], pg.role)).join("")}</select><input class="inp" data-vqp="${i}" data-vk="url" value="${esc(pg.url)}" placeholder="https://" autocomplete="off" spellcheck="false">${q.pages.length > 1 ? `<button class="btn ghost sm" data-act="vqdel" data-i="${i}" aria-label="Remove"><i class="ti ti-x"></i></button>` : "<span></span>"}</div>`).join("")}
+      ${q.pages.length < 6 ? `<button class="btn sm ghost" data-act="vqadd"><i class="ti ti-plus"></i><span>Add page</span></button>` : ""}
+      ${q.pages.some(x => x.role === "optin") ? "" : `<div class="note" style="margin:10px 0 0"><i class="ti ti-info-circle"></i> <span>For this kind of page the validator checks the structure only: buttons, sizes, page standard, texts and links.</span></div>`}
+      <div class="vqd"${q.pages.some(x => x.role === "optin") ? "" : ' style="display:none"'}><label class="vqc"><input type="checkbox" data-vq="useDate"${q.useDate ? " checked" : ""}><span>Check the launch date on the opt-in page</span></label>
         ${q.useDate ? `<div style="display:grid;grid-template-columns:1.2fr 1fr 1.2fr;gap:8px;margin-top:10px"><input type="date" class="inp" data-vq="date" value="${esc(q.date)}"><input type="time" class="inp" data-vq="time" value="${esc(q.time)}"><select class="sel" data-vq="tz">${zoneOpts(z)}</select></div>
         <div class="vqw${when ? "" : " no"}"><i class="ti ti-alert-circle"></i>${when ? `<span><span>Confirm the launch date</span>: <b data-i18n>${esc(when)}</b></span>` : `<span>Set the launch date</span>`}</div>` : ""}</div>
-      <details class="vqi"><summary><i class="ti ti-list-check"></i><span>What the validator checks</span></summary><ul><li>Launch date and time on the opt-in page. Old dates left on the page.</li><li>Buttons: the name of each one and if each one has a valid action.</li><li>Button size on desktop and on mobile, against the standard.</li><li>Page standard on desktop and on mobile: font, text sizes, title, description, favicon.</li><li>Form: the fields and if every field is required.</li><li>Texts: placeholder text and the name or the link of another client.</li></ul></details>
+      <details class="vqi"><summary><i class="ti ti-list-check"></i><span>What the validator checks</span></summary><ul><li>Launch date and time on the opt-in page. Old dates left on the page.</li><li>Buttons: the name of each one and if each one has a valid action.</li><li>Button size on desktop and on mobile, against the standard.</li><li>Page standard on desktop and on mobile: font, text sizes, title, description, favicon.</li><li>Form: the fields and if every field is required.</li><li>Texts: placeholder text and the name or the link of another client.</li><li>Homework, replay and other pages: the structure only. No date and no form rule.</li></ul></details>
       <div class="err" id="vqerr"></div>
-      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><button class="btn" data-act="vqclose">Cancel</button><button class="btn pri" data-act="vqgo"><i class="ti ti-shield-check"></i><span>${q.useDate ? "The date is correct · Validate" : "Validate"}</span></button></div></div></div>`;
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><button class="btn" data-act="vqclose">Cancel</button><button class="btn pri" data-act="vqgo"><i class="ti ti-shield-check"></i><span>${q.useDate && q.pages.some(x => x.role === "optin") ? "The date is correct · Validate" : "Validate"}</span></button></div></div></div>`;
   }
   function valReport(o, open) {
     const v = o && o.validation; if (!v) return "";
@@ -392,10 +395,11 @@
       ${missBanner()}
       <div class="board" style="grid-template-columns:repeat(${6 + cols().length},minmax(215px,1fr))">${[{ id: "new", sub: "client", label: "New clients", color: "#FF6D29", empty: "No new client to build" }, { id: "new", sub: "update", label: "Updates", color: "#8AB8FF", empty: "No new update" }, ...STATUS.slice(1, 3), ...cols().map(c => ({ id: "col:" + c.id, label: c.label, color: c.color || "#C9A8FF", owner: c.owner, custom: true })), ...STATUS.slice(3)].map(s => {
         let l = rs.filter(r => inCol(r, s.id, s.sub));
-        if (s.id === "done") l = l.filter(r => r.type === "client" || !r.done_at || +new Date(r.done_at) > cut);
+        const allDone = s.id === "done" ? l.length : 0;
+        if (s.id === "done" && !S.doneAll) l = l.filter(r => !r.done_at || ymdIn(+new Date(r.done_at), MYZ) >= weekStart());
         l.sort(s.id === "done" ? (a, b) => (b.done_at || "").localeCompare(a.done_at || "") : byRank);
         return `<div class="col" data-drop="${s.id}" data-sub="${s.sub || ""}"><div class="colh"><span class="dot" style="background:${esc(s.color)}"></span>${s.custom ? `<span class="cl">${esc(s.label)}</span>` : s.label}${s.owner ? `<span class="av colo" title="Owner: ${esc(s.owner)}">${esc(initials(s.owner))}</span>` : ""}<span class="q">${l.length}</span></div>${s.custom ? `<div class="colow">${s.owner ? `<i class="ti ti-user-check"></i><span>Owner</span> <b class="cl">${esc(s.owner)}</b>` : `<i class="ti ti-user-off"></i><span>No owner</span>`}</div>` : ""}
-        ${l.map(cardHTML).join("") || `<div class="empty">${s.empty || (s.id === "done" ? "Done in the last 7 days shows here" : "Drag a card here")}</div>`}</div>`;
+        ${s.id === "done" ? `<div class="colow"><i class="ti ti-calendar-week"></i><span>${S.doneAll ? "All done tasks" : "Done this week"}</span></div>` : ""}${l.map(cardHTML).join("") || `<div class="empty">${s.empty || (s.id === "done" ? "Nothing done this week yet" : "Drag a card here")}</div>`}${s.id === "done" && (S.doneAll || allDone > l.length) ? `<button class="btn sm doneall" data-act="doneall"><i class="ti ti-${S.doneAll ? "calendar-week" : "archive"}"></i><span>${S.doneAll ? "Show this week only" : "See all done tasks"}</span>${S.doneAll ? "" : `<b data-i18n>${allDone}</b>`}</button>` : ""}</div>`;
       }).join("")}</div>`;
   }
   function vClients() {
@@ -895,6 +899,7 @@
     undo() { undoLast(); },
     help(d) { S.help = d.h || "all"; renderOver(); },
     helpclose() { S.help = null; renderOver(); },
+    doneall() { S.doneAll = !S.doneAll; renderMain(); },
     fold(d) { S.fold = S.fold || {}; S.fold[d.k] = !S.fold[d.k]; renderOver(); },
     validate(d) {
       if (VB.has(d.id)) return;
@@ -903,19 +908,21 @@
       const del = re => c ? ((c.deliverables || []).find(x => re.test(x.label || "") && x.url) || {}).url || "" : "";
       const up = c ? S.items.requests.filter(x => x.client_id === c.id && x.event_date && x.event_date >= today()).sort((a, b) => a.event_date.localeCompare(b.event_date))[0] : null;
       const src = r && r.event_date ? r : (!r || r.type === "client") ? up : null;
-      S.vq = { k: d.k, id: d.id, name: (c ? c.name + (c.brand ? " · " + c.brand : "") : clientName(o.client_id)) + (r ? " · " + (r.title || typeOf(r).label) : ""), optin: (c && c.val_urls && c.val_urls.optin) || del(/webinar opt-?in page/i), bac: (c && c.val_urls && c.val_urls.bac) || del(/book a call funnel/i), date: src ? src.event_date : "", time: src ? src.event_time || "" : "", tz: (src && src.event_tz) || (c && c.tz) || "America/Chicago", useDate: !!src || !!(r && r.type === "launch") };
-      renderOver(); const i = $('[data-vq="optin"]'); if (i && !i.value) i.focus();
+      S.vq = { k: d.k, id: d.id, name: (c ? c.name + (c.brand ? " · " + c.brand : "") : clientName(o.client_id)) + (r ? " · " + (r.title || typeOf(r).label) : ""), pages: (t => /homework|pre-?call/.test(t) ? [{ role: "homework", url: del(/homework/i) }] : /\breplay\b/.test(t) ? [{ role: "replay", url: del(/replay/i) }] : [{ role: "optin", url: (c && c.val_urls && c.val_urls.optin) || del(/webinar opt-?in page/i) }, { role: "bac", url: (c && c.val_urls && c.val_urls.bac) || del(/book a call funnel/i) }])(r ? ((r.title || "") + " " + (r.source_text || "")).toLowerCase() : ""), date: src ? src.event_date : "", time: src ? src.event_time || "" : "", tz: (src && src.event_tz) || (c && c.tz) || "America/Chicago", useDate: !!src || !!(r && r.type === "launch") };
+      renderOver(); const i = $('[data-vk="url"]'); if (i && !i.value) i.focus();
     },
     vqclose() { S.vq = null; renderOver(); },
+    vqadd() { if (S.vq && S.vq.pages.length < 6) { S.vq.pages.push({ role: "other", url: "" }); renderOver(); const l = document.querySelectorAll('[data-vk="url"]'); if (l.length) l[l.length - 1].focus(); } },
+    vqdel(d) { if (S.vq && S.vq.pages.length > 1) { S.vq.pages.splice(+d.i, 1); renderOver(); } },
     async vqgo() {
       const q = S.vq, err = $("#vqerr"); if (!q) return;
-      const okU = u => !u || /^https?:\/\/\S+\.\S+/i.test(u), optin = (q.optin || "").trim(), bac = (q.bac || "").trim();
-      if (!optin && !bac) { err.textContent = "Paste the link of the opt-in page or of the Book a Call page."; return; }
-      if (!okU(optin) || !okU(bac)) { err.textContent = "A link must start with https://"; return; }
-      if (q.useDate && !q.date) { err.textContent = "Set the launch date, or clear the box above."; return; }
+      const pages = q.pages.map(x => ({ role: x.role, url: (x.url || "").trim() })).filter(x => x.url), hasOptin = pages.some(x => x.role === "optin");
+      if (!pages.length) { err.textContent = "Paste the link of the page."; return; }
+      if (pages.some(x => !/^https?:\/\/\S+\.\S+/i.test(x.url))) { err.textContent = "A link must start with https://"; return; }
+      if (q.useDate && hasOptin && !q.date) { err.textContent = "Set the launch date, or clear the box above."; return; }
       if (!LIVE) { err.textContent = "The validator works on the published panel only."; return; }
       S.vq = null; VB.add(q.id); render();
-      const body = Object.assign(q.k === "clients" ? { client_id: q.id } : { request_id: q.id }, { urls: { optin, bac }, event: q.useDate ? { date: q.date, time: q.time || "", tz: q.tz || "America/Chicago" } : null });
+      const body = Object.assign(q.k === "clients" ? { client_id: q.id } : { request_id: q.id }, { pages, event: q.useDate && hasOptin ? { date: q.date, time: q.time || "", tz: q.tz || "America/Chicago" } : null });
       const { data, error } = await sb.functions.invoke("desk-validate", { body });
       VB.delete(q.id);
       if (error || !data || !data.item) { render(); return toast("The validator could not run. Try again."); }
@@ -1018,19 +1025,22 @@
     if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === "z" && !/INPUT|TEXTAREA|SELECT/.test(e.target.tagName) && U.stack.length) { e.preventDefault(); undoLast(); }
     if (e.key === "Enter" && e.target.id === "lemail") A.login();
     if (e.key === "Enter" && e.target.id === "colname") A.coladd();
-    if (e.key === "Enter" && e.target.dataset.vq && e.target.type !== "checkbox") A.vqgo();
+    if (e.key === "Enter" && (e.target.dataset.vk === "url" || (e.target.dataset.vq && e.target.type !== "checkbox"))) A.vqgo();
     if (e.key === "Enter" && (e.target.id === "acemail" || e.target.id === "acname")) A.acadd();
     if (e.key === "Enter" && !e.shiftKey && e.target.id === "chatinput") { e.preventDefault(); A.chatsend(); }
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && e.target.id === "cbox" && S.open) A.comment({ id: S.open });
   });
   document.addEventListener("input", e => {
     const t = e.target;
+    if (t.dataset.vk === "url" && S.vq) { const pg = S.vq.pages[+t.dataset.vqp]; if (pg) pg.url = t.value; const e2 = $("#vqerr"); if (e2) e2.textContent = ""; return; }
     if (t.dataset.vq && S.vq && t.type !== "checkbox" && t.tagName !== "SELECT") { S.vq[t.dataset.vq] = t.value; const e2 = $("#vqerr"); if (e2) e2.textContent = ""; return; }
     if (t.id === "delword") { const b = $("#delbtn"), e2 = $("#delerr"); if (b) b.classList.toggle("ready", t.value === "DELETE"); if (e2) e2.textContent = ""; return; }
     if (t.dataset.n && S.modal) { S.modal[t.dataset.n] = t.value; if (/^event_/.test(t.dataset.n) && $("#ntz")) $("#ntz").innerHTML = tzHTML(S.modal); if (t.dataset.n === "client_id") { const c = get("clients", t.value); if (c && c.tz) S.modal.event_tz = c.tz; renderOver(); } }
   });
   document.addEventListener("change", e => {
     const t = e.target, d = t.dataset;
+    if (d.vk === "role" && S.vq) { const pg = S.vq.pages[+d.vqp]; if (pg) { pg.role = t.value; renderOver(); } return; }
+    if (d.vk === "url") return;
     if (d.vq && S.vq) { S.vq[d.vq] = t.type === "checkbox" ? t.checked : t.value; if (/^(useDate|date|time|tz)$/.test(d.vq)) renderOver(); return; }
     if (d.ui) { S[d.ui] = t.value; return renderMain(); }
     if (d.colsel) { const r = get("requests", d.colsel); if (r) { setCol(r, t.value); render(); } return; }

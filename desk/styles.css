@@ -482,3 +482,7 @@ a.btn{text-decoration:none;color:var(--branco)}
 .vqi summary{cursor:pointer;display:flex;align-items:center;gap:6px;list-style:none}
 .vqi summary::-webkit-details-marker{display:none}
 .vqi ul{margin:8px 0 0;padding-left:20px;line-height:1.55}
+.vqp{display:grid;grid-template-columns:170px 1fr auto;gap:8px;align-items:center;margin-bottom:8px}
+@media (max-width:560px){.vqp{grid-template-columns:1fr}}
+.doneall{width:100%;justify-content:center;margin-top:10px}
+.doneall b{margin-left:6px;color:var(--brasa)}
