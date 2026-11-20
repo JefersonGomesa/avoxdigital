@@ -222,12 +222,39 @@
   const VB = new Set();
   const valBtn = (k, id, text) => `<button class="vbtn${text ? " wide" : ""}${VB.has(id) ? " busy" : ""}" data-act="validate" data-k="${k}" data-id="${id}" title="Validate: open the pages and check date, form, links and leftovers" aria-label="Validate"><i class="ti ti-${VB.has(id) ? "loader-2" : "shield-check"}"></i>${text ? `<span>${VB.has(id) ? "Checking…" : "Validate"}</span>` : ""}</button>`;
   const valPill = o => { const v = o && o.validation; return !v ? "" : v.verdict === "approved" ? `<span class="pill g" title="Validated by ${esc(v.by)} · ${esc(fStamp(v.at))}"><i class="ti ti-shield-check"></i><span>Approved</span>${v.warns ? `<b data-i18n>${v.warns}!</b>` : ""}</span>` : `<span class="pill r" title="Validated by ${esc(v.by)} · ${esc(fStamp(v.at))}"><i class="ti ti-shield-x"></i><span>Not approved</span><b data-i18n>${v.fails}</b></span>`; };
+  /* The report shows the problems. What passed is folded in one line for each page. */
+  function valBody(o) {
+    const v = o && o.validation; if (!v) return "";
+    const by = {}; v.checks.forEach(c => (by[c.page] = by[c.page] || []).push(c));
+    const ic = { warn: ["alert-triangle", "var(--ambar)"], fail: ["circle-x", "var(--vermelho)"], miss: ["circle-x", "var(--vermelho)"] };
+    const z = v.event && (v.event.tz || "America/Chicago"), when = v.event && v.event.date ? fDue(v.event.date) + (v.event.time ? " · " + fTime(evUTC({ event_date: v.event.date, event_time: v.event.time, event_tz: z }), z) + " " + zAbbr(z) : "") : "";
+    return `${when || (v.urls || []).length ? `<div class="vmeta">${when ? `<span class="pill o" data-i18n><i class="ti ti-broadcast"></i>${esc(when)}</span>` : ""}${(v.urls || []).map(u => `<a class="pill" href="${esc(u.url)}" target="_blank" rel="noopener" title="${esc(u.url)}"><i class="ti ti-external-link"></i><span>${esc(u.label)}</span></a>`).join("")}</div>` : ""}` +
+      Object.keys(by).map(pg => { const bad = by[pg].filter(c => c.level !== "ok"), ok = by[pg].filter(c => c.level === "ok");
+        return `<div class="vpg"><div class="vph"><span class="cl">${esc(pg)}</span>${bad.length ? "" : `<span class="pill g"><i class="ti ti-check"></i><span>All good</span></span>`}</div>${bad.map(c => `<div class="vck ${c.level}"><i class="ti ti-${(ic[c.level] || ic.warn)[0]}" style="color:${(ic[c.level] || ic.warn)[1]}"></i><span><b>${esc(c.name)}</b><small class="cl">${mentions(c.detail || "")}</small></span></div>`).join("")}${ok.length ? `<details class="vok"><summary><i class="ti ti-circle-check"></i><b data-i18n>${ok.length}</b><span>passed</span><i class="ti ti-chevron-down ch"></i></summary>${ok.map(c => `<div class="vokr"><b>${esc(c.name)}</b><small class="cl">${mentions(c.detail || "")}</small></div>`).join("")}</details>` : ""}</div>`; }).join("");
+  }
+  /* The Validate box: the two pages and the launch date. The person confirms the date before the run. */
+  function vqHTML() {
+    const q = S.vq; if (!q) return "";
+    const z = q.tz || "America/Chicago", u = q.date ? evUTC({ event_date: q.date, event_time: q.time, event_tz: z }) : null;
+    const when = q.date ? fDue(q.date) + (q.time ? " · " + fTime(u, z) + " " + zAbbr(z) : "") : "";
+    return `<div class="veil mid" data-act="vqclose" style="z-index:35"><div class="modal vqm" data-stop>
+      <div class="dh"><i class="ti ti-shield-check" style="font-size:22px;color:var(--verde)"></i><span class="ttl">Validate</span><span class="sp"></span><button class="btn ghost sm" data-act="vqclose"><i class="ti ti-x"></i></button></div>
+      <div class="sub cl" style="margin:-6px 0 14px">${esc(q.name)}</div>
+      <span class="lab">Webinar opt-in page</span><input class="inp" data-vq="optin" value="${esc(q.optin)}" placeholder="https://" autocomplete="off" spellcheck="false">
+      <span class="lab" style="margin-top:12px;display:block">Book a Call page</span><input class="inp" data-vq="bac" value="${esc(q.bac)}" placeholder="https://" autocomplete="off" spellcheck="false">
+      <div class="vqd"><label class="vqc"><input type="checkbox" data-vq="useDate"${q.useDate ? " checked" : ""}><span>Check the launch date on the opt-in page</span></label>
+        ${q.useDate ? `<div style="display:grid;grid-template-columns:1.2fr 1fr 1.2fr;gap:8px;margin-top:10px"><input type="date" class="inp" data-vq="date" value="${esc(q.date)}"><input type="time" class="inp" data-vq="time" value="${esc(q.time)}"><select class="sel" data-vq="tz">${zoneOpts(z)}</select></div>
+        <div class="vqw${when ? "" : " no"}"><i class="ti ti-alert-circle"></i>${when ? `<span><span>Confirm the launch date</span>: <b data-i18n>${esc(when)}</b></span>` : `<span>Set the launch date</span>`}</div>` : ""}</div>
+      <details class="vqi"><summary><i class="ti ti-list-check"></i><span>What the validator checks</span></summary><ul><li>Launch date and time on the opt-in page. Old dates left on the page.</li><li>Buttons: the name of each one and if each one has a valid action.</li><li>Button size on desktop and on mobile, against the standard.</li><li>Page standard on desktop and on mobile: font, text sizes, title, description, favicon.</li><li>Form: the fields and if every field is required.</li><li>Texts: placeholder text and the name or the link of another client.</li></ul></details>
+      <div class="err" id="vqerr"></div>
+      <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><button class="btn" data-act="vqclose">Cancel</button><button class="btn pri" data-act="vqgo"><i class="ti ti-shield-check"></i><span>${q.useDate ? "The date is correct · Validate" : "Validate"}</span></button></div></div></div>`;
+  }
   function valReport(o, open) {
     const v = o && o.validation; if (!v) return "";
     const by = {}; v.checks.forEach(c => (by[c.page] = by[c.page] || []).push(c));
     const ic = { ok: ["circle-check", "var(--verde)"], warn: ["alert-triangle", "var(--ambar)"], fail: ["circle-x", "var(--vermelho)"], miss: ["circle-x", "var(--vermelho)"] }, pm = v.checks.filter(c => c.level === "miss").length;
     return `<details class="panel vrep ${v.verdict}" ${open || v.verdict !== "approved" ? "open" : ""}><summary><i class="ti ti-shield-${v.verdict === "approved" ? "check" : "x"}"></i><b>${v.verdict === "approved" ? "Validation: approved" : "Validation: not approved"}</b><span class="pill ${v.fails ? "r" : "g"}" data-i18n>${v.fails} ✕</span><span class="pill ${v.warns - pm ? "a" : ""}" data-i18n>${v.warns - pm} !</span>${pm ? `<span class="pill r"><span>Missing from Pineda</span><b data-i18n>${pm}</b></span>` : ""}<small data-i18n>${esc(v.by)} · ${esc(fStamp(v.at))}</small><i class="ti ti-chevron-down" style="margin-left:auto"></i></summary>
-      ${Object.keys(by).map(pg => `<div class="vpg"><div class="vph cl">${esc(pg)}</div>${by[pg].map(c => `<div class="vck ${c.level}"><i class="ti ti-${(ic[c.level] || ic.warn)[0]}" style="color:${(ic[c.level] || ic.warn)[1]}"></i><span><b>${esc(c.name)}</b><small class="cl">${mentions(c.detail || "")}</small></span></div>`).join("")}</div>`).join("")}</details>`;
+      ${valBody(o)}</details>`;
   }
   /* What Pineda sent and what is missing, inside the request card. Missing items first, in red. */
   function pinedaBox(c) {
@@ -629,6 +656,8 @@
   }
 
   /* ---------- drawer + modals ---------- */
+  /* One block of the request that opens with a click. Closed by default. */
+  const fold = (k, icon, title, badge, inner) => { const o = !!(S.fold && S.fold[k]); return `<div class="fold${o ? " open" : ""}"><button class="foldh" data-act="fold" data-k="${k}"><i class="ti ${icon}"></i><span>${title}</span>${badge || ""}<i class="ti ti-chevron-${o ? "up" : "down"} ch"></i></button>${o ? `<div class="foldb">${inner()}</div>` : ""}</div>`; };
   function drawerHTML(r) {
     const cm = S.items.comments.filter(c => c.request_id === r.id).sort((a, b) => a.at.localeCompare(b.at));
     const hs = S.items.activity.filter(a => a.ref === r.id).sort((a, b) => b.at.localeCompare(a.at));
@@ -642,10 +671,6 @@
       <div style="margin-top:10px">${stChip(r)}</div>
       ${newsHTML(r, true)}
       ${r.status === "tested" ? `<div class="note" style="color:var(--verde)"><i class="ti ti-rocket"></i> Pages and automations are updated and tested. Ads can launch.</div>` : ""}
-      ${r.source_text ? `<div class="sec cm" style="border-color:rgba(255,109,41,.35)"><div class="h"><i class="ti ti-brand-slack" style="color:var(--laranja);font-size:16px"></i><b>${esc(r.requester || "Slack")}</b>${esc(fStamp(reqAt(r)))}${r.slack_url ? `<a href="${esc(r.slack_url)}" target="_blank" rel="noopener" style="margin-left:auto">Open in Slack</a>` : ""}</div>${mentions(r.source_text)}</div>` : ""}
-      ${(r.updates || []).map(u => `<div class="sec cm" style="border-color:rgba(255,200,97,.4)"><div class="h"><i class="ti ti-brand-slack" style="color:var(--ambar);font-size:16px"></i><b>${esc(u.by || "Slack")}</b>${esc(fStamp(u.at))}<span class="pill a" style="margin-left:8px">Added in Slack</span>${u.url ? `<a href="${esc(u.url)}" target="_blank" rel="noopener" style="margin-left:auto">Open in Slack</a>` : ""}</div>${mentions(u.text || "")}</div>`).join("")}
-      ${r.validation ? `<div class="sec">${valReport(r)}</div>` : ""}
-      ${(c => c && (r.type === "client" || missing(c).length) ? pinedaBox(c) : "")(get("clients", r.client_id))}
       <div class="sec fg">
         <div><span class="lab" style="display:flex;align-items:center;gap:8px">Client ${gzPill(get("clients", r.client_id))}${get("clients", r.client_id) && get("clients", r.client_id).ghl ? `<a href="${esc(get("clients", r.client_id).ghl)}" target="_blank" rel="noopener" style="margin-left:auto;letter-spacing:0;text-transform:none" data-i18n><i class="ti ti-external-link"></i> GHL</a>` : ""}</span><select class="sel" data-f="client_id" ${A}>${opt("", "No client", r.client_id)}${clientOpts(r.client_id, true)}</select></div>
         <div><span class="lab">Type</span><select class="sel" data-f="type" ${A}>${TYPES.map(t => opt(t.id, t.label, r.type)).join("")}</select></div>
@@ -660,15 +685,21 @@
           <input type="date" class="inp" value="${esc(r.event_date || "")}" data-f="event_date" ${A}><input type="time" class="inp" value="${esc(r.event_time || "")}" data-f="event_time" ${A}>
           <select class="sel" data-f="event_tz" ${A}>${zoneOpts(r.event_tz || "America/Chicago")}</select></div>
         <div id="tzbox">${tzHTML(r)}</div></div>
-      <div class="sec"><span class="lab">Notes</span><textarea class="txt" data-f="details" ${A} placeholder="Notes for the team. What is missing, what was decided.">${esc(r.details || "")}</textarea></div>
-      <div class="sec panel"><h3><i class="ti ti-checklist"></i>Checklist · ${prog(r.checklist).d} of ${prog(r.checklist).n}</h3>${listHTML("requests", r.id, "checklist", "Add a step")}</div>
-      <div class="sec panel"><h3><i class="ti ti-link"></i>Links</h3>${linksHTML("requests", r.id)}</div>
-      <div class="sec"><span class="lab">Comments</span>
+      ${r.source_text ? `<div class="sec cm" style="border-color:rgba(255,109,41,.35)"><div class="h"><i class="ti ti-brand-slack" style="color:var(--laranja);font-size:16px"></i><b>${esc(r.requester || "Slack")}</b>${esc(fStamp(reqAt(r)))}${r.slack_url ? `<a href="${esc(r.slack_url)}" target="_blank" rel="noopener" style="margin-left:auto">Open in Slack</a>` : ""}</div>${mentions(r.source_text)}</div>` : ""}
+      ${(r.updates || []).map(u => `<div class="sec cm" style="border-color:rgba(255,200,97,.4)"><div class="h"><i class="ti ti-brand-slack" style="color:var(--ambar);font-size:16px"></i><b>${esc(u.by || "Slack")}</b>${esc(fStamp(u.at))}<span class="pill a" style="margin-left:8px">Added in Slack</span>${u.url ? `<a href="${esc(u.url)}" target="_blank" rel="noopener" style="margin-left:auto">Open in Slack</a>` : ""}</div>${mentions(u.text || "")}</div>`).join("")}
+      <div class="folds">
+      ${fold("val", "ti-shield-check", "Validation", r.validation ? valPill(r) : `<span class="pill">Not run yet</span>`, () => r.validation ? valBody(r) : `<div class="note" style="margin:0">Click Validate at the top of this request.</div>`)}
+      ${(c => c && (r.type === "client" || missing(c).length) ? fold("pin", missing(c).length ? "ti-alert-triangle" : "ti-circle-check", "Needed from Pineda to launch", `<span class="pill ${missing(c).length ? "r" : "g"}" data-i18n>${(c.requirements || []).length - missing(c).length} / ${(c.requirements || []).length}</span>`, () => pinedaBox(c)) : "")(get("clients", r.client_id))}
+      ${fold("notes", "ti-note", "Notes", r.details ? `<span class="pill o"><i class="ti ti-point-filled"></i></span>` : "", () => `<textarea class="txt" data-f="details" ${A} placeholder="Notes for the team. What is missing, what was decided.">${esc(r.details || "")}</textarea>`)}
+      ${fold("chk", "ti-checklist", "Checklist", `<span class="pill" data-i18n>${prog(r.checklist).d} / ${prog(r.checklist).n}</span>`, () => listHTML("requests", r.id, "checklist", "Add a step"))}
+      ${fold("links", "ti-link", "Links", `<span class="pill" data-i18n>${(r.links || []).length}</span>`, () => linksHTML("requests", r.id))}
+      ${fold("com", "ti-message", "Comments", `<span class="pill${cm.length ? " o" : ""}" data-i18n>${cm.length}</span>`, () => `
         ${cm.map(c => `<div class="cm"><div class="h"><span class="av">${esc(initials(c.author))}</span><b>${esc(c.author)}</b>${esc(fStamp(c.at))}</div>${mentions(c.body)}</div>`).join("")}
         <textarea class="txt" id="cbox" style="min-height:64px" placeholder="Write a comment. Use @ to tag someone."></textarea>
         <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px;align-items:center">${S.members.filter((m, i, l) => m.name !== S.me.name && l.findIndex(x => x.name === m.name) === i).map(m => `<button class="btn sm ghost" data-act="at" data-n="${esc(first(m.name))}">@${esc(first(m.name))}</button>`).join("")}
-        <button class="btn pri sm" style="margin-left:auto" data-act="comment" data-id="${r.id}">Comment</button></div></div>
-      <div class="sec"><span class="lab">History</span><div id="hbox">${histList(hs)}</div></div>
+        <button class="btn pri sm" style="margin-left:auto" data-act="comment" data-id="${r.id}">Comment</button></div>`)}
+      ${fold("hist", "ti-history", "History", `<span class="pill" data-i18n>${hs.length}</span>`, () => `<div id="hbox">${histList(hs)}</div>`)}
+      </div>
     </div></div>`;
   }
   function newHTML() {
@@ -704,7 +735,7 @@
   function renderOver() {
     const r = S.open && get("requests", S.open);
     const sc = $(".drawer") ? $(".drawer").scrollTop : 0;
-    $("#over").innerHTML = (r ? drawerHTML(r) : "") + (S.modal ? newHTML() : "") + colsHTML() + helpHTML() + confirmHTML();
+    $("#over").innerHTML = (r ? drawerHTML(r) : "") + (S.modal ? newHTML() : "") + colsHTML() + vqHTML() + helpHTML() + confirmHTML();
     if ($(".drawer")) $(".drawer").scrollTop = sc;
     onRender();
   }
@@ -864,14 +895,32 @@
     undo() { undoLast(); },
     help(d) { S.help = d.h || "all"; renderOver(); },
     helpclose() { S.help = null; renderOver(); },
-    async validate(d) {
+    fold(d) { S.fold = S.fold || {}; S.fold[d.k] = !S.fold[d.k]; renderOver(); },
+    validate(d) {
       if (VB.has(d.id)) return;
-      if (!LIVE) return toast("The validator works on the published panel only.");
-      VB.add(d.id); render();
-      const { data, error } = await sb.functions.invoke("desk-validate", { body: d.k === "clients" ? { client_id: d.id } : { request_id: d.id } });
-      VB.delete(d.id);
+      const o = get(d.k, d.id); if (!o) return;
+      const c = d.k === "clients" ? o : get("clients", o.client_id), r = d.k === "requests" ? o : null;
+      const del = re => c ? ((c.deliverables || []).find(x => re.test(x.label || "") && x.url) || {}).url || "" : "";
+      const up = c ? S.items.requests.filter(x => x.client_id === c.id && x.event_date && x.event_date >= today()).sort((a, b) => a.event_date.localeCompare(b.event_date))[0] : null;
+      const src = r && r.event_date ? r : (!r || r.type === "client") ? up : null;
+      S.vq = { k: d.k, id: d.id, name: (c ? c.name + (c.brand ? " · " + c.brand : "") : clientName(o.client_id)) + (r ? " · " + (r.title || typeOf(r).label) : ""), optin: (c && c.val_urls && c.val_urls.optin) || del(/webinar opt-?in page/i), bac: (c && c.val_urls && c.val_urls.bac) || del(/book a call funnel/i), date: src ? src.event_date : "", time: src ? src.event_time || "" : "", tz: (src && src.event_tz) || (c && c.tz) || "America/Chicago", useDate: !!src || !!(r && r.type === "launch") };
+      renderOver(); const i = $('[data-vq="optin"]'); if (i && !i.value) i.focus();
+    },
+    vqclose() { S.vq = null; renderOver(); },
+    async vqgo() {
+      const q = S.vq, err = $("#vqerr"); if (!q) return;
+      const okU = u => !u || /^https?:\/\/\S+\.\S+/i.test(u), optin = (q.optin || "").trim(), bac = (q.bac || "").trim();
+      if (!optin && !bac) { err.textContent = "Paste the link of the opt-in page or of the Book a Call page."; return; }
+      if (!okU(optin) || !okU(bac)) { err.textContent = "A link must start with https://"; return; }
+      if (q.useDate && !q.date) { err.textContent = "Set the launch date, or clear the box above."; return; }
+      if (!LIVE) { err.textContent = "The validator works on the published panel only."; return; }
+      S.vq = null; VB.add(q.id); render();
+      const body = Object.assign(q.k === "clients" ? { client_id: q.id } : { request_id: q.id }, { urls: { optin, bac }, event: q.useDate ? { date: q.date, time: q.time || "", tz: q.tz || "America/Chicago" } : null });
+      const { data, error } = await sb.functions.invoke("desk-validate", { body });
+      VB.delete(q.id);
       if (error || !data || !data.item) { render(); return toast("The validator could not run. Try again."); }
       const l = S.items[data.kind], i = l.findIndex(x => x.id === data.item.id); if (i >= 0) l[i] = data.item; U.shadow.set(data.kind + ":" + data.item.id, JSON.stringify(data.item));
+      S.fold = S.fold || {}; S.fold.val = true;
       render();
       toast(data.verdict === "approved" ? "Validation: approved" + (data.warns ? " · " + data.warns + " warning(s)" : "") : "Validation: not approved · " + data.fails + " issue(s)" + (data.moved ? ". Moved back to In progress." : ""));
     },
@@ -957,29 +1006,32 @@
 
   document.addEventListener("click", e => {
     const el = e.target.closest("[data-act]"); if (!el) return;
-    if ((el.dataset.act === "close" || el.dataset.act === "closemodal" || el.dataset.act === "helpclose" || el.dataset.act === "delcancel" || el.dataset.act === "colclose") && el.classList.contains("veil") && e.target !== el) return;
+    if ((el.dataset.act === "close" || el.dataset.act === "closemodal" || el.dataset.act === "helpclose" || el.dataset.act === "delcancel" || el.dataset.act === "colclose" || el.dataset.act === "vqclose") && el.classList.contains("veil") && e.target !== el) return;
     if (e.target.closest("a")) return;
     const na = e.target.closest("[data-noact]"); if (na && el.contains(na)) return;
     A[el.dataset.act] && A[el.dataset.act](el.dataset, e);
   });
   document.addEventListener("keydown", e => {
     if (e.key === "Enter" && e.target.id === "delword") { e.preventDefault(); return A.delgo(); }
-    if (e.key === "Escape") { if (S.confirm) A.delcancel(); else if (S.help) A.helpclose(); else if (S.colm) A.colclose(); else if (S.modal) A.closemodal(); else if (S.open) A.close(); else if (S.chat) A.chat(); }
+    if (e.key === "Escape") { if (S.confirm) A.delcancel(); else if (S.help) A.helpclose(); else if (S.vq) A.vqclose(); else if (S.colm) A.colclose(); else if (S.modal) A.closemodal(); else if (S.open) A.close(); else if (S.chat) A.chat(); }
     if (e.key === "Enter" && e.target.dataset.add) { const [k, id, fld] = e.target.dataset.add.split("|"); A.liadd({ k, id, fld }); }
     if ((e.metaKey || e.ctrlKey) && !e.shiftKey && e.key.toLowerCase() === "z" && !/INPUT|TEXTAREA|SELECT/.test(e.target.tagName) && U.stack.length) { e.preventDefault(); undoLast(); }
     if (e.key === "Enter" && e.target.id === "lemail") A.login();
     if (e.key === "Enter" && e.target.id === "colname") A.coladd();
+    if (e.key === "Enter" && e.target.dataset.vq && e.target.type !== "checkbox") A.vqgo();
     if (e.key === "Enter" && (e.target.id === "acemail" || e.target.id === "acname")) A.acadd();
     if (e.key === "Enter" && !e.shiftKey && e.target.id === "chatinput") { e.preventDefault(); A.chatsend(); }
     if (e.key === "Enter" && (e.metaKey || e.ctrlKey) && e.target.id === "cbox" && S.open) A.comment({ id: S.open });
   });
   document.addEventListener("input", e => {
     const t = e.target;
+    if (t.dataset.vq && S.vq && t.type !== "checkbox" && t.tagName !== "SELECT") { S.vq[t.dataset.vq] = t.value; const e2 = $("#vqerr"); if (e2) e2.textContent = ""; return; }
     if (t.id === "delword") { const b = $("#delbtn"), e2 = $("#delerr"); if (b) b.classList.toggle("ready", t.value === "DELETE"); if (e2) e2.textContent = ""; return; }
     if (t.dataset.n && S.modal) { S.modal[t.dataset.n] = t.value; if (/^event_/.test(t.dataset.n) && $("#ntz")) $("#ntz").innerHTML = tzHTML(S.modal); if (t.dataset.n === "client_id") { const c = get("clients", t.value); if (c && c.tz) S.modal.event_tz = c.tz; renderOver(); } }
   });
   document.addEventListener("change", e => {
     const t = e.target, d = t.dataset;
+    if (d.vq && S.vq) { S.vq[d.vq] = t.type === "checkbox" ? t.checked : t.value; if (/^(useDate|date|time|tz)$/.test(d.vq)) renderOver(); return; }
     if (d.ui) { S[d.ui] = t.value; return renderMain(); }
     if (d.colsel) { const r = get("requests", d.colsel); if (r) { setCol(r, t.value); render(); } return; }
     if (d.cf) { const c = get("columns", d.id), v = t.value.trim(); if (c && (c[d.cf] || "") !== v && (d.cf !== "label" || v)) { const was = c[d.cf] || ""; c[d.cf] = v; save("columns", c); if (d.cf !== "color") log("edited the " + (d.cf === "owner" ? "owner" : "name") + ' of the board column "' + c.label + '"', null, null, was, v); render(); } return; }

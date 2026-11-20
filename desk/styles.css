@@ -445,3 +445,40 @@ a.btn{text-decoration:none;color:var(--branco)}
 .ghlf .inp,.ghlf .sel{padding:6px 8px;font-size:12.5px}
 .ghlf .sel{color:var(--azul);border-color:rgba(138,184,255,.4)}
 .ghlf .sel.no{color:var(--ambar);border-color:rgba(255,200,97,.45)}
+/* request: blocks that open with a click */
+.folds{margin-top:18px;display:flex;flex-direction:column;gap:8px}
+.fold{border:1px solid var(--borda);border-radius:14px;background:var(--vidro);overflow:hidden}
+.fold.open{border-color:var(--borda2)}
+.foldh{width:100%;display:flex;align-items:center;gap:10px;padding:12px 14px;background:none;border:0;color:var(--branco);font:inherit;font-size:13.5px;font-weight:500;cursor:pointer;text-align:left}
+.foldh:hover{background:var(--vidro2)}
+.foldh>i:first-child{color:var(--laranja);font-size:17px}
+.foldh>span:first-of-type{margin-right:auto}
+.foldh .ch{color:var(--cinza);font-size:16px}
+.foldb{padding:4px 14px 14px}
+.foldb>.sec:first-child,.foldb>.panel:first-child{margin-top:0}
+.foldb .pbx{border:0;background:none;padding:0}
+.foldb .pbx>h3{display:none}
+/* validation report: problems first, what passed is folded */
+.vmeta{display:flex;gap:6px;flex-wrap:wrap;margin:2px 0 10px}
+.vmeta a.pill{text-decoration:none}
+.vph{display:flex;align-items:center;gap:8px}
+.vok{margin:4px 0 2px}
+.vok summary{list-style:none;display:flex;align-items:center;gap:6px;font-size:12px;color:var(--verde);cursor:pointer;padding:4px 0}
+.vok summary::-webkit-details-marker{display:none}
+.vok summary .ch{margin-left:2px;color:var(--cinza);font-size:14px}
+.vok[open] summary .ch{transform:rotate(180deg)}
+.vokr{font-size:12px;padding:3px 0 3px 22px;color:var(--cinza)}
+.vokr b{color:var(--branco);font-weight:500;margin-right:6px}
+.vokr small{font-size:11.5px}
+/* the Validate box */
+.vqm{width:min(560px,100%)}
+.vqd{margin-top:14px;padding:12px;border:1px solid var(--borda);border-radius:12px;background:var(--vidro)}
+.vqc{display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer}
+.vqc input{width:16px;height:16px;accent-color:var(--laranja)}
+.vqw{display:flex;align-items:center;gap:8px;margin-top:10px;padding:9px 11px;border-radius:10px;background:rgba(255,200,97,.12);color:var(--ambar);font-size:13px}
+.vqw b{color:var(--branco);font-weight:600}
+.vqw.no{background:rgba(255,122,122,.12);color:var(--vermelho)}
+.vqi{margin-top:12px;font-size:12.5px;color:var(--cinza)}
+.vqi summary{cursor:pointer;display:flex;align-items:center;gap:6px;list-style:none}
+.vqi summary::-webkit-details-marker{display:none}
+.vqi ul{margin:8px 0 0;padding-left:20px;line-height:1.55}
