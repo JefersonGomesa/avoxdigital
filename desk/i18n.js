@@ -18,6 +18,7 @@
     "What is each page?": "O que é cada página?", "Webinar opt-in": "Opt-in do webinar", "Homework": "Homework", "Replay": "Replay", "Confirmation page": "Página de confirmação", "Other page": "Outra página", "Add page": "Adicionar página", "Paste the link of the page.": "Cole o link da página.",
     "For this kind of page the validator checks the structure only: buttons, sizes, page standard, texts and links.": "Para este tipo de página, o validador confere só a estrutura: botões, tamanhos, padrão da página, textos e links.", "Homework, replay and other pages: the structure only. No date and no form rule.": "Homework, replay e outras páginas: só a estrutura. Sem regra de data e sem regra de formulário.",
     "Done this week": "Concluídas nesta semana", "All done tasks": "Todas as concluídas", "See all done tasks": "Ver todas as concluídas", "Show this week only": "Mostrar só esta semana", "Nothing done this week yet": "Nada concluído nesta semana ainda",
+    "Ads launch": "Início dos anúncios",
     "Requests": "Pedidos", "Clients": "Clientes", "Calendar": "Calendário", "History": "Histórico", "Sign out": "Sair",
     "Add request": "Adicionar pedido", "New request": "Novo pedido", "All clients": "Todos os clientes", "No client": "Sem cliente", "Add client": "Adicionar cliente",
     "New": "Novo", "Needs info": "Falta informação", "In progress": "Em andamento", "Updated & tested": "Atualizado e testado", "Done": "Concluído",

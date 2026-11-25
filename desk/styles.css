@@ -486,3 +486,4 @@ a.btn{text-decoration:none;color:var(--branco)}
 @media (max-width:560px){.vqp{grid-template-columns:1fr}}
 .doneall{width:100%;justify-content:center;margin-top:10px}
 .doneall b{margin-left:6px;color:var(--brasa)}
+.ev.ad{background:rgba(138,184,255,.16);color:var(--azul);border-color:rgba(138,184,255,.4)}

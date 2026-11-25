@@ -366,7 +366,7 @@
       <div style="display:flex;gap:8px;align-items:flex-start">${typeof pos === "number" && r.status !== "done" ? `<span class="rk" title="Priority ${pos + 1}">${pos + 1}</span>` : ""}<div style="flex:1;min-width:0"><div class="cl">${esc(clientName(r.client_id))}</div><div class="sub">${esc(r.title || t.label)}</div></div>${valBtn("requests", r.id)}<button class="chk${r.status === "done" ? " on" : ""}" data-act="quick" data-id="${r.id}" title="${r.status === "done" ? "Reopen" : "Mark as done"}" aria-label="Mark as done">${r.status === "done" ? '<i class="ti ti-check"></i>' : ""}</button></div>
       ${newsHTML(r)}
       ${whenHTML(r)}
-      ${r.source_text ? `<div class="q"><i class="ti ti-brand-slack"></i><span><b>${esc(r.requester || "Slack")}:</b> ${esc(r.source_text.length > 150 ? r.source_text.slice(0, 150) + "…" : r.source_text)}</span></div>` : ""}
+      ${r.source_text ? `<div class="q"><i class="ti ti-${r.src === "sheet" ? "table" : "brand-slack"}"></i><span><b>${esc(r.src === "sheet" ? "Forecast Sheet" : r.requester || "Slack")}:</b> ${esc(r.source_text.length > 150 ? r.source_text.slice(0, 150) + "…" : r.source_text)}</span></div>` : ""}
       ${reqLine(r)}
       ${r.type === "client" && r.status === "new" ? startBox(get("clients", r.client_id)) : ""}
       ${p.n ? `<div class="bar"><b style="width:${p.pct}%"></b></div>` : ""}
@@ -450,6 +450,7 @@
       const u = evUTC(r);
       if (u != null) push(ymdIn(u, MYZ), { r, cls: r.status === "tested" || r.status === "done" ? "ok" : "", t: (r.event_time ? fTime(u, MYZ, BR) + " " : "") + clientName(r.client_id), tip: fDay(u, r.event_tz) + (r.event_time ? " · " + fTime(u, r.event_tz) + " " + zAbbr(r.event_tz) : "") });
       if (r.due_date && r.status !== "done") push(r.due_date, { r, cls: "due", t: "Due · " + clientName(r.client_id), tip: r.title || "" });
+      if (r.ad_date) push(r.ad_date, { r, cls: "ad", t: "Ads · " + clientName(r.client_id), tip: "Ads launch for the webinar of " + (r.event_date ? fDue(r.event_date) : "") + (r.sheet && r.sheet.next ? " · " + r.sheet.next : "") });
     });
     let cells = ""; const td = today();
     for (let i = 0; i < Math.ceil((start + dim) / 7) * 7; i++) {
@@ -457,7 +458,7 @@
       cells += `<div class="day${out ? " out" : ""}${key === td ? " today" : ""}"><span>${d.getUTCDate()}</span>${(ev[key] || []).map(e => `<button class="ev ${e.cls}" title="${esc(e.tip)}" data-act="open" data-id="${e.r.id}">${esc(e.t)}</button>`).join("")}</div>`;
     }
     return `<div class="top"><h1>${f.toLocaleDateString("en-US", { timeZone: "UTC", month: "long", year: "numeric" })}</h1>
-      <span class="pill o">Webinar</span><span class="pill a">Delivery due</span><span class="pill g">Updated & tested</span><span class="pill">Times in ${MYLABEL}</span>
+      <span class="pill o">Webinar</span><span class="pill tzp">Ads launch</span><span class="pill a">Delivery due</span><span class="pill g">Updated & tested</span><span class="pill">Times in ${MYLABEL}</span>
       <button class="btn sm" data-act="cal" data-d="-1"><i class="ti ti-chevron-left"></i></button><button class="btn sm" data-act="cal" data-d="0">Today</button><button class="btn sm" data-act="cal" data-d="1"><i class="ti ti-chevron-right"></i></button></div>
       <div class="cal">${["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => `<div class="dn">${d}</div>`).join("")}${cells}</div>`;
   }
