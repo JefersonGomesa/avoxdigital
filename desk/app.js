@@ -450,7 +450,6 @@
       const u = evUTC(r);
       if (u != null) push(ymdIn(u, MYZ), { r, cls: r.status === "tested" || r.status === "done" ? "ok" : "", t: (r.event_time ? fTime(u, MYZ, BR) + " " : "") + clientName(r.client_id), tip: fDay(u, r.event_tz) + (r.event_time ? " · " + fTime(u, r.event_tz) + " " + zAbbr(r.event_tz) : "") });
       if (r.due_date && r.status !== "done") push(r.due_date, { r, cls: "due", t: "Due · " + clientName(r.client_id), tip: r.title || "" });
-      if (r.ad_date) push(r.ad_date, { r, cls: "ad", t: "Ads · " + clientName(r.client_id), tip: "Ads launch for the webinar of " + (r.event_date ? fDue(r.event_date) : "") + (r.sheet && r.sheet.next ? " · " + r.sheet.next : "") });
     });
     let cells = ""; const td = today();
     for (let i = 0; i < Math.ceil((start + dim) / 7) * 7; i++) {
@@ -458,7 +457,7 @@
       cells += `<div class="day${out ? " out" : ""}${key === td ? " today" : ""}"><span>${d.getUTCDate()}</span>${(ev[key] || []).map(e => `<button class="ev ${e.cls}" title="${esc(e.tip)}" data-act="open" data-id="${e.r.id}">${esc(e.t)}</button>`).join("")}</div>`;
     }
     return `<div class="top"><h1>${f.toLocaleDateString("en-US", { timeZone: "UTC", month: "long", year: "numeric" })}</h1>
-      <span class="pill o">Webinar</span><span class="pill tzp">Ads launch</span><span class="pill a">Delivery due</span><span class="pill g">Updated & tested</span><span class="pill">Times in ${MYLABEL}</span>
+      <span class="pill o">Webinar</span><span class="pill a">Delivery due</span><span class="pill g">Updated & tested</span><span class="pill">Times in ${MYLABEL}</span>
       <button class="btn sm" data-act="cal" data-d="-1"><i class="ti ti-chevron-left"></i></button><button class="btn sm" data-act="cal" data-d="0">Today</button><button class="btn sm" data-act="cal" data-d="1"><i class="ti ti-chevron-right"></i></button></div>
       <div class="cal">${["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map(d => `<div class="dn">${d}</div>`).join("")}${cells}</div>`;
   }
